@@ -11,21 +11,29 @@ The idea comes from difficulty discovering smaller and niche events. It covers m
 ### Event discovery
 
 - Location-centered map with a default-city fallback when browser location is unavailable or declined; free panning and zooming with automatic result refresh.
-- Muted dark basemap and genre-colored venue pins. Multiple matching events share an ombre pin with an event count; selecting it opens events ordered by date.
+- Muted dark basemap and broad-category-colored venue pins. Multiple matching events share an ombre pin with an event count; selecting it opens events ordered by date.
 - Next 14 days shown by default, with date controls and genre filters supporting ANY (OR) or ALL (AND) matching. No genre selection means all genres.
-- Event details include venue, date/time, genres, description, optional approximate BPM range, listening links, and an optional external ticket link.
+- Event details include venue, date/time, genres, description, an app-derived typical tempo estimate from admin-curated category/tag ranges, listening links, and an optional external ticket link.
 - Admin-curated Explore Genres directory with consistent names, colors, descriptions, and representative artists/tracks/sets. Event-specific listening references support mixed or hard-to-classify music.
 - Registered users submit events and edit their own listings. Existing approved venues are selectable; proposed new locations require admin review before their events become public.
 - Valid listings at approved venues publish immediately. Users can report events; admins can review reports, hide listings, and deactivate accounts.
 
 ### Attendance groups
 
-- An event's “Going alone?” section displays discoverable groups.
+- An event's “Attending alone?” section displays discoverable groups.
 - Groups have a name, description, capacity, and optional uploaded photo.
 - Public groups allow immediate joining; private groups remain visible but require creator approval. Hidden invite-only groups are out of scope.
-- Membership rules prevent duplicate membership and exceeding capacity; members can leave.
+- One group membership per user per event, including the owner in capacity. Approved private-group offers do not reserve spaces; accepting can atomically switch groups. Owner departure transfers ownership by seniority; empty groups are deleted.
 - A members-only, text-based message board stores messages with author and timestamp. Messages load on page opening or refresh, without live chat infrastructure.
 - Username/password accounts use Django authentication. Groups and memberships belong to accounts rather than browser-only identities.
+
+### Tracking and classification
+
+- Events require one or more broad color categories and can have multiple detailed subgenre tags. Tempo is estimated from curated ranges, not supplied by event creators.
+- Users can follow events independently of attendance or groups and receive in-app venue/time/cancellation updates.
+- Groups are optional company for solo attendees, not an attendance requirement or RSVP system.
+- Authors can edit/delete their own messages; admins can remove messages. Group removal permits rejoining; a separate group ban prevents it.
+- Required start/end times support overnight events; changing an event venue never edits another event's location.
 
 ## Stack
 
@@ -44,10 +52,10 @@ Dependency versions, image-processing library, server package, and testing tools
 
 One Django project runs as one process, with two logical domain apps sharing one SQLite database:
 
-- **`discovery`:** genres, venues, events, listening references, venue review, event reports, and map filtering.
+- **`discovery`:** categories/tags, venues, events, listening references, venue review, event reports, follows/change history, and map filtering.
 - **`groups`:** attendance groups, join requests, memberships, photos, and messages.
 
-Django authentication supplies shared accounts. Request handlers handle HTTP; domain business rules remain separate from page rendering and map JSON responses. Groups references events by identity and obtains necessary event information through a small discovery interface. A future service split would also need to address shared accounts and database relationships; it is not part of this assignment.
+Django authentication supplies shared accounts with display names and optional private email; shared notifications support event-change updates and group offers. Request handlers handle HTTP; domain business rules remain separate from page rendering and map JSON responses. Groups references events by identity and obtains necessary event information through a small discovery interface. A future service split would also need to address shared accounts and database relationships; it is not part of this assignment.
 
 ```text
 Browser: templates + CSS + JavaScript + Leaflet
@@ -69,9 +77,12 @@ README.md
 ADR.md
 AI_USAGE.md
 DESIGN.md
+SCHEMA.md
 requirements.txt
 manage.py
 config/                # Django settings, URL configuration, startup integration
+accounts/              # Django-based user model
+notifications/         # Shared in-app notifications
 discovery/             # Models, views, business rules, migrations
 groups/                # Models, views, business rules, migrations
 templates/             # Pages and reusable fragments
@@ -101,6 +112,7 @@ Venue approval means a location record was reviewed, not that an event or organi
 - [ADR.md](ADR.md): required architecture decisions and their tradeoffs.
 - [AI_USAGE.md](AI_USAGE.md): meaningful AI interactions and author explanations.
 - [DESIGN.md](DESIGN.md): detailed agreed behavior, proposed details, and unresolved questions.
+- [SCHEMA.md](SCHEMA.md): September 27 field-level schema, relationships, constraints, state transitions, and planning diagram; not yet implemented.
 
 Deadline: **October 4, 2026, 23:59**; confirm the submission timezone in the course portal. Final deliverables also include a 4–5 page report with SDLC reasoning, SMART goals, matching architecture/schema diagrams, and the course AI-disclosure statement, plus the written comprehension check.
 
