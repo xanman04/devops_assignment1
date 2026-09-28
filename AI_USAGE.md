@@ -1,6 +1,30 @@
 # AI usage log
 
-Reconstructed from this task's conversation on September 24, 2026. Prompt cells are excerpts or clearly labeled summaries, not a complete transcript. Dates follow the conversation context; no commit hashes or push dates have been invented. No application code has been generated in this repository yet.
+## September 28 commit workflow
+
+| Date/commit | Tool | Prompt | Disposition (Accepted/Modified/Rejected) | What changed & why (if modified) | In my own words, how this works |
+|---|---|---|---|---|---|
+| 2026-09-28; commit preparation | OpenAI Codex | “make a commit/s for the changes we've made”; “If we make a substantial change ... make and push commits” | Accepted | Reviewed pending implementation and documentation, grouped them into meaningful commits, and recorded standing authorization in AGENTS.md for verified substantial changes to be committed and pushed during active sessions. Uses actual timestamps; no fabricated cadence, scheduled job, or CI was added. | TODO — explain what these commits contain and how future automatic commits differ from meeting the distinct-day requirement. |
+
+## September 28 group services and request-handler proposal
+
+| Date/commit | Tool | Prompt | Disposition (Accepted/Modified/Rejected) | What changed & why (if modified) | In my own words, how this works |
+|---|---|---|---|---|---|
+| 2026-09-28; implementation pending author review | OpenAI Codex | “One group created per user at a time. Same rules as there are for being a member”; remaining workflow decisions approved, image handling delegated | Accepted | Implemented group membership/request/offer services, atomic confirmed switching, seniority handover, bans, member-only messages, processed photo storage/cleanup, and group notifications. Creators count as members under the one-group-per-event rule. Added notification migration and backend tests; 76 tests pass. Drafted ROUTES.md for discussion before public handlers are implemented. | TODO — explain capacity checks, why offers reserve no place, transaction rollback during switching, message authorization, photo re-encoding, and the filesystem/transaction limitation. |
+
+September 28 timezone/lifecycle follow-up: author approved venue-local date/time entry and cancellation removal from the map. Implemented form conversion to/from UTC with DST validation and verified 50 tests at that stage. Event genre selections remain editable; shared tag-parent reassignment is the protected operation. Retention duration remains undecided; subsequent discussion approved the event-start group cutoff. Author understanding explanation pending.
+
+September 28 admin clarification: corrected the genre-category plural label, labeled category/tag BPM as curated reference ranges, and displayed a read-only automatic tempo estimate on event pages. Events have no manual BPM fields; author requested clarification after inspecting admin. Author understanding explanation pending.
+
+## September 28 discovery services
+
+| Date/commit | Tool | Prompt | Disposition (Accepted/Modified/Rejected) | What changed & why (if modified) | In my own words, how this works |
+|---|---|---|---|---|---|
+| 2026-09-28; implementation pending author review | OpenAI Codex + official Django documentation | “Please implement discovery services to the best of your ability ... discuss ... changes when you've finished.” | Accepted | Implemented authorized discovery services, admin forms, read-only map JSON, transactional event-change notifications, recipient inbox operations, and isolated workflow tests. No group workflows or frontend were claimed complete. | TODO — explain save_event/classification, search_events, _record_changes, why notification failure rolls back edits, and which raw ORM operations would bypass service rules. |
+
+September 28 follow-up: the author requested an admin account-removal option. Removed the blanket deletion-permission override, retaining Django confirmation/permissions and protected references. Verified account deletion and blocked deletion using test accounts only (18 schema tests pass). Author explanation pending; no real account was deleted.
+
+The planning entries below were reconstructed from this task's conversation on September 24, 2026; later implementation entries were added as work proceeded. Prompt cells are excerpts or clearly labeled summaries, not a complete transcript. Dates follow the conversation context; no commit hashes or push dates have been invented.
 
 **Author action required:** complete the final column in your own words before submission. AI has not written first-person claims of your understanding. When code is introduced, use actual function/variable names in those explanations. Dispositions below summarize choices made in the conversation; today's generated documentation still needs author review. Add new rows as meaningful interactions occur.
 
@@ -44,3 +68,4 @@ Prompts below are summarized. No application code was produced in this documenta
 | 2026-09-27; group rules | OpenAI Codex | One group per event, seniority handover, approval then confirmed switch | Modified | Replaced multiple-group allowance with atomic switching; approval offers reserve no spaces; empty groups delete. | TODO — explain how failed switches preserve existing membership. |
 | 2026-09-27; moderation/messages | OpenAI Codex | Reapplication, separate removal/ban, authors edit/delete messages | Modified | Added ban history and message edit/deletion metadata; group owners do not control others' message content. | TODO — explain permissions and lifecycle. |
 | 2026-09-27; documentation delivery | OpenAI Codex | Ship schema documentation for a distinct-day push, then continue to Django | Accepted | Created SCHEMA.md, recorded ADR-3, reconciled README/DESIGN, and updated this log; no implementation claims. | TODO — review documents and explain the schema in your own words. |
+| 2026-09-27; Django skeleton, not committed | OpenAI Codex + Django documentation lookup | “Can you skeleton this whole schema in django” | Accepted | Generated project configuration, model classes, migrations, read-only domain admin, startup command, and focused schema checks. Used Django 5.2 LTS, Pillow, Waitress, WhiteNoise, and tzdata. Cross-record workflows and public pages remain unimplemented; author code review pending. | TODO — explain Event.venue, EventCategory/EventTag, conditional JoinRequest/GroupBan uniqueness, Notification constraints, and why Membership uniqueness alone does not enforce one group per event. |

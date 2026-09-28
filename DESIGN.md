@@ -45,10 +45,12 @@ The professor approved the proposal according to the author. That does not imply
 - “Going alone?” presents group cards associated with an event, with a create-group action.
 - All groups are discoverable. Public means immediate joining; private means approval required, not hidden.
 - Private join requests can be approved or declined by the creator. Hidden invite-only groups are explicitly out of scope.
-- Group name, description, capacity, and one optional uploaded photo. Use a default image when absent; validate type/size and store files in the configured data directory, paths in SQLite.
+- Group name, description (up to 2,000 characters), capacity, and one optional uploaded photo. Use a default image when absent. Accept JPG/PNG/WebP up to 5 MiB and 20 megapixels, reject animation, resize to a maximum 1,600-pixel edge, and re-encode to JPEG without metadata. Store files in the configured data directory, paths in SQLite.
 - Prevent duplicate memberships and exceeding capacity. Members can leave. The owner counts toward capacity. One membership per user per event; switching uses an atomic operation.
-- Only members read/post messages. Text-only messages have author and timestamp; no live updates, message notifications, attachments, or read receipts. Event-change and group-offer notifications are separate.
-- Owner departure transfers ownership by membership seniority; empty groups are deleted. Removal permits rejoining, bans prevent it. Authors may edit/delete their messages; admins may remove messages. Approved private requests are offers without reserved spaces. The exact post-start joining cutoff remains an implementation follow-up.
+- Only current members read/post messages. Text-only messages have author and timestamp, with a 4,000-character maximum; no live updates, message notifications, attachments, or read receipts. The board supports simple coordination, including arranging an external chat group.
+- Creators count as members: one group per person per event, including groups they create. Owner departure transfers ownership by membership seniority; empty groups are deleted. Removal permits rejoining, bans prevent it. Authors may edit/delete their messages; admins may remove messages. Approved private requests are offers without reserved spaces. New participation closes at event start.
+- Owners may edit name, description, photo, joining mode, and capacity, but not below current membership. Changing mode preserves existing members and unresolved requests. Only admins may disband a populated group.
+- Notify owners of new requests and applicants of approval/rejection. Also notify members of removal, bans, and ownership transfer. Ordinary messages do not generate notices.
 
 ## Agreed: implementation direction
 
@@ -96,4 +98,20 @@ See [SCHEMA.md](SCHEMA.md) for the complete field-level specification and relati
 - Groups are optional under “Attending alone?”. One membership per event; private approval offers require acceptance and a fresh capacity check without reserving space.
 - Owner departure transfers ownership by seniority, or deletes the empty group. Removal and bans are separate. Authors edit/delete their own messages.
 - Shared accounts/notification modules supplement the two feature domains without introducing services.
-- Today's delivery is documentation and ADR-3 only. Django skeleton/models/migrations are the next chunk.
+- The earlier September 27 documentation/ADR-3 batch was committed separately. The subsequent Django skeleton implements models/migrations and row constraints. September 28 discovery and group services, admin moderation, and map JSON are implemented; public request handlers and frontend remain pending (see README, SCHEMA, and the proposed ROUTES.md).
+
+## September 28 discovery implementation details for review
+
+- Discovery operations are in services.py and reused by admin forms. No automatic moderation or public write API was added.
+- Creator edits preserve admin hiding. Public queries exclude pending/rejected locations; creators/admins can inspect their unpublished records. Existing rejected-venue events can be corrected or cancelled, but new assignments to rejected venues are rejected.
+- Used subgenre tags cannot be moved between categories without explicitly reclassifying their references; creating a new tag avoids silently corrupting event selections.
+- Map windows use aware datetimes and overlap rules; default next 14 days. API supports viewport/date/ANY-ALL category/tag filters. More than 1,000 results requires a narrower query rather than partial counts.
+- Notifications are persisted in the edit transaction. Summaries contain changed field names and pending-location warnings, not private coordinates/text; before/after snapshots remain restricted to admin history. Inbox UI remains to build.
+- Venue-local datetime input was approved and implemented in event admin forms. UTC remains the storage format; moving an event reinterprets entered times in the destination venue's timezone, with DST ambiguity/gap validation.
+- No real event fixtures or changes to user data were made. Fifty isolated tests pass; full measured core coverage and ADR-4 are still outstanding.
+
+### Lifecycle clarification
+
+Event creators can change their own category/tag selections without deleting the event. The restriction concerns moving a shared tag into a new parent category, which could invalidate other events and curated references.
+
+Cancelled events disappear from the map and generate tracked-event notifications; records remain. Retention-based purging is a future possibility with no agreed duration or deletion policy; no purge job is implemented. Group services enforce closure of creation, joins, requests, and offer acceptance at event start. Existing memberships continue and members can use the message board during and after the event, including after cancellation. Seventy-six backend tests pass; measured coverage remains to establish.

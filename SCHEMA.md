@@ -1,6 +1,6 @@
 # Database schema
 
-Agreed design recorded September 27, 2026. Documentation only: Django models, migrations, and enforcement are not implemented yet. This is the target for implementation and the eventual database diagram; update both together if it changes.
+Agreed design recorded September 27, 2026. Django models and initial migrations now implement the records and database constraints. Cross-record workflows below remain targets, not completed behavior. Update this schema and the eventual report diagram with implementation changes.
 
 ## Conventions and ownership
 
@@ -23,7 +23,7 @@ Use a project user model based on Django's standard user, declared before initia
 | is_active, is_staff, is_superuser | Django account/admin flags |
 | date_joined, last_login | Django timestamps; last_login optional |
 
-Keep standard Django permission relationships. No profile photos, public email, email verification, recovery workflow, or attendance/RSVP record is introduced. Accounts are normally deactivated, not deleted. Account email appears only to its owner and authorized administration.
+Keep standard Django permission relationships. No profile photos, public email, email verification, recovery workflow, or attendance/RSVP record is introduced. Accounts are normally deactivated. As clarified September 28, admins may delete unreferenced accounts with confirmation; protected event/group/message references block deletion. Account email appears only to its owner and authorized administration.
 
 ## Discovery
 
@@ -111,13 +111,13 @@ Groups appear under “Attending alone?” for users actively seeking company. T
 
 `event` FK, `owner` User FK, `name` string(120), `description` text, `capacity` positive integer (includes owner), `joining_mode` (`public`, `approval_required`), optional `photo` file path, `created_at`, `updated_at`.
 
-All groups are discoverable where their event is publicly visible; messages are not. Store image files under the configured data directory, not image bytes in SQLite. Validate file type/size; exact limits/library remain to select. Group's event cannot be reassigned after creation.
+All groups are discoverable where their event is publicly visible; messages are not. Descriptions are limited to 2,000 characters. Store image files under the configured data directory, not image bytes in SQLite. Uploads accept decoded JPG/PNG/WebP images up to 5 MiB and 20 megapixels, reject animation, and re-encode to metadata-free JPEG with a maximum 1,600-pixel edge. Group's event cannot be reassigned after creation.
 
 ### Membership
 
 `group` FK, `user` FK, `joined_at`; unique `(group, user)`. Membership rows represent current membership only; leaving removes the row. A user may belong to only one group for a particular event. Event is derived through group rather than duplicated here.
 
-The cross-group event rule requires transactional business logic, not merely `(group,user)` uniqueness. All joins, approvals accepted, removals, capacity edits, bans, and switches must use the same guarded write path. SQLite concurrency handling and retries must preserve that invariant; do not assume row-level locking is available or rely on a form check alone.
+The cross-group event rule requires transactional business logic, not merely `(group,user)` uniqueness. Creators are members and cannot create another group for the same event while already a member. All joins, approvals accepted, removals, capacity edits, bans, and switches use the guarded service write path. SQLite transactions start in IMMEDIATE mode to serialize writers; request handlers must handle lock failures without partial changes.
 
 ### JoinRequest
 
@@ -133,7 +133,7 @@ Keep attempts as history; at most one unresolved (`pending` or `approved`) reque
 
 `group` FK, `author` User FK, `body` text, `created_at`, optional `edited_at`, `deleted_at`, and `deleted_by` User FK. Non-deleted messages require nonempty text. On deletion, clear body and retain a tombstone with deletion metadata; do not retain edit history/deleted text.
 
-Only current members read/post. Authors may edit/delete their own messages while authorized to access the group; admins can remove messages. Group owners cannot edit/delete others' messages just because they own the group. No attachments or live delivery.
+Only current members read/post. Messages contain 1–4,000 characters. Authors may edit/delete their own messages while authorized to access the group; admins can remove messages. Group owners cannot edit/delete others' messages just because they own the group. No attachments or live delivery.
 
 ### Atomic membership behavior
 
@@ -145,15 +145,15 @@ Only current members read/post. Authors may edit/delete their own messages while
 6. If no members remain, delete the group and its dependent records; clean up its photo after successful database commit. No ownerless group remains.
 7. Lowering capacity below current membership count is rejected. Removal allows rejoining; banning prevents it.
 
-Exact cutoff for joining after an event starts and post-event message retention remain explicit implementation follow-ups, not invented confirmed requirements. Cancelled/hidden events must not gain new public group participation; existing authorized members need a view of cancellation/change status.
+Creation, new joins, requests, and acceptance of approved offers close at event start, enforced by group services. Existing memberships continue and members retain message access during and after the event. Post-event message retention remains undecided. Cancelled/hidden events cannot gain new public group participation; existing authorized members retain access and need a view of cancellation/change status.
 
 ## Notifications
 
 ### Notification
 
-`recipient` User FK, `kind` (`event_change`, `group_offer`), optional `event_change` FK, optional `join_request` FK, `summary` text, `created_at`, optional `read_at`.
+`recipient` User FK, `kind` (`event_change`, `group_offer`, `group_request`, `group_rejected`, `member_removed`, `member_banned`, `owner_transfer`), optional `event_change` FK, optional `join_request` FK, optional `group` FK, `summary` text, `created_at`, optional `read_at`.
 
-Exactly one relevant source at creation, consistent with kind. Unique `(recipient,event_change)` and `(recipient,join_request)` prevent duplicate notifications for a source. Deleting a group removes its request-offer notifications along with requests, avoiding broken offers. Event history is retained. Recipients alone can read/mark their own notifications. Group approval notices do not imply reserved membership.
+Exactly one relevant source, enforced by a CHECK: event changes reference EventChange; request/offer/rejection notices reference JoinRequest; removal/ban/ownership notices reference AttendanceGroup. Unique `(recipient,event_change)` and `(recipient,join_request)` prevent duplicate notifications for those sources. Deleting a group removes its notifications directly or through its requests. Event history is retained. Recipients alone can read/mark their own notifications. New requests notify the owner; decisions notify the applicant. Group approval notices do not imply reserved membership. Individual messages do not generate notifications.
 
 Delivery is in-app on load/refresh. Phone push, browser banners/push, email, price/deal alerts, queues, and background workers are deferred. No generic foreign-key mechanism is needed for the two known types.
 
@@ -204,8 +204,17 @@ erDiagram
     User ||--o{ Notification : receives
     EventChange o|--o{ Notification : announces
     JoinRequest o|--o{ Notification : offers
+    AttendanceGroup o|--o{ Notification : announces
 ```
 
 ## Implementation handoff
 
-Next chunk: create Django skeleton and initial models/migrations matching this specification; select runtime dependencies, verify schema constraints, and update this document to match actual models. The final report's schema diagram must show actual table columns and relationships, not merely reuse a planning diagram. Testing strategy/ADR-4 remains deferred, with the assignment's coverage requirement unchanged.
+Implemented: custom `accounts.User` based on AbstractUser; all discovery/groups/notification entities and explicit linking models; initial migrations; conditional uniqueness and row CHECK constraints; field validation; indexes; read-only domain admin. Django retains standard first/last-name and permission fields; this adds no public profile interface.
+
+Coordinates use six-decimal-place DecimalFields and IDs use BigAutoFields. Genre names have SQL uniqueness via Lower (SQLite's built-in case handling, primarily ASCII); model validation trims names. Notification source/kind and message/tombstone consistency have database constraints. Photos use randomized paths, decoded-image validation, resizing, and re-encoding. A visibility-checked photo service is implemented; no upload/public-media view is exposed yet.
+
+September 28: discovery services now implement event/category/tag validation, public visibility, venue review, time/bounds/genre filtering, tempo calculation, authorized references, follow/report operations, and transactional EventChange/Notification generation. Discovery admin saves use these services. In-use tags cannot change parent category. Coordinate snapshot formatting is normalized to avoid false change alerts. Summaries never include private coordinates; raw history is admin-only. No schema migration was required for these services.
+
+September 28: group services implement creation/editing, membership transitions, requests/offers, atomic switching, seniority handover, bans, message permissions/tombstones, photo processing/cleanup, and group notifications. Notification migration 0002 extends sources and kinds. Admins may disband groups and remove message content through services; direct group editing remains disabled. Photo cleanup runs after successful commits; filesystem and database operations are not jointly atomic, so process crashes or a caller rolling back an outer transaction can leave orphaned files.
+
+Still pending: public request handlers, forms/pages, account workflows, inbox UI, and map UI. Raw ORM writes bypass service rules. Seventy-six schema/discovery/group tests pass against migrated SQLite, including competing joins and capacity checks. No coverage percentage is claimed. The final report diagram must show actual table columns and relationships. ADR-4 remains pending until broader testing priorities and coverage approach are decided. Proposed routes are in ROUTES.md.
