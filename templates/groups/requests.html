@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% block content %}
+<h1>Requests for {{ group.name }}</h1><p><a href="{% url 'group-detail' group.pk %}">Back to group</a></p>
+{% for request in requests %}<div class="card"><p>{{ request.applicant.public_name }} · {{ request.get_status_display }}</p>
+{% if request.status == 'pending' %}<div class="actions"><form method="post" action="{% url 'request-approve' request.pk %}">{% csrf_token %}<button>Approve offer</button></form><form method="post" action="{% url 'request-reject' request.pk %}">{% csrf_token %}<button>Decline</button></form></div>{% endif %}</div>{% empty %}<p>No requests.</p>{% endfor %}
+{% include 'pagination.html' with page=requests %}
+<h2>Active bans</h2>{% for ban in bans %}<div class="card"><p>{{ ban.user.public_name }} · {{ ban.reason }}</p><form method="post" action="{% url 'ban-lift' ban.pk %}">{% csrf_token %}<button>Lift ban</button></form></div>{% empty %}<p>No active bans.</p>{% endfor %}
+{% endblock %}

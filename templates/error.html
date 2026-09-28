@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block content %}<h1>Unable to complete this action</h1>{% for error in errors %}<p role="alert">{{ error }}</p>{% endfor %}
+<p><a href="{% url 'activity' %}">My activity</a> · <a href="{% url 'home' %}">Discover events</a></p>{% endblock %}

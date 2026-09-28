@@ -98,7 +98,7 @@ See [SCHEMA.md](SCHEMA.md) for the complete field-level specification and relati
 - Groups are optional under “Attending alone?”. One membership per event; private approval offers require acceptance and a fresh capacity check without reserving space.
 - Owner departure transfers ownership by seniority, or deletes the empty group. Removal and bans are separate. Authors edit/delete their own messages.
 - Shared accounts/notification modules supplement the two feature domains without introducing services.
-- The earlier September 27 documentation/ADR-3 batch was committed separately. The subsequent Django skeleton implements models/migrations and row constraints. September 28 discovery and group services, admin moderation, and map JSON are implemented; public request handlers and frontend remain pending (see README, SCHEMA, and the proposed ROUTES.md).
+- The earlier September 27 documentation/ADR-3 batch was committed separately. The subsequent Django skeleton implements models/migrations and row constraints. September 28 discovery/group services, admin moderation, map JSON, and the approved public request handlers/forms/templates are implemented (see README, SCHEMA, and ROUTES.md).
 
 ## September 28 discovery implementation details for review
 
@@ -106,7 +106,7 @@ See [SCHEMA.md](SCHEMA.md) for the complete field-level specification and relati
 - Creator edits preserve admin hiding. Public queries exclude pending/rejected locations; creators/admins can inspect their unpublished records. Existing rejected-venue events can be corrected or cancelled, but new assignments to rejected venues are rejected.
 - Used subgenre tags cannot be moved between categories without explicitly reclassifying their references; creating a new tag avoids silently corrupting event selections.
 - Map windows use aware datetimes and overlap rules; default next 14 days. API supports viewport/date/ANY-ALL category/tag filters. More than 1,000 results requires a narrower query rather than partial counts.
-- Notifications are persisted in the edit transaction. Summaries contain changed field names and pending-location warnings, not private coordinates/text; before/after snapshots remain restricted to admin history. Inbox UI remains to build.
+- Notifications are persisted in the edit transaction. Summaries contain changed field names and pending-location warnings, not private coordinates/text; before/after snapshots remain restricted to admin history. The recipient-only inbox UI is implemented.
 - Venue-local datetime input was approved and implemented in event admin forms. UTC remains the storage format; moving an event reinterprets entered times in the destination venue's timezone, with DST ambiguity/gap validation.
 - No real event fixtures or changes to user data were made. Fifty isolated tests pass; full measured core coverage and ADR-4 are still outstanding.
 
@@ -114,4 +114,12 @@ See [SCHEMA.md](SCHEMA.md) for the complete field-level specification and relati
 
 Event creators can change their own category/tag selections without deleting the event. The restriction concerns moving a shared tag into a new parent category, which could invalidate other events and curated references.
 
-Cancelled events disappear from the map and generate tracked-event notifications; records remain. Retention-based purging is a future possibility with no agreed duration or deletion policy; no purge job is implemented. Group services enforce closure of creation, joins, requests, and offer acceptance at event start. Existing memberships continue and members can use the message board during and after the event, including after cancellation. Seventy-six backend tests pass; measured coverage remains to establish.
+Cancelled events disappear from the map and generate tracked-event notifications; records remain. Retention-based purging is a future possibility with no agreed duration or deletion policy; no purge job is implemented. Group services enforce closure of creation, joins, requests, and offer acceptance at event start. Existing memberships continue and members can use the message board during and after the event, including after cancellation. 101 backend/HTTP tests pass; measured coverage remains to establish.
+
+## September 28: approved public routes and first interface
+
+Implemented Django pages/forms for accounts, venue proposals, event submission/editing/references/reports/tracking, optional group creation/settings/joining/request review/switching, messages, checked photos, notifications, and My Activity. All writes are POST with CSRF; services enforce domain permissions and transactions. Public group cards remain visible while boards are member-only. Successful writes redirect; invalid forms retain errors and lock failures ask for a retry.
+
+The first interface uses black/gray layouts with genre accents and a grayscale Leaflet/OpenStreetMap map. Browser location centers the map, falling back to Paris; panning or filtering refreshes JSON automatically. Gradient venue pins combine category colors and show counts for multiple matching events. Browser dates describe local-midnight intervals; detail/form dates use venue-local time. Listening examples are external links. CDN library and tiles require internet access and visible attribution; no new package manifest or server process was introduced.
+
+Local Waitress page/asset checks and 101 automated tests pass. JavaScript syntax and migration consistency were checked. Visual browser inspection was attempted but the computer-use runtime failed to start; review layout, map interactions, and accessibility in a normal browser next. Existing long-running app processes need restarting to load the new URLs.

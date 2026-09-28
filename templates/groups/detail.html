@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}{{ group.name }} · Music Event Discovery{% endblock %}
+{% block content %}
+<h1>{{ group.name }}</h1>
+{% if event_access %}<p><a href="{% url 'event-detail' group.event_id %}">{{ group.event.title }}</a></p>{% else %}<p class="notice">Event details are currently unavailable. Existing members can still coordinate here.</p>{% endif %}
+{% if group.event.cancelled_at %}<p class="notice">The event is cancelled.</p>{% endif %}
+{% if group.photo %}<img class="group-photo large" src="{% url 'group-photo' group.pk %}" alt="Group photo">{% else %}<div class="photo-placeholder" aria-hidden="true">{{ group.name|first }}</div>{% endif %}
+{{ group.description|linebreaks }}<p>{{ count }}/{{ group.capacity }} members · {{ group.get_joining_mode_display }} · Owned by {{ group.owner.public_name }}</p>
+{% if manager %}<p><a href="{% url 'group-edit' group.pk %}">Edit group</a> · <a href="{% url 'group-requests' group.pk %}">Requests and bans</a></p>{% endif %}
+{% if member %}<form method="post" action="{% url 'group-leave' group.pk %}">{% csrf_token %}<button>Leave group</button><p class="muted">Ownership transfers to the earliest remaining member. An empty group is deleted.</p></form>
+{% elif banned %}<p>You are banned from this group.</p>
+{% elif user.is_authenticated %}
+{% if joining_open %}
+{% if full %}<p>This group is full.</p>{% else %}
+{% if offer %}<form method="post" action="{% url 'request-accept' offer.pk %}">{% csrf_token %}<p>Your request was approved. Places are not reserved.</p>{{ join_form.as_p }}<button>Accept offer</button></form>
+{% elif group.joining_mode == 'public' %}<form method="post" action="{% url 'group-join' group.pk %}">{% csrf_token %}{{ join_form.as_p }}<button>Join group</button></form>
+{% elif pending %}<p>Your join request is pending.</p>
+{% else %}<form method="post" action="{% url 'group-request' group.pk %}">{% csrf_token %}<button>Request to join</button></form>{% endif %}
+{% endif %}
+{% else %}<p>New participation is closed.</p>{% endif %}
+{% if offer %}<form method="post" action="{% url 'request-cancel' offer.pk %}">{% csrf_token %}<button>Cancel offer</button></form>
+{% elif pending %}<form method="post" action="{% url 'request-cancel' pending.pk %}">{% csrf_token %}<button>Cancel request</button></form>{% endif %}
+{% else %}<p><a href="{% url 'login' %}?next={% url 'group-detail' group.pk %}">Log in to join</a></p>{% endif %}
+{% if member or manager %}<h2>Members</h2>{% for membership in members %}<div class="member-row"><span>{{ membership.user.public_name }}{% if membership.user_id == group.owner_id %} (owner){% endif %}</span>
+{% if manager and membership.user_id != group.owner_id %}<div class="actions">
+<form method="post" action="{% url 'member-remove' group.pk membership.user_id %}">{% csrf_token %}<button>Remove</button></form>
+<form method="post" action="{% url 'member-ban' group.pk membership.user_id %}">{% csrf_token %}<label>Ban reason (optional) <input name="reason" maxlength="2000"></label><button>Ban</button></form></div>{% endif %}</div>{% endfor %}{% endif %}
+<h2>Message board</h2>
+{% if member %}<p class="muted">Coordinate plans or arrange an external group chat. Refresh to see new messages.</p>
+{% for message in board %}<article class="card"><p><strong>{{ message.author.public_name }}</strong> · {{ message.created_at|date:'j M Y H:i' }} UTC{% if message.edited_at %} · edited{% endif %}</p>
+{% if message.deleted_at %}<p class="muted">Message removed.</p>{% else %}{{ message.body|linebreaks }}
+{% if message.author_id == user.pk %}<a href="{% url 'message-edit' message.pk %}">Edit</a><form method="post" class="inline" action="{% url 'message-delete' message.pk %}">{% csrf_token %}<button>Delete</button></form>{% endif %}{% endif %}</article>{% empty %}<p>No messages yet.</p>{% endfor %}
+{% include 'pagination.html' with page=board %}
+<form method="post" action="{% url 'message-new' group.pk %}">{% csrf_token %}{{ message_form.as_p }}<button>Post message</button></form>
+{% else %}<p>Only current members can read or post messages.</p>{% endif %}
+{% endblock %}

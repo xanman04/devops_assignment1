@@ -1,4 +1,4 @@
-"""Authorized discovery operations shared by admin and future public forms.
+"""Authorized discovery operations shared by admin and public forms.
 
 Writes are atomic. SQLite IMMEDIATE transactions serialize these short operations;
 no network work occurs while holding a transaction. Raw ORM writes are not an API.

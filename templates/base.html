@@ -1,0 +1,23 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Music Event Discovery{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'app.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+<header><a class="brand" href="{% url 'home' %}">Music Event Discovery</a>
+<nav aria-label="Main navigation">
+  <a href="{% url 'home' %}">Discover</a><a href="{% url 'genres' %}">Genres</a>
+  {% if user.is_authenticated %}
+  <a href="{% url 'event-new' %}">List an event</a><a href="{% url 'activity' %}">My activity</a>
+  <a href="{% url 'inbox' %}">Notifications</a><a href="{% url 'account-settings' %}">Account</a>
+  {% if user.is_staff %}<a href="/admin/">Admin</a>{% endif %}
+  <form method="post" action="{% url 'logout' %}" class="inline">{% csrf_token %}<button>Log out</button></form>
+  {% else %}<a href="{% url 'login' %}">Log in</a><a href="{% url 'register' %}">Create account</a>{% endif %}
+</nav></header>
+<main>{% block content %}{% endblock %}</main>
+{% block scripts %}{% endblock %}
+</body></html>

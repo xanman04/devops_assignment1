@@ -164,12 +164,12 @@ class SchemaTests(TestCase):
         change = EventChange(event=self.event, actor=self.owner, kind="event_edit", changes={"cancelled": {"before": False, "after": True}})
         change.full_clean()
 
-    def test_domain_admin_is_read_only_until_services_exist(self):
+    def test_group_admin_disables_direct_creation_and_home_renders(self):
         staff = get_user_model().objects.create_superuser("admin", password="local-test-password")
         self.client.force_login(staff)
         response = self.client.get("/admin/groups/attendancegroup/add/")
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(self.client.get("/").json()["status"], "backend services")
+        self.assertContains(self.client.get("/"), "Find your music")
 
     def test_admin_can_confirm_and_delete_unreferenced_account(self):
         staff = get_user_model().objects.create_superuser("admin", password="local-test-password")

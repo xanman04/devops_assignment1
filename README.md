@@ -4,7 +4,7 @@ A music-first event discovery application: find nearby events by genre and date,
 
 The idea comes from difficulty discovering smaller and niche events. It covers music broadly, including electronic music, rock, and jazz. Attendees and independent event organizers are the intended users.
 
-**Status:** discovery and group business services implemented September 28, 2026. Membership/requests, messages, photo processing, and in-app notification generation are implemented and tested. Public pages/forms and route integration remain pending. The proposal was approved by the professor, as reported by the author on September 24. Product name is provisional.
+**Status:** discovery/group services and the approved Django pages, forms, and routes are implemented September 28, 2026. The first interface includes map discovery, accounts, event submission/editing, optional groups, message boards, and in-app notifications. Visual refinement and interactive browser review remain. The professor approved the proposal, as reported by the author on September 24. Product name is provisional.
 
 ## Planned features
 
@@ -43,7 +43,7 @@ The idea comes from difficulty discovering smaller and niche events. It covers m
 | Database | SQLite through Django ORM and migrations | Required storage, with integrated relationships and schema evolution |
 | Pages | Django templates, HTML, plain CSS | Familiar tools, responsive layouts, no separate frontend build pipeline |
 | Browser behavior | Plain JavaScript and Django JSON endpoints | Refresh map results without page reloads; no REST framework needed yet |
-| Map | Leaflet and a muted dark basemap | Panning, zooming, and custom genre markers; tile provider/access terms still to confirm |
+| Map | Leaflet 1.9.4 with grayscale OpenStreetMap tiles | Panning, zooming, and custom genre markers; visible attribution and normal browser tile caching |
 | Files | Local group images; file paths in SQLite | Keep data inside the application's configurable data directory |
 
 Dependencies are pinned in the single root `requirements.txt`: Django 5.2.17 LTS, Pillow for image-field support, Waitress for a single-process Windows-compatible server, WhiteNoise for static assets, tzdata for Windows timezones, and Django's transitive dependencies. Verified with Python 3.13.1. Frontend assets must not introduce another package manifest.
@@ -70,7 +70,7 @@ Browser: templates + CSS + JavaScript + Leaflet
 Browser also requests basemap tiles from the selected provider.
 ```
 
-Current layout (frontend templates/assets remain future work):
+Current layout:
 
 ```text
 README.md
@@ -78,6 +78,8 @@ ADR.md
 AI_USAGE.md
 DESIGN.md
 SCHEMA.md
+ROUTES.md              # Implemented URL and request-handler contract
+AGENTS.md              # Automatic commit/push workflow during active sessions
 requirements.txt
 manage.py
 app.py                 # Automatic migration/static setup and single-process server
@@ -87,6 +89,9 @@ notifications/         # Shared in-app notifications
 discovery/             # Models, services, admin forms, map JSON view, tests, migrations
 groups/                # Models, membership/message services, photos, tests, admin, migrations
 test_schema.py         # Focused persistence/integrity checks
+test_web.py            # HTTP form/workflow, permission, privacy, and CSRF checks
+templates/             # Shared layout and discovery/group/account/inbox pages
+static/                # Plain CSS and Leaflet map integration JavaScript
 ```
 
 ## Running the application
@@ -99,7 +104,11 @@ python -m venv .venv
 .venv/Scripts/python.exe app.py
 ```
 
-On Linux/macOS use `.venv/bin/python` instead. Open http://localhost:8000/ for backend status. Startup applies committed migrations and collects static assets automatically, then starts Waitress on `0.0.0.0` in one process, without a reloader or frontend server. Restart the process after code changes; it does not auto-reload.
+On Linux/macOS use `.venv/bin/python` instead. Open http://localhost:8000/ for map discovery. Startup applies committed migrations and collects static assets automatically, then starts Waitress on `0.0.0.0` in one process, without a reloader or frontend server. Restart the process after code changes; it does not auto-reload.
+
+Create an account through the public navigation. Use admin to curate genres and approve proposed venues; then list events and use optional groups through the public pages. Map JavaScript requests browser location permission and falls back to Paris when unavailable/declined. Pan to explore another area. Map results refresh automatically; the server-rendered upcoming-events list is also usable without JavaScript. Browser date filters span local midnight through the selected end date exclusively; event detail/form times use the venue timezone. No location history is saved to accounts.
+
+The browser loads [Leaflet 1.9.4](https://leafletjs.com/download.html) from a pinned CDN URL with integrity checks and requests [OpenStreetMap tiles](https://operations.osmfoundation.org/policies/tiles/) with visible attribution and normal browser caching. These require internet access; no key, Node runtime, or frontend package manifest is needed. Location and map filters are not sent to a geocoding provider. Tile requests reveal the viewed map area to the provider. No offline tile download or prefetch is provided. Browser visual inspection remains outstanding because the automation runtime was unavailable; local HTTP/assets and workflow tests passed.
 
 | Environment variable | Default / purpose |
 |---|---|
@@ -109,7 +118,7 @@ On Linux/macOS use `.venv/bin/python` instead. Open http://localhost:8000/ for b
 | `DJANGO_ALLOWED_HOSTS` | `localhost,127.0.0.1,[::1]`; add the real hostname/IP for access from another device |
 | `DJANGO_DEBUG` | `0`; use `1` only for local debugging |
 
-No `.env` file or source edit is required. Runtime data and the virtual environment are ignored by Git. Uploaded media has no public route yet.
+No `.env` file or source edit is required. Runtime data and the virtual environment are ignored by Git. Group photos are served through a visibility-checked route; raw media directories are not public.
 
 Optional administration, not required for startup:
 
@@ -135,7 +144,7 @@ To try discovery: create a genre category, add a venue and set its review status
 | `report_event`, `review_report` | Reports require review; authorized admins can hide an event when marking a report actioned |
 | `save_event_reference`, `delete_event_reference` | Creator/admin-owned external listening links, separate from the curated directory |
 
-`notifications/services.py` supplies recipient-scoped `inbox` and `mark_read` operations. Relevant edits produce one EventChange with before/after snapshots and one notification per active follower, inside the edit transaction. Failed notification writes roll back the edit. No alerts are generated for unchanged saves or title-only changes. Notification summaries omit coordinates and private event text; raw snapshots remain admin-only history. User-facing inbox/follow/report forms are not built yet.
+`notifications/services.py` supplies recipient-scoped `inbox` and `mark_read` operations. Relevant edits produce one EventChange with before/after snapshots and one notification per active follower, inside the edit transaction. Failed notification writes roll back the edit. No alerts are generated for unchanged saves or title-only changes. Notification summaries omit coordinates and private event text; raw snapshots remain admin-only history. Public pages provide event tracking/report forms and a recipient-only inbox.
 
 Read-only map endpoint: `GET /api/map/events/`. Optional query parameters:
 
@@ -144,7 +153,7 @@ Read-only map endpoint: `GET /api/map/events/`. Optional query parameters:
 - `match`: `any` (default) or `all`, applied across the selected category/tag IDs.
 - `bounds`: `south,west,north,east`; west greater than east handles a viewport crossing the date line.
 
-Example: `/api/map/events/?bounds=48,2,49,3&match=any`. Results contain venue coordinates, distinct category colors, counts, and matching event cards ordered by start time. Only approved-venue, unhidden, uncancelled, categorized events overlapping the requested interval appear. The interval is start-inclusive/end-exclusive; ongoing events match. Cancelled events remain available through authorized detail services but not the map. Invalid queries return 400; queries over 1,000 events ask for narrower filters rather than returning misleading partial pin counts. Text fields are plain text and must be rendered as text by the future frontend.
+Example: `/api/map/events/?bounds=48,2,49,3&match=any`. Results contain venue coordinates, distinct category colors, counts, and matching event cards ordered by start time. Only approved-venue, unhidden, uncancelled, categorized events overlapping the requested interval appear. The interval is start-inclusive/end-exclusive; ongoing events match. Cancelled events remain available through authorized detail pages but not the map. Invalid queries return 400; queries over 1,000 events ask for narrower filters rather than returning misleading partial pin counts. Templates escape text, and JavaScript builds popup/card text using DOM text nodes.
 
 Admins with user-delete permission can delete unreferenced accounts through Django's confirmation page. Referenced accounts remain protected: Django lists blocking event/group/message records rather than cascading deletion. Deactivate those accounts when their history should remain.
 
@@ -155,12 +164,12 @@ No self-authored Dockerfile, Compose configuration, CI workflow, IaC, external d
 ```powershell
 .venv/Scripts/python.exe manage.py check
 .venv/Scripts/python.exe manage.py makemigrations --check --dry-run
-.venv/Scripts/python.exe manage.py test groups discovery test_schema
+.venv/Scripts/python.exe manage.py test groups discovery test_schema test_web
 ```
 
-**76 tests pass**: 18 schema checks, 32 discovery tests, and 26 group tests. These cover permissions, rollback, filters, timezone/DST, notifications, membership switching, offers/capacity, bans/ownership, messages, photo processing/cleanup, and separate-connection SQLite races. No coverage percentage has been measured; the **70% core-logic coverage** requirement and ADR-4 remain outstanding.
+**101 tests pass**: 18 schema checks, 32 discovery tests, 26 group tests, and 25 HTTP tests. These cover permissions, rollback, filters, timezone/DST, notifications, membership switching, offers/capacity, bans/ownership, messages, photo processing/cleanup, separate-connection SQLite races, CSRF, forged form fields, and private venue/message access. JavaScript syntax, migration consistency, and live public page/static asset responses were also checked. No coverage percentage has been measured; the **70% core-logic coverage** requirement and ADR-4 remain outstanding.
 
-Database constraints guard row-level invariants. Both domains' services validate and use transactions; raw ORM writes can bypass these rules and are not a supported interface. SQLite uses IMMEDIATE transactions and a timeout; competing lock failures roll back and must become retry messages in future handlers. Public forms/pages, signup, inbox/group-photo routes, and the map interface remain to implement.
+Database constraints guard row-level invariants. Both domains' services validate and use transactions; raw ORM writes can bypass these rules and are not a supported interface. SQLite uses IMMEDIATE transactions and a timeout; handlers translate competing lock failures into retry responses. Pages use GET for reads, POST plus CSRF for writes, and redirects after successful saves. Visual polish, a browser interaction review, measured coverage, and the remaining submission records/report are still outstanding.
 
 ### Group services
 
@@ -168,7 +177,7 @@ Database constraints guard row-level invariants. Both domains' services validate
 
 New groups, joins, requests, and offer acceptance close at event start and freeze on cancellation/hiding. Existing members may coordinate during/after the event or cancellation; former members lose message access. Offers reserve no capacity; public/private mode changes retain existing members and pending requests. Request approval/rejection, owner transfer, removal/ban, and new requests generate in-app notices; messages do not.
 
-Photos accept JPG/PNG/WebP up to 5 MiB and 20 megapixels, reject animation/invalid contents, resize to a maximum 1,600-pixel edge, and save a fresh JPEG without input metadata. Group descriptions allow 2,000 characters and messages 4,000. Old images delete after commit; newly written files are removed on a failed service write. Database and filesystem are not one transaction: callers must respect the service boundary, and production maintenance must handle crash-orphaned files. Photo-serving views are not yet present.
+Photos accept JPG/PNG/WebP up to 5 MiB and 20 megapixels, reject animation/invalid contents, resize to a maximum 1,600-pixel edge, and save a fresh JPEG without input metadata. Group descriptions allow 2,000 characters and messages 4,000. Old images delete after commit; newly written files are removed on a failed service write. Database and filesystem are not one transaction: callers respect the service boundary, and production maintenance must handle crash-orphaned files. Photo views check group visibility and disable shared caching.
 
 ## Scope boundaries
 
@@ -182,7 +191,7 @@ Venue approval means a location record was reviewed, not that an event or organi
 - [AI_USAGE.md](AI_USAGE.md): meaningful AI interactions and author explanations.
 - [DESIGN.md](DESIGN.md): detailed agreed behavior, proposed details, and unresolved questions.
 - [SCHEMA.md](SCHEMA.md): schema, relationships, constraints, target workflows, and current implementation boundary.
-- [ROUTES.md](ROUTES.md): proposed step-2 URLs, forms, and handler behavior; awaiting discussion.
+- [ROUTES.md](ROUTES.md): implemented step-2 URLs, forms, and handler behavior.
 
 Deadline: **October 4, 2026, 23:59**; confirm the submission timezone in the course portal. Final deliverables also include a 4–5 page report with SDLC reasoning, SMART goals, matching architecture/schema diagrams, and the course AI-disclosure statement, plus the written comprehension check.
 

@@ -1,4 +1,4 @@
-"""Read-only map endpoint; write operations use admin/services for now."""
+"""Read-only map JSON endpoint; public page handlers live in discovery.pages."""
 from datetime import datetime
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse

@@ -1,5 +1,11 @@
 # AI usage log
 
+## September 28 public pages, forms, and map integration
+
+| Date/commit | Tool | Prompt | Disposition (Accepted/Modified/Rejected) | What changed & why (if modified) | In my own words, how this works |
+|---|---|---|---|---|---|
+| 2026-09-28; approved step 2 implementation | OpenAI Codex; official Leaflet download and OpenStreetMap tile policy lookup; computer-use skill | “Ok I approve your plan for step 2.” | Accepted | Connected approved routes to Django forms/templates and existing services. Added username/password registration/login, private settings, event/venue/report/reference forms, group/request/ban/message/photo pages, recipient inbox and My Activity. Added a grayscale Leaflet map with genre filters, location fallback, gradient/count markers, and automatic refresh. 101 tests, JS syntax/migration checks, and live local HTTP/static checks pass. Browser visual inspection was attempted but its runtime failed; no visual verification is claimed. | TODO — explain GET versus POST/CSRF, actor/field allowlisting, templates versus map JSON, location privacy, venue-local input, group offer switching, and what remains to verify in a browser. |
+
 ## September 28 commit workflow
 
 | Date/commit | Tool | Prompt | Disposition (Accepted/Modified/Rejected) | What changed & why (if modified) | In my own words, how this works |

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}{% block content %}
+<h1>My activity</h1><p>{{ user.public_name }}</p>
+<h2>My listings</h2><p><a href="{% url 'event-new' %}">List an event</a> · <a href="{% url 'venue-new' %}">Propose a venue</a></p>
+{% for event in events %}<p><a href="{% url 'event-detail' event.pk %}">{{ event.title }}</a>{% if event.cancelled_at %} · cancelled{% endif %}{% if event.moderation_hidden %} · hidden{% endif %}{% if event.venue.review_status != 'approved' %} · location {{ event.venue.get_review_status_display|lower }}{% endif %}</p>{% empty %}<p>No listings yet.</p>{% endfor %}
+{% include 'pagination.html' with page=events parameter='events_page' %}
+<h2>Tracked events</h2>{% for event in follows %}<div class="member-row">{% if event.available %}<a href="{% url 'event-detail' event.id %}">{{ event.title }}</a>{% else %}<span>{{ event.title }}</span>{% endif %}
+<form method="post" action="{% url 'event-unfollow' event.id %}">{% csrf_token %}<button>Stop tracking</button></form></div>{% empty %}<p>No tracked events.</p>{% endfor %}
+{% include 'pagination.html' with page=follows parameter='follows_page' %}
+<h2>My groups</h2>{% for membership in memberships %}<p><a href="{% url 'group-detail' membership.group_id %}">{{ membership.group.name }}</a></p>{% empty %}<p>No group memberships.</p>{% endfor %}
+{% include 'pagination.html' with page=memberships parameter='memberships_page' %}
+<h2>Requests and offers</h2>{% for request in requests %}<div class="card"><p><a href="{% url 'group-detail' request.group_id %}">{{ request.group.name }}</a> · {{ request.get_status_display }}</p>
+{% if request.status == 'approved' %}<p>Approval does not reserve a place. Open the group to accept and confirm any membership switch.</p>{% endif %}
+{% if request.status == 'approved' or request.status == 'pending' %}<form method="post" action="{% url 'request-cancel' request.pk %}">{% csrf_token %}<button>Cancel request/offer</button></form>{% endif %}</div>{% empty %}<p>No requests.</p>{% endfor %}
+{% include 'pagination.html' with page=requests parameter='requests_page' %}
+<h2>My proposed venues</h2>{% for venue in venues %}<p>{{ venue.name }} · {{ venue.get_review_status_display }}</p>{% empty %}<p>No venue proposals.</p>{% endfor %}
+{% include 'pagination.html' with page=venues parameter='venues_page' %}
+{% endblock %}

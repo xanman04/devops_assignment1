@@ -1,0 +1,8 @@
+{% extends 'base.html' %}{% block content %}
+<h1>Notifications</h1><p><a href="{% url 'inbox' %}">All</a> · <a href="{% url 'inbox' %}?unread=1">Unread</a> · <a href="{% url 'activity' %}">My requests and tracked events</a></p>
+{% for notice in notices %}<article class="card"><p>{{ notice.summary }}</p><p class="muted">{{ notice.created_at|date:'j M Y H:i' }} UTC</p>
+{% if notice.join_request_id %}<p><a href="{% url 'group-detail' notice.join_request.group_id %}">View group</a></p>
+{% elif notice.group_id %}<p><a href="{% url 'group-detail' notice.group_id %}">View group</a></p>
+{% elif notice.event_change_id %}<p><a href="{% url 'event-detail' notice.event_change.event_id %}">View event</a></p>{% endif %}
+{% if not notice.read_at %}<form method="post" action="{% url 'notification-read' notice.pk %}">{% csrf_token %}<button>Mark read</button></form>{% endif %}</article>{% empty %}<p>No notifications.</p>{% endfor %}
+{% include 'pagination.html' with page=notices %}{% endblock %}

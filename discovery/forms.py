@@ -1,9 +1,10 @@
-"""Validate admin relationships before service-backed saves."""
+"""Validate public/admin inputs before service-backed saves."""
 from django import forms
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.db.models import Q
 from . import models, services
 
 
@@ -54,14 +55,20 @@ class EventForm(ClassificationForm):
         model = models.Event
         fields = ["venue", "title", "description", "starts_at", "ends_at", "ticket_url", "categories", "tags", "cancelled", "moderation_hidden"]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, actor=None, **kwargs):
         super().__init__(*args, **kwargs)
+        if actor is not None:
+            self.fields.pop("moderation_hidden", None)
+            choices = Q(review_status="approved") | Q(review_status="pending", submitted_by=actor)
+            if self.instance.pk:
+                choices |= Q(pk=self.instance.venue_id)
+            self.fields["venue"].queryset = models.Venue.objects.filter(choices).order_by("name", "id")
         self.fields["cancelled"].initial = self.instance.cancelled_at is not None
         venue = self.instance.venue if self.instance.venue_id else None
         if self.is_bound:
             venue_id = self.data.get(self.add_prefix("venue"))
             try:
-                # Respect the venue choices available to this particular admin.
+                # Respect the venue choices available to this particular form.
                 venue = self.fields["venue"].queryset.filter(pk=int(venue_id)).first()
             except (TypeError, ValueError, OverflowError):
                 venue = None
@@ -118,3 +125,22 @@ class ReportForm(forms.ModelForm):
         if data.get("hide_event") and data.get("status") != "actioned":
             raise ValidationError("Only actioned reports can hide an event.")
         return data
+
+
+class VenueProposalForm(forms.ModelForm):
+    class Meta:
+        model = models.Venue
+        fields = ["name", "address", "latitude", "longitude", "timezone"]
+        help_texts = {"timezone": "IANA timezone, for example Europe/Paris. Events use this location's local time."}
+
+
+class EventReportForm(forms.ModelForm):
+    class Meta:
+        model = models.EventReport
+        fields = ["reason", "explanation"]
+
+
+class EventReferenceForm(forms.ModelForm):
+    class Meta:
+        model = models.EventListeningReference
+        fields = ["title", "artist_credit", "url", "kind", "display_order"]

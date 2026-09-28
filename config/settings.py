@@ -67,8 +67,14 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 STATIC_URL = "/static/"
 STATIC_ROOT = DATA_DIR / "static"
+STATICFILES_DIRS = [BASE_DIR / "static"]
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "activity"
+LOGOUT_REDIRECT_URL = "home"
+# Browser tile requests retain an origin Referer, as required by OSM's tile policy.
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 MEDIA_ROOT = DATA_DIR / "media"
-# No public media route: group-photo authorization will be added with views.
+# No raw public media route: processed group photos use a visibility-checked view.
 MEDIA_URL = "/media/"
 SESSION_COOKIE_HTTPONLY = True
 X_FRAME_OPTIONS = "DENY"

@@ -1,6 +1,6 @@
 # Step 2: Django pages, forms, and request handlers
 
-Proposed September 28, 2026, pending discussion. Only the status root, Django admin, and `/api/map/events/` exist. This plan does not claim the additional routes are implemented.
+Approved and implemented September 28, 2026. The root now serves the discovery page; all routes below are connected to Django forms/templates and the existing domain services. The interface is a functional first pass, with visual refinement still to review.
 
 Most interactions use Django templates and POST forms, redirecting after successful writes. GET reads; POST writes with CSRF protection. Map refresh uses JSON. No REST Framework or separate frontend server is needed. Views pass request.user to existing services rather than trusting submitted actor/creator/reviewer/recipient fields.
 
@@ -18,6 +18,8 @@ Most interactions use Django templates and POST forms, redirecting after success
 | `/events/<id>/cancel/` | POST | Retain event, remove from map, notify followers |
 | `/events/<id>/follow/`, `/events/<id>/unfollow/` | POST | Follow updates independently of attendance/groups |
 | `/events/<id>/report/` | GET, POST | Reason/explanation for admin review |
+| `/events/<id>/references/new/`, `/events/<id>/references/<reference_id>/edit/` | GET, POST | Creator-authorized external music references |
+| `/references/<id>/delete/` | POST | Creator-authorized listening reference removal |
 | `/venues/new/` | GET, POST | Propose venue name/address/pin/timezone; pending review |
 | `/events/<id>/groups/new/` | GET, POST | Create group, owner membership, optional processed photo |
 | `/groups/<id>/` | GET | Public card details; conversation only for current members |
@@ -52,6 +54,10 @@ Most interactions use Django templates and POST forms, redirecting after success
 - Translate domain ValidationError into form errors and permissions into 403/404 as appropriate. A competing SQLite lock failure produces a retry message without partial changes.
 - Photo services own the write boundary; avoid wrapping them in another request transaction. Cleanup of old files runs after commit. A process crash can still orphan a file and needs maintenance in a future production version.
 
-## Suggested order
+## Implementation and verification
 
-Account views and a basic shared layout; event forms/detail and venue proposal; group/request/message/photo pages and notifications; map integration against existing JSON; visual polish. Discuss route/navigation behavior before implementing the plan in a larger batch.
+Account registration/login/settings; event/venue/report/reference forms; group membership/request/moderation/message/photo routes; inbox and paginated My Activity are implemented. Services handle domain writes; views allowlist submitted fields, authenticate actors, and render validation/permission/not-found/retry responses. State-changing endpoints require POST and CSRF; successful writes redirect.
+
+The discovery page uses Leaflet 1.9.4 from its documented CDN with integrity hashes, browser geolocation with a Paris fallback, grayscale OpenStreetMap tiles, genre/subgenre ANY/ALL filters, a two-week window, automatic refresh after panning, and gradient/count venue markers. Listing text and popup contents use DOM text nodes. An ordinary server-rendered upcoming-events list remains available without JavaScript. Location is not persisted to accounts; external tiles/library require internet access. Attribution is visible and browser Referrer policy permits an origin header to the tile service. No tile prefetch or offline download is implemented.
+
+101 backend/HTTP tests pass, including CSRF, forged actor/permission fields, venue privacy, messages, confirmed switching, and processed uploads. Live Waitress checks returned 200 for public pages, map JSON, and local CSS/JavaScript assets. JavaScript syntax and migration consistency checks pass. Visual browser inspection remains outstanding because the computer-use runtime failed to start. Review visual styling and interactive behavior in a normal browser next.
