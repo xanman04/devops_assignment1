@@ -1,0 +1,120 @@
+"""Validate admin relationships before service-backed saves."""
+from django import forms
+from datetime import datetime
+from zoneinfo import ZoneInfo
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from . import models, services
+
+
+class ClassificationForm(forms.ModelForm):
+    categories = forms.ModelMultipleChoiceField(queryset=models.GenreCategory.objects.all())
+    tags = forms.ModelMultipleChoiceField(queryset=models.GenreTag.objects.select_related("category"), required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.fields["categories"].initial = self.instance.categories.all()
+            self.fields["tags"].initial = self.instance.tags.all()
+
+    def clean(self):
+        data = super().clean()
+        if "categories" in data and "tags" in data:
+            services.classification(data["categories"].values_list("pk", flat=True), data["tags"].values_list("pk", flat=True))
+        return data
+
+
+class VenueLocalDateTimeField(forms.SplitDateTimeField):
+    """Interpret wall-clock input in the venue zone, with Django's DST checks."""
+    venue_timezone = ZoneInfo("UTC")
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("widget", forms.SplitDateTimeWidget(
+            date_attrs={"type": "date"}, time_attrs={"type": "time", "step": "1"},
+            date_format="%Y-%m-%d", time_format="%H:%M:%S",
+        ))
+        super().__init__(*args, **kwargs)
+
+    def compress(self, data_list):
+        with timezone.override(self.venue_timezone):
+            return super().compress(data_list)
+
+    def prepare_value(self, value):
+        if isinstance(value, datetime) and timezone.is_aware(value):
+            return value.astimezone(self.venue_timezone).replace(tzinfo=None)
+        return super().prepare_value(value)
+
+
+class EventForm(ClassificationForm):
+    starts_at = VenueLocalDateTimeField(label="Start (venue local time)")
+    ends_at = VenueLocalDateTimeField(label="End (venue local time)")
+    cancelled = forms.BooleanField(required=False, help_text="Retain the event but remove it from upcoming results.")
+
+    class Meta:
+        model = models.Event
+        fields = ["venue", "title", "description", "starts_at", "ends_at", "ticket_url", "categories", "tags", "cancelled", "moderation_hidden"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["cancelled"].initial = self.instance.cancelled_at is not None
+        venue = self.instance.venue if self.instance.venue_id else None
+        if self.is_bound:
+            venue_id = self.data.get(self.add_prefix("venue"))
+            try:
+                # Respect the venue choices available to this particular admin.
+                venue = self.fields["venue"].queryset.filter(pk=int(venue_id)).first()
+            except (TypeError, ValueError, OverflowError):
+                venue = None
+        elif self.initial.get("venue"):
+            venue = self.fields["venue"].queryset.filter(pk=self.initial["venue"]).first()
+        zone = ZoneInfo(venue.timezone if venue else "UTC")
+        for name in ("starts_at", "ends_at"):
+            self.fields[name].venue_timezone = zone
+            self.fields[name].help_text = (
+                "Enter the local date and time at the selected venue. "
+                "Changing venue interprets these values in the new venue's timezone. "
+                "Ambiguous or nonexistent daylight-saving times require a different time."
+            )
+
+    def clean(self):
+        data = super().clean()
+        if data.get("starts_at") and data.get("ends_at"):
+            services.validate_event_times(data["starts_at"], data["ends_at"])
+        venue = data.get("venue")
+        if venue and venue.review_status == "rejected" and (not self.instance.pk or self.instance.venue_id != venue.pk):
+            raise ValidationError("Choose an approved venue or propose a new location.")
+        return data
+
+
+class GenreReferenceForm(ClassificationForm):
+    class Meta:
+        model = models.GenreListeningReference
+        fields = ["title", "artist_credit", "url", "kind", "display_order", "categories", "tags"]
+
+
+class TagForm(forms.ModelForm):
+    class Meta:
+        model = models.GenreTag
+        fields = "__all__"
+
+    def clean(self):
+        data = super().clean()
+        if self.instance.pk and data.get("category"):
+            services.validate_tag_move(models.GenreTag.objects.get(pk=self.instance.pk), data["category"].pk)
+        return data
+
+
+class ReportForm(forms.ModelForm):
+    hide_event = forms.BooleanField(required=False)
+
+    class Meta:
+        model = models.EventReport
+        fields = ["status", "resolution_note"]
+
+    def clean(self):
+        data = super().clean()
+        if data.get("status") == "pending":
+            raise ValidationError("Choose dismissed or actioned to resolve the report.")
+        if data.get("hide_event") and data.get("status") != "actioned":
+            raise ValidationError("Only actioned reports can hide an event.")
+        return data
