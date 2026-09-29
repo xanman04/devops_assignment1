@@ -138,6 +138,8 @@ Further UI review adds trackpad Ctrl+wheel pinch, mouse-wheel zoom, and two-poin
 
 ### Subsequent sidebar and browsing review
 
+The author's follow-up changes the Discover order to Events, Genres, DJs, Artists. Filter positioning is left for the author to tune in style.css; bottom padding raises the bottom-aligned filter block, while the sidebar navigation margin sets a minimum gap above it. The short-height media rule overrides these spacing values.
+
 The author approved current control/icon sizes but requested more surrounding space and a wider sidebar. The sidebar is now 310px wide. Filters align toward the bottom with a reserved gap after Profile and a smaller bottom margin; shorter desktop heights adjust spacing while preserving control sizes. Browser review at 1280 × 720 measured approximately 45px between Profile and When and 28px below Genres, with no default sidebar overflow. Dialog offsets share the sidebar-width variable.
 
 Top category tabs are replaced by simultaneously available carousel sections: Discover has Genres, Artists, DJs, and Events; My events has Tracked events and Your listings; Groups has My groups and Requests. Genre cards reuse placeholder category colors, artist/DJ cards use round artwork areas, and event/group cards use compact landscape artwork. Native horizontal scrolling, accessible previous/next buttons, reduced-motion handling, and clickable placeholder detail previews provide interaction. Browser review confirmed the carousel advances, previews open/close, and both event/group sections are present together. Cards/statuses are layout examples rather than live records; genre taxonomy remains undecided.

@@ -272,10 +272,10 @@
     }
     const sections={
       discover:[
-        {id:'genres',title:'Genres',note:'Find a sound to explore',kind:'genre',name:'Genre',meta:'Explore the sound',symbol:'discover'},
-        {id:'artists',title:'Artists',note:'Follow the music that catches your ear',kind:'artist',name:'Artist',meta:'Artist preview',symbol:'profile'},
-        {id:'djs',title:'DJs',note:'Get to know the people behind the decks',kind:'artist',name:'DJ',meta:'Sets & listening references',symbol:'profile'},
         {id:'discover-events',title:'Events',note:'Explore beyond your current map view',kind:'event',name:'Event',meta:'Venue · Local date and time',symbol:'events'},
+        {id:'genres',title:'Genres',note:'Find a sound to explore',kind:'genre',name:'Genre',meta:'Explore the sound',symbol:'discover'},
+        {id:'djs',title:'DJs',note:'Get to know the people behind the decks',kind:'artist',name:'DJ',meta:'Sets & listening references',symbol:'profile'},
+        {id:'artists',title:'Artists',note:'Follow the music that catches your ear',kind:'artist',name:'Artist',meta:'Artist preview',symbol:'profile'},
       ],
       events:[
         {id:'tracked',title:'Tracked events',note:state.tracked?'Your tracked preview appears first':'Nights you want to keep an eye on',kind:'event',name:'Event',meta:'Venue · Local date and time',symbol:'events'},
