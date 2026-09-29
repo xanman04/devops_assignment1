@@ -8,7 +8,6 @@
   let saved;
   try { saved = JSON.parse(sessionStorage.getItem('music-ui-prototype') || '{}'); } catch { saved = {}; }
   const state = {...initial, ...saved};
-  const tabs = {discover:'Genres', events:'Tracked events', groups:'My groups'};
   const colors = ['#72aaff','#dcab61','#b697d7','#6db8a1','#d38f9e','#a3b56b'];
   const genres = colors.map((color,index) => ({id:String(index), name:`Genre ${String(index+1).padStart(2,'0')}`, color}));
   let draftGenres = [], draftMatch = 'any', dateChoice = state.date, toastTimer;
@@ -258,9 +257,9 @@
   $('#event-form').onsubmit=event=>{event.preventDefault();toast('Layout preview only. No event was created.');};
 
   const pageInfo={
-    discover:{title:'Discover',intro:'Explore the music. Find what moves you.',tabs:['Genres','Artists','DJs','Events'],icon:'discover'},
-    events:{title:'My events',intro:'The nights you’re keeping an eye on.',tabs:['Tracked events','Your listings'],icon:'events'},
-    groups:{title:'Groups',intro:'A little company for your next night out.',tabs:['My groups','Requests'],icon:'groups'},
+    discover:{title:'Discover',intro:'Explore the music. Find what moves you.'},
+    events:{title:'My events',intro:'The nights you’re keeping an eye on.'},
+    groups:{title:'Groups',intro:'A little company for your next night out.'},
     profile:{title:'Profile',intro:'Your corner of the map.',icon:'profile'}
   };
   function renderPage() {
@@ -271,32 +270,65 @@
       $('#content-page').innerHTML=heading+`<form class="profile-form"><span class="avatar">N</span><label>Username<input placeholder="Username" autocomplete="off"></label><label>Display name<input placeholder="How you’d like to appear" autocomplete="off"></label><label>Email (optional)<input type="email" placeholder="Only visible to you" autocomplete="off"></label><p class="muted">This is a layout preview; account changes aren’t saved.</p><button class="primary">Save changes</button></form>`;
       $('.profile-form').onsubmit=event=>{event.preventDefault();toast('Preview only. No account details were saved.');};return;
     }
-    const selected=tabs[page];
-    const bar=`<div class="tabs" role="tablist" aria-label="${info.title}">${info.tabs.map(tab=>`<button role="tab" data-tab="${tab}" aria-selected="${tab===selected}">${tab}</button>`).join('')}</div>`;
-    const descriptions={Genres:'Your curated genre directory will live here.',Artists:'Artist discovery will live here.',DJs:'DJ discovery will live here.',Events:'Explore events beyond your current map view.', 'Tracked events':'Events you track will appear here.','Your listings':'The events you create will appear here.','My groups':'Groups you join will appear here.',Requests:'Follow the status of your join requests here.'};
-    let body=`<div class="empty-state" role="tabpanel"><span class="empty-icon">${icon(info.icon)}</span><h2>${selected}</h2><p class="muted">${descriptions[selected]}</p><a class="primary" style="padding:12px 18px;border-radius:8px" href="#near">Explore nearby <span>↗</span></a></div>`;
-    if(page==='events'&&selected==='Tracked events'&&state.tracked)body=`<div style="margin-top:30px"><button class="venue-event" data-event-preview>Event title<small>Venue name · Local date and time</small><span>↗</span></button></div>`;
-    $('#content-page').innerHTML=heading+bar+body;
+    const sections={
+      discover:[
+        {id:'genres',title:'Genres',note:'Find a sound to explore',kind:'genre',name:'Genre',meta:'Explore the sound',symbol:'discover'},
+        {id:'artists',title:'Artists',note:'Follow the music that catches your ear',kind:'artist',name:'Artist',meta:'Artist preview',symbol:'profile'},
+        {id:'djs',title:'DJs',note:'Get to know the people behind the decks',kind:'artist',name:'DJ',meta:'Sets & listening references',symbol:'profile'},
+        {id:'discover-events',title:'Events',note:'Explore beyond your current map view',kind:'event',name:'Event',meta:'Venue · Local date and time',symbol:'events'},
+      ],
+      events:[
+        {id:'tracked',title:'Tracked events',note:state.tracked?'Your tracked preview appears first':'Nights you want to keep an eye on',kind:'event',name:'Event',meta:'Venue · Local date and time',symbol:'events'},
+        {id:'listings',title:'Your listings',note:'The events you share with the community',kind:'event',name:'Listing',meta:'Venue · Local date and time',symbol:'events'},
+      ],
+      groups:[
+        {id:'my-groups',title:'My groups',note:'People you’re planning to go with',kind:'group',name:'Group',meta:'Event · Group description',symbol:'groups'},
+        {id:'requests',title:'Requests',note:'Keep up with your join requests',kind:'group',name:'Group request',meta:'Event · Request preview',symbol:'groups'},
+      ],
+    };
+    const rows=sections[page].map(section=>{
+      const cards=Array.from({length:6},(_,index)=>{
+        const title=section.id==='tracked'&&index===0&&state.tracked?'Event title A':`${section.name} ${String(index+1).padStart(2,'0')}`;
+        const status=section.id==='requests'?['Pending','Approved','Pending'][index%3]:section.id==='tracked'&&index===0&&state.tracked?'Tracking':'';
+        return `<button class="browse-card ${section.kind}-card" data-card="${section.id}" data-card-title="${title}" style="--accent:${colors[index]}">
+          <span class="card-art">${icon(section.symbol)}<span class="card-index">${String(index+1).padStart(2,'0')}</span>${status?`<span class="card-status">${status}</span>`:''}</span>
+          <strong>${title}</strong><small>${section.meta}</small></button>`;
+      }).join('');
+      return `<section class="carousel-section" aria-labelledby="heading-${section.id}">
+        <header class="carousel-heading"><div><h2 id="heading-${section.id}">${section.title}</h2><p>${section.note}</p></div>
+          <div class="carousel-controls"><button data-scroll="${section.id}" data-direction="-1" aria-label="Previous ${section.title.toLowerCase()}" disabled>‹</button><button data-scroll="${section.id}" data-direction="1" aria-label="Next ${section.title.toLowerCase()}">›</button></div></header>
+        <div class="carousel-track" id="row-${section.id}" tabindex="0" aria-label="${section.title} preview cards">${cards}</div></section>`;
+    }).join('');
+    $('#content-page').innerHTML=heading+rows;
+    $$('.carousel-track').forEach(track=>{
+      const update=()=>{
+        $(`[data-scroll="${track.id.slice(4)}"][data-direction="-1"]`).disabled=track.scrollLeft<=1;
+        $(`[data-scroll="${track.id.slice(4)}"][data-direction="1"]`).disabled=track.scrollLeft+track.clientWidth>=track.scrollWidth-1;
+      };
+      track.addEventListener('scroll',update); update();
+    });
   }
   $('#content-page').onclick=event=>{
-    const tab=event.target.closest('[data-tab]');
-    if(tab){tabs[state.page]=tab.dataset.tab;renderPage();$(`[data-tab="${tabs[state.page]}"]`).focus();}
+    const arrow=event.target.closest('[data-scroll]');
+    if(arrow){const track=$(`#row-${arrow.dataset.scroll}`);track.scrollBy({left:Number(arrow.dataset.direction)*track.clientWidth*.8,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
+    const card=event.target.closest('[data-card]');
+    if(card){
+      $('#card-title').textContent=card.dataset.cardTitle;
+      $('#card-kind').textContent=card.closest('section').querySelector('h2').textContent;
+      $('#card-description').textContent='This card previews the layout. Details, listening references, and actions for this item will appear here when connected.';
+      open('#card-dialog');
+    }
     if(event.target.closest('[data-create]'))open('#create-dialog');
-    if(event.target.closest('[data-event-preview]'))open('#detail-dialog');
   };
-  // Arrow keys move between tabs as well as pointer clicks.
-  $('#content-page').addEventListener('keydown',event=>{
-    if(!event.target.matches('[role="tab"]')||!['ArrowLeft','ArrowRight'].includes(event.key))return;
-    event.preventDefault();const options=pageInfo[state.page].tabs,index=options.indexOf(tabs[state.page]);
-    tabs[state.page]=options[(index+(event.key==='ArrowRight'?1:-1)+options.length)%options.length];renderPage();$(`[data-tab="${tabs[state.page]}"]`).focus();
-  });
+  $('#card-near').onclick=()=>$('#card-dialog').close();
   function route() {
     if ($('#detail-dialog').open) $('#detail-dialog').close();
+    if ($('#card-dialog').open) $('#card-dialog').close();
     const page=location.hash.slice(1)||'near';state.page=page==='near'||Object.hasOwn(pageInfo,page)?page:'near';save();
     const near=state.page==='near';$('#near-page').hidden=!near;$('#map-options').hidden=!near;$('#content-page').hidden=near;
     $$('nav a').forEach(a=>{if(a.dataset.page===state.page)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
     document.title=`${near?'Near me':pageInfo[state.page].title} · Name`;
-    if(!near)renderPage();
+    if(!near){renderPage();$('#content-page').scrollTop=0;}
   }
   window.addEventListener('hashchange',route);route();
 })();

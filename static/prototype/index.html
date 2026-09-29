@@ -113,6 +113,12 @@
   <header><h2>List an event</h2><button class="icon-button" data-close aria-label="Close event form"><svg><use href="#close"/></svg></button></header>
   <form id="event-form"><label>Event title<input placeholder="Give your event a name"></label><label>Venue<input placeholder="Choose a venue"></label><div class="date-range"><label>Date<input type="date"></label><label>Time<input type="time"></label></div><label>Description<textarea rows="3" placeholder="Tell people about the music"></textarea></label><p class="muted">Layout preview. Nothing entered here is saved.</p><button class="primary">Preview submission</button></form>
 </dialog>
+<dialog id="card-dialog" class="card-dialog" aria-labelledby="card-title">
+  <header><div><p class="eyebrow" id="card-kind">DISCOVER</p><h2 id="card-title">Preview</h2></div><button class="icon-button" data-close aria-label="Close card preview"><svg><use href="#close"/></svg></button></header>
+  <p class="muted" id="card-description"></p>
+  <div class="skeleton-lines" aria-label="Content placeholder"><i></i><i></i><i></i></div>
+  <footer><a class="primary" href="#near" id="card-near" style="padding:12px 18px;border-radius:8px">Explore nearby ↗</a></footer>
+</dialog>
 <div id="toast" class="toast" role="status" hidden></div>
 </body>
 </html>
