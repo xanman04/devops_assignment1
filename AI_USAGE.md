@@ -1,5 +1,11 @@
 # AI usage log
 
+## September 29 fictional demo data
+
+| Date/commit | Tool | Prompt | Disposition (Accepted/Modified/Rejected) | What changed & why (if modified) | In my own words, how this works |
+|---|---|---|---|---|---|
+| 2026-09-29; demo fixture implementation | OpenAI Codex | “I want to work on adding genres later ... but we can add venues and fake users and stuff like that.” | Accepted | Added an explicit repeatable seed_demo command. Created five ordinary fictional users and five synthetic venues locally; no genres, tags, events, or groups were created in the current genre-free database. Optional existing-category selection later enables event/group/offer/message/notification scenarios. Added seven checks for repeatability, collision/rollback protection, genre preservation, and retained user activity. Generated SQLite data is not committed. | TODO — explain fixture states versus real venue review, why no genres are generated, which scenarios use services, and how reruns preserve existing records. |
+
 ## September 28 public pages, forms, and map integration
 
 | Date/commit | Tool | Prompt | Disposition (Accepted/Modified/Rejected) | What changed & why (if modified) | In my own words, how this works |

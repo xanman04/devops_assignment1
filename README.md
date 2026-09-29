@@ -159,6 +159,27 @@ Admins with user-delete permission can delete unreferenced accounts through Djan
 
 No self-authored Dockerfile, Compose configuration, CI workflow, IaC, external database/cache/queue, or public deployment belongs in this assignment.
 
+## Optional demo data
+
+```powershell
+.venv/Scripts/python.exe manage.py seed_demo
+```
+
+Adds five fictional users (`demo_organizer`, `demo_alex`, `demo_sam`, `demo_jo`, `demo_morgan`) and five clearly labeled fictional Paris-area venues: three approved fixture states, one pending, and one rejected. These are synthetic locations, not real venue recommendations or verification. New demo accounts have password `Demo-music-2026!` and no staff/admin permissions. The command is explicit and never runs automatically at startup.
+
+Genres and subgenre tags are never created or changed. Without a category selection, no events/groups are created, so venues alone do not produce map pins. After curating a genre in admin, select its existing ID:
+
+```powershell
+.venv/Scripts/python.exe manage.py seed_demo --category 1
+# Repeat --category for mixed-category examples, using actual existing IDs.
+# Explicitly refresh this fixture's event dates later if needed:
+.venv/Scripts/python.exe manage.py seed_demo --category 1 --refresh-dates
+```
+
+Optional scenarios include six listings (four public/upcoming, one awaiting venue approval, one cancelled), overlapping events, two groups, a pending request, an approved switch offer, messages, follows, and notifications. Event/group transitions use domain services. Synthetic venue review states and account fixtures use direct validated model creation; they do not claim a real review occurred. Genre references/BPM/colors remain unchanged.
+
+Unchanged reruns create no duplicates, reset no passwords, and preserve demo profiles, venue edits, memberships, and requests. Reserved usernames require their original `@example.invalid` demo email marker; conflicting accounts abort without changes. Renaming/removing fixtures or editing those markers can require manual reconciliation. No reset/deletion command is included. `--refresh-dates` updates matching fixture event times with normal follower notices; classification/cancellation remain unchanged. All seed writes roll back together on failure. SQLite demo data stays ignored by Git.
+
 ## Testing status
 
 ```powershell
@@ -167,7 +188,7 @@ No self-authored Dockerfile, Compose configuration, CI workflow, IaC, external d
 .venv/Scripts/python.exe manage.py test groups discovery test_schema test_web
 ```
 
-**101 tests pass**: 18 schema checks, 32 discovery tests, 26 group tests, and 25 HTTP tests. These cover permissions, rollback, filters, timezone/DST, notifications, membership switching, offers/capacity, bans/ownership, messages, photo processing/cleanup, separate-connection SQLite races, CSRF, forged form fields, and private venue/message access. JavaScript syntax, migration consistency, and live public page/static asset responses were also checked. No coverage percentage has been measured; the **70% core-logic coverage** requirement and ADR-4 remain outstanding.
+**108 tests pass**: 18 schema checks, 32 discovery tests, 26 group tests, 25 HTTP tests, and 7 demo-data checks. These cover permissions, rollback, filters, timezone/DST, notifications, membership switching, offers/capacity, bans/ownership, messages, photo processing/cleanup, separate-connection SQLite races, CSRF, forged form fields, and private venue/message access. JavaScript syntax, migration consistency, and live public page/static asset responses were also checked. No coverage percentage has been measured; the **70% core-logic coverage** requirement and ADR-4 remain outstanding.
 
 Database constraints guard row-level invariants. Both domains' services validate and use transactions; raw ORM writes can bypass these rules and are not a supported interface. SQLite uses IMMEDIATE transactions and a timeout; handlers translate competing lock failures into retry responses. Pages use GET for reads, POST plus CSRF for writes, and redirects after successful saves. Visual polish, a browser interaction review, measured coverage, and the remaining submission records/report are still outstanding.
 
