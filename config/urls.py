@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import path
+from django.views.generic import RedirectView
 from accounts import views as accounts
 from discovery import pages as discovery
 from discovery.views import map_events
@@ -10,6 +11,7 @@ from .pages import activity
 
 
 urlpatterns = [
+    path("ui/", RedirectView.as_view(url="/static/prototype/index.html", permanent=False), name="ui-prototype"),
     path("", discovery.home, name="home"),
     path("admin/", admin.site.urls),
     path("api/map/events/", map_events, name="map-events"),

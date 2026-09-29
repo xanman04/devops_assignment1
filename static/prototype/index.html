@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Name · Desktop prototype</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="prototype.js" defer></script>
+</head>
+<body>
+<svg class="icon-definitions" aria-hidden="true"><defs>
+  <symbol id="near" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m16 8-2.5 5.5L8 16l2.5-5.5Z"/></symbol>
+  <symbol id="discover" viewBox="0 0 24 24"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5Z"/></symbol>
+  <symbol id="events" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v5m8-5v5M4 11h16m-11 5h6"/></symbol>
+  <symbol id="groups" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M17 5a3 3 0 0 1 0 6m1 3a5 5 0 0 1 3 4v3"/></symbol>
+  <symbol id="profile" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 22v-2a8 8 0 0 1 16 0v2"/></symbol>
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+  <symbol id="filter" viewBox="0 0 24 24"><path d="M3 7h18M3 17h18"/><circle cx="8" cy="7" r="2"/><circle cx="16" cy="17" r="2"/></symbol>
+  <symbol id="close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+  <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+  <symbol id="location" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></symbol>
+</defs></svg>
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" href="#near">Name<span class="brand-dot"></span></a>
+    <button class="search-trigger" id="search-open"><svg><use href="#search"/></svg><span>Search</span><kbd>/</kbd></button>
+    <nav aria-label="Main navigation">
+      <a href="#near" data-page="near"><svg><use href="#near"/></svg>Near me</a>
+      <a href="#discover" data-page="discover"><svg><use href="#discover"/></svg>Discover</a>
+      <a href="#events" data-page="events"><svg><use href="#events"/></svg>My events</a>
+      <a href="#groups" data-page="groups"><svg><use href="#groups"/></svg>Groups</a>
+      <a href="#profile" data-page="profile"><svg><use href="#profile"/></svg>Profile</a>
+    </nav>
+    <div class="sidebar-bottom" id="map-options">
+      <p class="eyebrow">WHEN</p>
+      <button class="sidebar-control" id="date-open"><svg><use href="#events"/></svg><span id="date-summary">Next two weeks</span><span class="chevron">⌄</span></button>
+      <div class="filter-heading"><p class="eyebrow">GENRES</p><button class="text-button" id="clear-selection" hidden>Clear</button></div>
+      <button class="sidebar-control" id="filters-open"><svg><use href="#filter"/></svg><span>All genres</span><span class="chevron">+</span></button>
+      <div class="selected-chips" id="selected-chips"></div>
+    </div>
+    <div class="sidebar-footer"><span class="avatar">N</span><span>Your profile<small>Find your kind of night.</small></span><a href="#profile" aria-label="Open profile">↗</a></div>
+  </aside>
+
+  <main>
+    <section id="near-page" class="map-page" aria-label="Near me">
+      <div id="map-surface" class="map-surface" aria-label="Illustrative map. Drag to move or use zoom controls.">
+        <div id="map-world" class="map-world">
+          <svg id="city-map" viewBox="0 0 1600 1100" role="img" aria-label="Illustrative city street layout"></svg>
+          <button class="pin blue" style="left:38%;top:42%" aria-label="Preview an event" data-pin="one"><span></span></button>
+          <button class="pin mixed" style="left:62%;top:36%" aria-label="Preview multiple events at a venue" data-pin="multiple"><span>2</span></button>
+          <button class="pin amber" style="left:57%;top:67%" aria-label="Preview another event" data-pin="two"><span></span></button>
+        </div>
+      </div>
+      <div class="map-heading"><span class="live-dot"></span><span>Explore your surroundings</span></div>
+      <div class="map-controls" aria-label="Map controls">
+        <button id="recenter" title="Return to starting position" aria-label="Recenter map"><svg><use href="#location"/></svg></button>
+        <div class="zoom-controls"><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">−</button></div>
+      </div>
+      <article id="event-panel" class="event-panel" hidden aria-label="Event preview">
+        <button class="icon-button panel-close" id="panel-close" aria-label="Close event preview"><svg><use href="#close"/></svg></button>
+        <p class="eyebrow" id="panel-kicker">EVENT</p>
+        <div id="single-preview">
+          <h1>Event title</h1><p class="venue-line">Venue name</p>
+          <p class="event-time"><svg><use href="#events"/></svg>Local date · time</p>
+          <div class="tags"><span class="chip" style="--accent:#72aaff">Genre</span><span class="subtag">Subgenre</span></div>
+          <button class="show-more" id="event-more">Show more…<svg><use href="#arrow"/></svg></button>
+        </div>
+        <div id="multiple-preview" hidden><h1>Venue name</h1><p class="muted">Events at this venue</p>
+          <button class="venue-event">Event title <small>Local date · time</small><span>↗</span></button>
+          <button class="venue-event">Event title <small>Local date · time</small><span>↗</span></button>
+        </div>
+      </article>
+      <div class="map-caption">Illustrative map <span>·</span> Drag to explore</div>
+      <div class="map-scale"><span></span>500 m</div>
+    </section>
+    <section id="content-page" class="content-page" hidden tabindex="-1"></section>
+  </main>
+</div>
+
+<dialog id="filter-dialog" class="filter-dialog" aria-label="Genre filters">
+  <header><div><p class="eyebrow">NEAR ME</p><h2>Find your sound</h2></div><button class="icon-button" data-close aria-label="Close genre filters"><svg><use href="#close"/></svg></button></header>
+  <label class="search-field"><svg><use href="#search"/></svg><input id="genre-search" placeholder="Search genres" aria-label="Search genres"></label>
+  <div class="match-control"><span>Match selected genres</span><div class="segmented" id="match-mode"><button data-match="any" aria-pressed="true">Any</button><button data-match="all" aria-pressed="false">All</button></div></div>
+  <p class="muted filter-note">Placeholder labels — your genre list comes later.</p>
+  <div id="genre-options" class="genre-options"></div>
+  <footer><button id="filter-clear" class="text-button">Clear all</button><button id="filter-apply" class="primary">Apply filters <span>↗</span></button></footer>
+</dialog>
+
+<dialog id="date-dialog" class="compact-dialog" aria-label="Date filters">
+  <header><h2>Choose your dates</h2><button class="icon-button" data-close aria-label="Close date controls"><svg><use href="#close"/></svg></button></header>
+  <div class="date-presets"><button data-date="Tonight">Tonight</button><button data-date="This weekend">This weekend</button><button data-date="Next two weeks" aria-pressed="true">Next two weeks</button><button data-date="Any time">Any time</button></div>
+  <p class="eyebrow">OR CHOOSE A RANGE</p><div class="date-range"><label>From<input type="date" id="date-from"></label><label>To<input type="date" id="date-to"></label></div>
+  <p id="date-error" class="error" role="alert" hidden>Choose both dates, with the end on or after the start.</p>
+  <footer><button class="primary" id="date-apply">Apply dates</button></footer>
+</dialog>
+
+<dialog id="search-dialog" class="search-dialog" aria-label="Search">
+  <header><label class="search-field"><svg><use href="#search"/></svg><input id="global-search" placeholder="Search events, venues, artists…" aria-label="Search events, venues and artists"></label><button class="icon-button" data-close aria-label="Close search"><svg><use href="#close"/></svg></button></header>
+  <p id="search-hint" class="muted">Search across events, venues and artists.</p><div class="search-placeholders" aria-hidden="true"><i></i><i></i><i></i></div>
+</dialog>
+
+<dialog id="detail-dialog" class="detail-dialog" aria-label="Event details">
+  <header><p class="eyebrow">EVENT DETAILS</p><button class="icon-button" data-close aria-label="Close event details"><svg><use href="#close"/></svg></button></header>
+  <h2>Event title</h2><p class="muted">Venue name · Local date and time</p><div class="tags"><span class="chip" style="--accent:#72aaff">Genre</span><span class="subtag">Subgenre</span></div>
+  <div class="detail-actions"><button class="primary" id="track-preview" aria-pressed="false">Track event</button><button id="ticket-preview">Tickets ↗</button></div>
+  <section><h3>About this event</h3><div class="skeleton-lines" aria-label="Description placeholder"><i></i><i></i><i></i></div></section>
+  <section><h3>What does this music sound like?</h3><p class="muted">Listening references and estimated tempo will go here.</p><div class="listening-placeholder"><span>♫</span><div class="skeleton-lines"><i></i><i></i></div></div></section>
+  <section><h3>Attending alone?</h3><p class="muted">Find people to go with. Joining a group is optional.</p><button id="groups-preview">Explore groups <span>↗</span></button></section>
+</dialog>
+
+<dialog id="create-dialog" class="detail-dialog" aria-label="Create event preview">
+  <header><h2>List an event</h2><button class="icon-button" data-close aria-label="Close event form"><svg><use href="#close"/></svg></button></header>
+  <form id="event-form"><label>Event title<input placeholder="Give your event a name"></label><label>Venue<input placeholder="Choose a venue"></label><div class="date-range"><label>Date<input type="date"></label><label>Time<input type="time"></label></div><label>Description<textarea rows="3" placeholder="Tell people about the music"></textarea></label><p class="muted">Layout preview. Nothing entered here is saved.</p><button class="primary">Preview submission</button></form>
+</dialog>
+<div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>

@@ -8,6 +8,14 @@ The idea comes from difficulty discovering smaller and niche events. It covers m
 
 ## Planned features
 
+### Desktop UI prototype
+
+Open `static/prototype/index.html` directly in a desktop browser, or restart `app.py` and visit **http://localhost:8000/ui/**. This is a standalone HTML/CSS/JavaScript design prototype with no database/API connection, external assets, or location permission requests. The existing functional app remains at `/`.
+
+Click the sidebar to visit Near me, Discover, My events, Groups, and Profile. Near me has an illustrative draggable/zoomable map, placeholder pins, date controls, and a searchable/collapsible genre filter panel. Selected genre chips invert to colored fills; generic genre labels are not taxonomy decisions. Map position/date/genre state survives navigation and, where permitted, refresh within the same browser tab using sessionStorage. Pin previews contain only title, venue, local date/time, and genre tags; Show more opens a detail layout. Groups contains only My groups and Requests. Search, profile edits, and event creation demonstrate layouts without saving real data; tracking a placeholder changes only prototype state. Mobile layout work remains deferred.
+
+Checks: JavaScript syntax and Django configuration validated. Browser visual verification was unavailable: Chrome was not connected, and the in-app browser disallowed the local file URL.
+
 ### Event discovery
 
 - Location-centered map with a default-city fallback when browser location is unavailable or declined; free panning and zooming with automatic result refresh.
