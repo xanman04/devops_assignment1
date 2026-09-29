@@ -2,6 +2,8 @@
 
 ## Desktop visual prototype
 
+September 29 map gesture/sidebar iteration (author review pending): the author requested pinch zoom and roomier filters, and asked for opinions on icon-only navigation with colored hover labels. Codex implemented wheel/trackpad and two-pointer pinch handling, gesture anchoring, drag continuity, and click suppression; enlarged filters and removed the expanding gap above them. Visible navigation labels and neutral highlights remain pending further discussion. JavaScript syntax, simulated gesture checks, and local HTTP layout/wheel-zoom review passed; physical trackpad/touch testing remains for the author. Author own-word explanation: TODO — explain gesture anchoring and why navigation colors should be considered separately from genre information.
+
 September 29 refinement (author review pending): requested larger teardrop pins, direct switching between pins, a more prominent preview, larger sidebar items, and removal of the duplicate profile card. Codex updated the standalone prototype and documentation. JavaScript syntax and local HTTP browser checks confirmed switching from A to B and from expanded details to the multi-event preview. No backend connection was added. Author own-word explanation: TODO — explain marker anchoring, selection state, and nonmodal details.
 
 | Date/commit | Tool | Prompt | Disposition (Accepted/Modified/Rejected) | What changed & why (if modified) | In my own words, how this works |

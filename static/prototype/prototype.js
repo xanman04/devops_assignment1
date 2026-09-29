@@ -74,19 +74,75 @@
     $('#map-world').style.transform = `translate(${state.x}px,${state.y}px) scale(${state.zoom})`;
   }
   transformMap();
-  let drag = null;
-  $('#map-surface').addEventListener('pointerdown', event => {
-    if (event.target.closest('button') || event.button !== 0) return;
-    drag={x:event.clientX,y:event.clientY,baseX:state.x,baseY:state.y};
-    event.currentTarget.setPointerCapture(event.pointerId); event.currentTarget.classList.add('dragging');
+  const surface = $('#map-surface'), pointers = new Map();
+  let gesture = null, suppressClickUntil = 0;
+  const clampZoom = value => Math.max(.75, Math.min(2.2, value));
+  function mapPoint(x, y) {
+    const rect=surface.getBoundingClientRect();
+    return {x:x-rect.left-rect.width/2, y:y-rect.top-rect.height/2};
+  }
+  function pointerPair() {
+    const [a,b]=[...pointers.values()];
+    return {center:mapPoint((a.x+b.x)/2,(a.y+b.y)/2), distance:Math.hypot(a.x-b.x,a.y-b.y)};
+  }
+  function startGesture() {
+    if (pointers.size>=2) {
+      const pair=pointerPair();
+      gesture={type:'pinch', distance:Math.max(1,pair.distance), zoom:state.zoom,
+        anchor:{x:(pair.center.x-state.x)/state.zoom,y:(pair.center.y-state.y)/state.zoom}};
+      suppressClickUntil=performance.now()+350;
+    } else if (pointers.size===1) {
+      const point=[...pointers.values()][0];
+      gesture={type:'drag',x:point.x,y:point.y,baseX:state.x,baseY:state.y};
+    } else gesture=null;
+    surface.classList.toggle('dragging',pointers.size>0);
+  }
+  function zoomAt(point, zoom) {
+    const anchor={x:(point.x-state.x)/state.zoom,y:(point.y-state.y)/state.zoom};
+    state.zoom=clampZoom(zoom);
+    state.x=point.x-anchor.x*state.zoom; state.y=point.y-anchor.y*state.zoom;
+    transformMap();
+  }
+  surface.addEventListener('pointerdown', event => {
+    const button=event.target.closest('button');
+    if (event.button!==0 || (button && event.pointerType!=='touch')) return;
+    pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
+    (button || surface).setPointerCapture(event.pointerId);
+    startGesture();
   });
-  $('#map-surface').addEventListener('pointermove', event => {
-    if (!drag) return;
-    state.x=drag.baseX+event.clientX-drag.x; state.y=drag.baseY+event.clientY-drag.y; transformMap();
+  surface.addEventListener('pointermove', event => {
+    if (!pointers.has(event.pointerId)) return;
+    pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
+    if (gesture.type==='pinch') {
+      const pair=pointerPair();
+      state.zoom=clampZoom(gesture.zoom*pair.distance/gesture.distance);
+      state.x=pair.center.x-gesture.anchor.x*state.zoom;
+      state.y=pair.center.y-gesture.anchor.y*state.zoom;
+      suppressClickUntil=performance.now()+350;
+    } else {
+      const dx=event.clientX-gesture.x,dy=event.clientY-gesture.y;
+      state.x=gesture.baseX+dx; state.y=gesture.baseY+dy;
+      if (Math.hypot(dx,dy)>5) suppressClickUntil=performance.now()+350;
+    }
+    transformMap();
   });
-  const stopDrag = () => { drag=null; $('#map-surface').classList.remove('dragging'); save(); };
-  $('#map-surface').addEventListener('pointerup',stopDrag);
-  $('#map-surface').addEventListener('pointercancel',stopDrag);
+  const stopGesture = event => {
+    if (!pointers.delete(event.pointerId)) return;
+    if (gesture.type==='pinch') suppressClickUntil=performance.now()+350;
+    startGesture(); save();
+  };
+  ['pointerup','pointercancel','lostpointercapture'].forEach(name=>surface.addEventListener(name,stopGesture));
+  surface.addEventListener('click',event=>{
+    if (performance.now()<suppressClickUntil) {event.preventDefault();event.stopPropagation();}
+  },true);
+  // Desktop trackpad pinches arrive as Ctrl+wheel. Wheel zoom also works for a mouse.
+  surface.addEventListener('wheel',event=>{
+    event.preventDefault();
+    const unit=event.deltaMode===1?16:event.deltaMode===2?surface.clientHeight:1;
+    zoomAt(mapPoint(event.clientX,event.clientY),state.zoom*Math.exp(-event.deltaY*unit*(event.ctrlKey ? .01 : .002)));
+    if (pointers.size) startGesture();
+    save();
+  },{passive:false});
   $('#zoom-in').onclick = () => {state.zoom+=.15;transformMap();save();};
   $('#zoom-out').onclick = () => {state.zoom-=.15;transformMap();save();};
   $('#recenter').onclick = () => {state.x=0;state.y=0;state.zoom=1;transformMap();save();};

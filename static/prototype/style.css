@@ -11,23 +11,24 @@ svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width:
 [hidden] { display: none !important; }
 .icon-definitions { position: absolute; width: 0; height: 0; overflow: hidden; }
 .app-shell { height: 100vh; min-height: 610px; display: grid; grid-template-columns: 270px 1fr; overflow: hidden; }
-.sidebar { background: #191a1c; border-right: 1px solid #303135; display: flex; flex-direction: column; z-index: 3; }
+.sidebar { background: #191a1c; border-right: 1px solid #303135; display: flex; flex-direction: column; overflow-y: auto; z-index: 3; }
 .brand { padding: 30px 25px 27px; font-size: 25px; font-weight: 650; letter-spacing: -.8px; display: flex; align-items: center; gap: 8px; }
 .brand-dot { width: 5px; height: 5px; background: #9ea1a9; border-radius: 50%; margin-top: 13px; }
 .search-trigger { margin: 0 20px 25px; padding: 12px; display: flex; gap: 10px; align-items: center; color: var(--muted); background: #202123; }
 .search-trigger svg { width: 17px; height: 17px; }
 kbd { margin-left: auto; font: 12px inherit; padding: 2px 6px; border: 1px solid #36373c; border-radius: 4px; color: #757781; }
-nav { padding: 0 14px; display: grid; gap: 12px; }
+nav { padding: 0 14px; display: grid; gap: 12px; flex-shrink: 0; }
 nav a { display: flex; align-items: center; gap: 19px; padding: 23px 19px; border-radius: 12px; color: #a4a7b0; font-size: 16px; }
 nav a svg { width: 26px; height: 26px; }
 nav a:hover { background: #222326; color: #eee; }
 nav a[aria-current="page"] { background: #2b2c30; color: #f3f3f5; font-weight: 600; }
-.sidebar-bottom { margin-top: auto; padding: 22px 23px; border-top: 1px solid var(--border); }
+.sidebar-bottom { margin-top: 32px; padding: 28px 23px 32px; border-top: 1px solid var(--border); }
+.sidebar-bottom .eyebrow { font-size: 12px; margin-bottom: 16px; color: #a6a9b2; }
 .eyebrow { color: #858893; font-size: 10px; font-weight: 650; letter-spacing: 1.7px; margin: 0 0 13px; }
-.sidebar-control { display: flex; width: 100%; align-items: center; gap: 10px; background: transparent; padding: 11px 10px; color: #c6c8cf; }
-.sidebar-control svg { width: 17px; height: 17px; color: #9195a0; }
+.sidebar-control { display: flex; width: 100%; min-height: 64px; align-items: center; gap: 13px; background: #222428; padding: 18px 14px; color: #dedfe5; font-size: 16px; text-align: left; }
+.sidebar-control svg { width: 23px; height: 23px; color: #a9aeb9; }
 .sidebar-control .chevron { margin-left: auto; color: #9396a0; }
-.filter-heading { display: flex; justify-content: space-between; align-items: baseline; margin-top: 24px; }
+.filter-heading { display: flex; justify-content: space-between; align-items: baseline; margin-top: 30px; }
 .text-button { border: 0; padding: 0; background: none; color: #a5a8b1; font-size: 12px; }
 .text-button:hover { background: none; color: white; }
 .selected-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
@@ -94,7 +95,7 @@ input, textarea { background: #25272d; border: 1px solid #42454f; border-radius:
 .toast { position: fixed; bottom: 26px; left: calc(50% + 100px); transform: translateX(-50%); z-index: 10; background: #393d47; border: 1px solid #5a6272; border-radius: 8px; padding: 14px 20px; font-size: 12px; box-shadow: 0 8px 30px #0004; }
 @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
-@media (max-height: 760px) { .brand { padding-top: 22px; padding-bottom: 20px; }nav { gap: 8px; }nav a { padding-top: 18px; padding-bottom: 18px; }.sidebar-bottom { padding-top: 17px; padding-bottom: 17px; } }
+@media (max-height: 850px) { .brand { padding-top: 22px; padding-bottom: 20px; }.search-trigger { margin-bottom: 18px; }nav { gap: 7px; }nav a { padding-top: 13px; padding-bottom: 13px; }.sidebar-bottom { margin-top: 24px; padding-top: 20px; padding-bottom: 16px; } }
 
 /* Expanded event details also allow switching pins without dismissing a modal. */
 #detail-dialog { position: fixed; inset: auto auto 60px 306px; margin: 0; z-index: 5; max-height: calc(100vh - 120px); width: min(520px, calc(100vw - 370px)); }
