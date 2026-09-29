@@ -9,6 +9,8 @@
 </head>
 <body>
 <svg class="icon-definitions" aria-hidden="true"><defs>
+  <linearGradient id="pin-blend" x1="0%" y1="0%" x2="100%" y2="100%"><stop stop-color="#72aaff"/><stop offset="50%" stop-color="#b697d7"/><stop offset="100%" stop-color="#dcab61"/></linearGradient>
+  <symbol id="pin-shape" viewBox="0 0 48 62"><path d="M24 60C19 51 3 36 3 24a21 21 0 0 1 42 0c0 12-16 27-21 36Z"/></symbol>
   <symbol id="near" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m16 8-2.5 5.5L8 16l2.5-5.5Z"/></symbol>
   <symbol id="discover" viewBox="0 0 24 24"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5Z"/></symbol>
   <symbol id="events" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v5m8-5v5M4 11h16m-11 5h6"/></symbol>
@@ -38,7 +40,6 @@
       <button class="sidebar-control" id="filters-open"><svg><use href="#filter"/></svg><span>All genres</span><span class="chevron">+</span></button>
       <div class="selected-chips" id="selected-chips"></div>
     </div>
-    <div class="sidebar-footer"><span class="avatar">N</span><span>Your profile<small>Find your kind of night.</small></span><a href="#profile" aria-label="Open profile">↗</a></div>
   </aside>
 
   <main>
@@ -46,9 +47,9 @@
       <div id="map-surface" class="map-surface" aria-label="Illustrative map. Drag to move or use zoom controls.">
         <div id="map-world" class="map-world">
           <svg id="city-map" viewBox="0 0 1600 1100" role="img" aria-label="Illustrative city street layout"></svg>
-          <button class="pin blue" style="left:38%;top:42%" aria-label="Preview an event" data-pin="one"><span></span></button>
-          <button class="pin mixed" style="left:62%;top:36%" aria-label="Preview multiple events at a venue" data-pin="multiple"><span>2</span></button>
-          <button class="pin amber" style="left:57%;top:67%" aria-label="Preview another event" data-pin="two"><span></span></button>
+          <button class="pin blue" style="left:38%;top:42%" aria-label="Preview event A" aria-pressed="false" data-pin="one"><svg aria-hidden="true"><use href="#pin-shape"/></svg><span></span></button>
+          <button class="pin mixed" style="left:62%;top:36%" aria-label="Preview multiple events at a venue" aria-pressed="false" data-pin="multiple"><svg aria-hidden="true"><use href="#pin-shape"/></svg><span>2</span></button>
+          <button class="pin amber" style="left:57%;top:67%" aria-label="Preview event B" aria-pressed="false" data-pin="two"><svg aria-hidden="true"><use href="#pin-shape"/></svg><span></span></button>
         </div>
       </div>
       <div class="map-heading"><span class="live-dot"></span><span>Explore your surroundings</span></div>
@@ -59,7 +60,7 @@
       <article id="event-panel" class="event-panel" hidden aria-label="Event preview">
         <button class="icon-button panel-close" id="panel-close" aria-label="Close event preview"><svg><use href="#close"/></svg></button>
         <p class="eyebrow" id="panel-kicker">EVENT</p>
-        <div id="single-preview">
+        <div id="single-preview" aria-live="polite">
           <h1>Event title</h1><p class="venue-line">Venue name</p>
           <p class="event-time"><svg><use href="#events"/></svg>Local date · time</p>
           <div class="tags"><span class="chip" style="--accent:#72aaff">Genre</span><span class="subtag">Subgenre</span></div>

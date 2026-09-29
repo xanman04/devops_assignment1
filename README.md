@@ -14,7 +14,9 @@ Open `static/prototype/index.html` directly in a desktop browser, or restart `ap
 
 Click the sidebar to visit Near me, Discover, My events, Groups, and Profile. Near me has an illustrative draggable/zoomable map, placeholder pins, date controls, and a searchable/collapsible genre filter panel. Selected genre chips invert to colored fills; generic genre labels are not taxonomy decisions. Map position/date/genre state survives navigation and, where permitted, refresh within the same browser tab using sessionStorage. Pin previews contain only title, venue, local date/time, and genre tags; Show more opens a detail layout. Groups contains only My groups and Requests. Search, profile edits, and event creation demonstrate layouts without saving real data; tracking a placeholder changes only prototype state. Mobile layout work remains deferred.
 
-Checks: JavaScript syntax and Django configuration validated. Browser visual verification was unavailable: Chrome was not connected, and the in-app browser disallowed the local file URL.
+Pins now use larger teardrops anchored at their tips. Selecting another pin replaces the floating preview, including when expanded details are open. The sidebar uses larger labeled navigation items and a single Profile destination.
+
+Checks: JavaScript syntax and Django configuration validated. The revised desktop prototype was visually inspected through local HTTP; direct pin switching and switching from expanded details to a multi-event pin were verified. Restart `app.py` after static-file edits: the running WhiteNoise server caches file metadata, so refreshing alone can serve incomplete updated assets.
 
 ### Event discovery
 

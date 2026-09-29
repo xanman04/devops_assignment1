@@ -17,8 +17,9 @@ svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width:
 .search-trigger { margin: 0 20px 25px; padding: 12px; display: flex; gap: 10px; align-items: center; color: var(--muted); background: #202123; }
 .search-trigger svg { width: 17px; height: 17px; }
 kbd { margin-left: auto; font: 12px inherit; padding: 2px 6px; border: 1px solid #36373c; border-radius: 4px; color: #757781; }
-nav { padding: 0 14px; display: grid; gap: 7px; }
-nav a { display: flex; align-items: center; gap: 16px; padding: 17px 15px; border-radius: 10px; color: #999ca7; font-size: 15px; }
+nav { padding: 0 14px; display: grid; gap: 12px; }
+nav a { display: flex; align-items: center; gap: 19px; padding: 23px 19px; border-radius: 12px; color: #a4a7b0; font-size: 16px; }
+nav a svg { width: 26px; height: 26px; }
 nav a:hover { background: #222326; color: #eee; }
 nav a[aria-current="page"] { background: #2b2c30; color: #f3f3f5; font-weight: 600; }
 .sidebar-bottom { margin-top: auto; padding: 22px 23px; border-top: 1px solid var(--border); }
@@ -31,11 +32,7 @@ nav a[aria-current="page"] { background: #2b2c30; color: #f3f3f5; font-weight: 6
 .text-button:hover { background: none; color: white; }
 .selected-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
 .selected-chips:empty { display: none; }
-.sidebar-footer { border-top: 1px solid var(--border); margin-top: auto; padding: 19px 24px; display: flex; gap: 11px; align-items: center; font-size: 12px; }
-.sidebar-bottom:not([hidden]) + .sidebar-footer { margin-top: 0; }
 .avatar { display: grid; place-items: center; width: 33px; height: 33px; border: 1px solid #46474d; border-radius: 50%; background: #28292d; color: #babcc5; }
-.sidebar-footer small { display: block; color: #70737d; font-size: 10px; margin-top: 4px; }
-.sidebar-footer a { margin-left: auto; color: #90939e; }
 main { position: relative; min-width: 0; overflow: hidden; }
 .map-page { height: 100%; position: relative; background: #25272a; overflow: hidden; }
 .map-surface { position: absolute; inset: 0; overflow: hidden; cursor: grab; touch-action: none; }
@@ -53,14 +50,21 @@ main { position: relative; min-width: 0; overflow: hidden; }
 .map-caption, .map-scale { position: absolute; bottom: 22px; color: #93969e; font-size: 10px; z-index: 1; pointer-events: none; }
 .map-caption { left: 30px; }.map-caption span { padding: 0 6px; }
 .map-scale { right: 25px; text-align: right; }.map-scale span { display: block; width: 65px; height: 5px; border: 1px solid #8f929b; border-top: 0; margin-bottom: 5px; }
-.pin { position: absolute; display: grid; place-items: center; width: 31px; height: 31px; padding: 0; border: 2px solid #b8d1ef; border-radius: 50%; background: #72aaff; box-shadow: 0 0 0 7px #72aaff12, 0 4px 14px #0009; transform: translate(-50%, -50%); transition: box-shadow .15s; }
-.pin:hover, .pin.selected { background: #72aaff; box-shadow: 0 0 0 10px #72aaff25, 0 4px 18px #000a; }
-.pin span { width: 7px; height: 7px; border-radius: 50%; background: #252932; pointer-events: none; }
-.pin.amber { background: #dcab61; border-color: #e6c28e; box-shadow: 0 0 0 7px #dcab6112, 0 4px 14px #0009; }
-.pin.mixed { background: linear-gradient(130deg, #72aaff, #b697d7 50%, #dcab61); border-color: #c7b8d4; width: 36px; height: 36px; }
-.pin.mixed span { width: auto; height: auto; background: none; font-size: 12px; font-weight: 700; color: #282931; }
-.event-panel { position: absolute; left: 30px; bottom: 58px; width: 340px; background: #1d1e22f5; border: 1px solid #46484e; box-shadow: 0 20px 60px #0005; border-radius: 14px; padding: 25px; z-index: 2; animation: enter .18s ease-out; }
-.event-panel h1 { font-size: 23px; font-weight: 600; letter-spacing: -.6px; margin: 18px 0 7px; }.event-panel .eyebrow { font-size: 9px; }
+/* The button's bottom center is the location; only the teardrop extends upward. */
+.pin { --pin-fill: #72aaff; --pin-border: #c0d8fb; position: absolute; width: 48px; height: 62px; padding: 0; border: 0; border-radius: 0; background: transparent; transform: translate(-50%, -100%); transform-origin: 50% 100%; transition: filter .15s, transform .15s; filter: drop-shadow(0 5px 7px #0008); }
+.pin svg { width: 48px; height: 62px; fill: var(--pin-fill); stroke: var(--pin-border); stroke-width: 1.5; pointer-events: none; }
+.pin:hover, .pin.selected { background: transparent; transform: translate(-50%, -100%) scale(1.12); filter: drop-shadow(0 0 7px #ffffff35) drop-shadow(0 6px 10px #0009); z-index: 1; }
+.pin span { position: absolute; top: 24px; left: 24px; transform: translate(-50%, -50%); width: 9px; height: 9px; border-radius: 50%; background: #252932; pointer-events: none; }
+.pin.amber { --pin-fill: #dcab61; --pin-border: #f1d4a9; }
+.pin.mixed { --pin-fill: url(#pin-blend); --pin-border: #ddd0e8; }
+.pin.mixed span { width: auto; height: auto; background: none; font-size: 16px; font-weight: 750; color: #282931; }
+.event-panel { --event-accent: #72aaff; position: absolute; left: 36px; bottom: 78px; width: min(430px, calc(100% - 100px)); background: #222429fa; border: 1px solid #62656d; border-top: 4px solid var(--event-accent); box-shadow: 0 24px 80px #0009, 0 0 0 1px #ffffff06; border-radius: 16px; padding: 30px 32px; z-index: 2; animation: enter .18s ease-out; }
+.event-panel h1 { font-size: 29px; font-weight: 600; letter-spacing: -.8px; margin: 18px 0 10px; }
+.event-panel .eyebrow { font-size: 10px; color: #adb2bd; }
+.event-panel .venue-line { font-size: 16px; }
+.event-panel .event-time { font-size: 14px; margin: 23px 0; }
+.event-panel .chip, .event-panel .subtag { font-size: 12px; padding: 8px 12px; }
+.event-panel .show-more { font-size: 14px; margin-top: 27px; padding-top: 21px; }
 .venue-line { color: #b7bac3; margin: 0; }.event-time { display: flex; align-items: center; gap: 8px; color: #9397a2; font-size: 12px; margin: 19px 0; }.event-time svg { width: 15px; height: 15px; }
 .icon-button { display: grid; place-items: center; width: 32px; height: 32px; padding: 6px; border: 0; background: transparent; color: #969aa5; }.icon-button svg { width: 17px; height: 17px; }
 .panel-close { position: absolute; top: 13px; right: 13px; }
@@ -90,4 +94,7 @@ input, textarea { background: #25272d; border: 1px solid #42454f; border-radius:
 .toast { position: fixed; bottom: 26px; left: calc(50% + 100px); transform: translateX(-50%); z-index: 10; background: #393d47; border: 1px solid #5a6272; border-radius: 8px; padding: 14px 20px; font-size: 12px; box-shadow: 0 8px 30px #0004; }
 @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
-@media (max-height: 760px) { .brand { padding-top: 22px; padding-bottom: 20px; }nav a { padding-top: 13px; padding-bottom: 13px; }.sidebar-bottom { padding-top: 17px; padding-bottom: 17px; } }
+@media (max-height: 760px) { .brand { padding-top: 22px; padding-bottom: 20px; }nav { gap: 8px; }nav a { padding-top: 18px; padding-bottom: 18px; }.sidebar-bottom { padding-top: 17px; padding-bottom: 17px; } }
+
+/* Expanded event details also allow switching pins without dismissing a modal. */
+#detail-dialog { position: fixed; inset: auto auto 60px 306px; margin: 0; z-index: 5; max-height: calc(100vh - 120px); width: min(520px, calc(100vw - 370px)); }

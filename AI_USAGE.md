@@ -2,6 +2,8 @@
 
 ## Desktop visual prototype
 
+September 29 refinement (author review pending): requested larger teardrop pins, direct switching between pins, a more prominent preview, larger sidebar items, and removal of the duplicate profile card. Codex updated the standalone prototype and documentation. JavaScript syntax and local HTTP browser checks confirmed switching from A to B and from expanded details to the multi-event preview. No backend connection was added. Author own-word explanation: TODO — explain marker anchoring, selection state, and nonmodal details.
+
 | Date/commit | Tool | Prompt | Disposition (Accepted/Modified/Rejected) | What changed & why (if modified) | In my own words, how this works |
 |---|---|---|---|---|---|
 | 2026-09-29; desktop UI prototype | OpenAI Codex | “mock up an interactable skeleton ... Just visuals and clickable buttons/visitable pages. No need for data.” | Accepted | Created standalone HTML/CSS/JS using the author's dark sidebar/map reference and agreed navigation, floating event preview, dates, expandable genre filters, and Groups sections. Placeholder content and session-only interaction state; no backend data connection. Added /ui/ entry route and documentation. Syntax/config checks passed; browser visual inspection was blocked by unavailable Chrome/local-file URL policy. | TODO — explain prototype versus app state, navigation/map restoration, placeholder genre controls, and which visual choices need review. |

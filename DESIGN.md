@@ -132,4 +132,8 @@ A selected pin opens a floating panel showing only title, venue, local date/time
 
 ## September 29: demo fixtures without genre decisions
 
+### Desktop preview refinement
+
+The September 29 UI review increases markers to 48 × 62 pixel teardrops with tips anchored to map locations, preserving gradients and event counts. A larger floating preview has stronger typography, contrast, and a genre-colored accent. Selecting another marker replaces the preview immediately; expanded details are nonmodal and close when switching markers. Placeholder A/B/C labels make switching visible without connecting real data. Larger labeled sidebar items replace the previous compact spacing; Profile appears only in navigation. Local HTTP browser inspection verified the layout and direct switching, including from expanded details. Restart the static-serving app after asset edits because WhiteNoise caches file metadata at startup.
+
 Genre taxonomy remains for the author to curate after discussion with other music listeners. The explicit seed_demo command creates five regular demo users and five synthetic Paris-area venues labeled as fictional. Three approved, one pending, and one rejected venue illustrate fixture review states; no actual location verification is claimed. No genres/tags are created or edited. Without a selected existing category, events/groups are skipped. Later, --category ID enables event/group/request/message/follow scenarios through domain services. Unchanged reruns preserve profiles, passwords, venue edits, and membership/request activity. --refresh-dates explicitly moves fixture events forward with normal tracked-event notices. Runtime fixture data stays local and ignored by Git. The full suite now passes 108 tests.

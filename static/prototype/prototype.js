@@ -17,7 +17,13 @@
     $('#toast').textContent = text; $('#toast').hidden = false;
     clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('#toast').hidden = true; }, 3500);
   }
-  function open(id) { $(id).showModal(); }
+  function open(id) {
+    if (id === '#detail-dialog') {
+      if (!$(id).open) $(id).show();
+    } else {
+      $(id).showModal();
+    }
+  }
   $$('[data-close]').forEach(button => button.addEventListener('click', () => button.closest('dialog').close()));
   $$('dialog').forEach(dialog => dialog.addEventListener('click', event => {
     const box = dialog.getBoundingClientRect();
@@ -84,15 +90,40 @@
   $('#zoom-in').onclick = () => {state.zoom+=.15;transformMap();save();};
   $('#zoom-out').onclick = () => {state.zoom-=.15;transformMap();save();};
   $('#recenter').onclick = () => {state.x=0;state.y=0;state.zoom=1;transformMap();save();};
-  function preview(multiple=false) {
+  let selectedPin = 'one';
+  const previews = {
+    one: {title:'Event title A', venue:'Venue A', color:'#72aaff'},
+    two: {title:'Event title B', venue:'Venue B', color:'#dcab61'},
+    multiple: {title:'Event title C', venue:'Venue C', color:'#b697d7'},
+  };
+  function preview(multiple=false, title=null) {
+    const info=previews[selectedPin];
+    $('#detail-dialog').close();
+    $('#single-preview h1').textContent=title || info.title;
+    $('#single-preview .venue-line').textContent=info.venue;
+    $('#single-preview .chip').style.setProperty('--accent',info.color);
+    $('#multiple-preview h1').textContent=info.venue;
+    $('#event-panel').style.setProperty('--event-accent',info.color);
+    $('#detail-dialog h2').textContent=title || info.title;
+    $('#detail-dialog > .muted').textContent=info.venue+' · Local date and time';
+    $('#detail-dialog .chip').style.setProperty('--accent',info.color);
     $('#single-preview').hidden=multiple; $('#multiple-preview').hidden=!multiple;
     $('#panel-kicker').textContent=multiple ? '2 EVENTS · ONE VENUE' : 'EVENT'; $('#event-panel').hidden=false;
   }
   $$('.pin').forEach(pin=>pin.onclick=()=>{
-    $$('.pin').forEach(p=>p.classList.toggle('selected',p===pin)); preview(pin.dataset.pin==='multiple');
+    selectedPin=pin.dataset.pin;
+    $$('.pin').forEach(p=>{p.classList.toggle('selected',p===pin);p.setAttribute('aria-pressed',String(p===pin));});
+    preview(selectedPin==='multiple');
   });
-  $('#panel-close').onclick=()=>{$('#event-panel').hidden=true;$$('.pin').forEach(p=>p.classList.remove('selected'));};
-  $$('.venue-event').forEach(button=>button.onclick=()=>preview());
+  const closePreview=()=>{
+    $('#event-panel').hidden=true;
+    $$('.pin').forEach(p=>{p.classList.remove('selected');p.setAttribute('aria-pressed','false');});
+  };
+  $('#panel-close').onclick=closePreview;
+  $$('#multiple-preview .venue-event').forEach((button,index)=>{
+    button.firstChild.textContent=`Event title C${index+1} `;
+    button.onclick=()=>preview(false,`Event title C${index+1}`);
+  });
   $('#event-more').onclick=()=>open('#detail-dialog');
   $('#track-preview').onclick=()=>{
     state.tracked=!state.tracked; save();
@@ -163,7 +194,10 @@
   };
   document.addEventListener('keydown',event=>{
     if(event.key==='/'&&!event.target.closest('input,textarea')&&!document.querySelector('dialog[open]')){event.preventDefault();open('#search-dialog');}
-    if(event.key==='Escape'&&!document.querySelector('dialog[open]'))$('#event-panel').hidden=true;
+    if(event.key==='Escape') {
+      if ($('#detail-dialog').open) $('#detail-dialog').close();
+      else if (!document.querySelector('dialog[open]')) closePreview();
+    }
   });
   $('#event-form').onsubmit=event=>{event.preventDefault();toast('Layout preview only. No event was created.');};
 
@@ -201,6 +235,7 @@
     tabs[state.page]=options[(index+(event.key==='ArrowRight'?1:-1)+options.length)%options.length];renderPage();$(`[data-tab="${tabs[state.page]}"]`).focus();
   });
   function route() {
+    if ($('#detail-dialog').open) $('#detail-dialog').close();
     const page=location.hash.slice(1)||'near';state.page=page==='near'||Object.hasOwn(pageInfo,page)?page:'near';save();
     const near=state.page==='near';$('#near-page').hidden=!near;$('#map-options').hidden=!near;$('#content-page').hidden=near;
     $$('nav a').forEach(a=>{if(a.dataset.page===state.page)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
