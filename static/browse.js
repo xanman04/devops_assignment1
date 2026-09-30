@@ -1,4 +1,6 @@
-(() => {
+window.initializeBrowse = () => {
+  window.cleanupBrowse?.();
+  const observers=[];
   for (const row of document.querySelectorAll('.browse-track')) {
     const id=row.id.slice(4);
     const previous=document.querySelector(`[data-row="${id}"][data-direction="-1"]`);
@@ -13,7 +15,9 @@
                     behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
     });
     row.addEventListener('scroll',update);
-    new ResizeObserver(update).observe(row);
+    const observer=new ResizeObserver(update);observer.observe(row);observers.push(observer);
     update();
   }
-})();
+  window.cleanupBrowse=()=>observers.forEach(observer=>observer.disconnect());
+};
+window.initializeBrowse();

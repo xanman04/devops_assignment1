@@ -26,7 +26,7 @@
 <section class="live-map-page" aria-label="Near me">
   <div id="map" aria-label="Event map" data-endpoint="{% url 'map-events' %}"></div>
   <div class="live-map-tools"><button type="button" id="locate" title="Near my location" aria-label="Near my location"><svg class="live-icon" aria-hidden="true"><use href="#icon-location"/></svg></button><button type="button" id="list-toggle" aria-expanded="false" aria-controls="map-results">List</button></div>
-  <p id="map-status" class="live-map-status" role="status">Loading map. Use List to browse matching events.</p>
+  <p id="map-status" class="live-map-status" role="status">0 events at 0 venues.</p>
   <section id="event-panel" class="live-event-panel" aria-label="Events at selected venue" hidden><button type="button" id="panel-close" aria-label="Close event preview">×</button><p class="live-label">EVENTS AT THIS VENUE</p><h2 id="panel-venue"></h2><div id="panel-events"></div></section>
   <section id="map-results" class="live-map-results" aria-label="Map results" hidden><button type="button" id="list-close" aria-label="Close event list">×</button><h2>Events in this area</h2><div id="result-items"><p>Loading nearby events…</p></div></section>
   <noscript><section class="live-no-script"><h2>Upcoming public events</h2>{% for event in events %}<p><a href="{% url 'event-detail' event.pk %}">{{ event.title }}</a> · {{ event.venue.name }}</p>{% empty %}<p>No upcoming public events.</p>{% endfor %}</section></noscript>

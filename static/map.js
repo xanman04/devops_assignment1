@@ -21,11 +21,17 @@ import { Map as MapLibreMap, Marker } from 'maplibre-gl';
   const today=new Date();
   const start=form.elements.start,end=form.elements.end;
   start.value=localDate(today);end.value=localDate(addDays(today,14));
+  let savedCamera;
+  try{savedCamera=JSON.parse(sessionStorage.getItem('music-map-camera'));}catch{savedCamera=null;}
+  const validCamera=Array.isArray(savedCamera?.center)&&savedCamera.center.length===2&&
+    savedCamera.center.every(Number.isFinite)&&Math.abs(savedCamera.center[0])<=180&&
+    Math.abs(savedCamera.center[1])<=90&&savedCamera.zoom>=1&&savedCamera.zoom<=20;
   const map=new MapLibreMap({container:element,style:'https://tiles.openfreemap.org/styles/dark',
-    center:[2.3522,48.8566],zoom:11,minZoom:1,attributionControl:true});
+    center:validCamera?savedCamera.center:[2.3522,48.8566],zoom:validCamera?savedCamera.zoom:11,
+    minZoom:1,attributionControl:true});
   const markers=new Map();
-  let locationDot,locationArea=null;
-  let timer,controller,selectedVenueId=null,locationMessage='Default area shown. Move the map to explore.';
+  let locationDot,currentLocation;
+  let timer,controller,selectedVenueId=null,lastRefresh=0;
   const node=(tag,value)=>{const item=document.createElement(tag);item.textContent=value;return item;};
   function eventLink(event) {const link=node('a',event.title);link.href=`/events/${event.id}/`;return link;}
   function eventTime(event) {
@@ -96,7 +102,6 @@ import { Map as MapLibreMap, Marker } from 'maplibre-gl';
   document.addEventListener('keydown',event=>{if(event.key==='Escape')hideList();});
   async function refresh(){
     controller?.abort();const active=new AbortController();controller=active;
-    status.textContent='Finding events in this area…';
     const data=new FormData(form),query=new URLSearchParams();
     try{
       if(data.get('start'))query.set('start',new Date(`${data.get('start')}T00:00:00`).toISOString());
@@ -148,11 +153,24 @@ import { Map as MapLibreMap, Marker } from 'maplibre-gl';
       for(const [id,entry] of markers)if(!visible.has(id)){entry.marker.remove();markers.delete(id);}
       if(selected)showVenue(selected);else clearPanel();
       if(!count)resultItems.append(node('p','No events match this area and date range. Move the map or adjust the filters.'));
-      status.textContent=`${count} event${count===1?'':'s'} at ${payload.venues.length} venue${payload.venues.length===1?'':'s'}. ${locationMessage}`;
+      status.textContent=`${count} event${count===1?'':'s'} at ${payload.venues.length} venue${payload.venues.length===1?'':'s'}.`;
+      lastRefresh=Date.now();
     }catch(error){if(error.name!=='AbortError')status.textContent=error.message;}
   }
   const schedule=()=>{clearTimeout(timer);timer=setTimeout(refresh,300);};
-  map.on('moveend',schedule);
+  map.on('moveend',()=>{
+    const center=map.getCenter();
+    try{sessionStorage.setItem('music-map-camera',JSON.stringify({center:[center.lng,center.lat],zoom:map.getZoom()}));}catch{}
+    schedule();
+  });
+  const resumeMap=()=>requestAnimationFrame(()=>{
+    map.resize();map.triggerRepaint();
+    if(Date.now()-lastRefresh>60000)schedule();
+  });
+  window.addEventListener('map:shown',resumeMap);
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden&&!element.closest('[hidden]'))resumeMap();
+  });
   form.addEventListener('submit',event=>{event.preventDefault();schedule();});
   form.addEventListener('change',event=>{
     if(event.target.name==='categories'||event.target.name==='tags')syncChips();
@@ -176,37 +194,54 @@ import { Map as MapLibreMap, Marker } from 'maplibre-gl';
   document.addEventListener('click',event=>{
     if(!event.target.closest('.filter-menu'))document.querySelectorAll('.filter-menu').forEach(menu=>{menu.open=false;});
   });
-  function locate(){
-    if(!navigator.geolocation){locationMessage='Location unavailable; move the map to choose an area.';schedule();return;}
-    locationMessage='Waiting for location permission…';schedule();
+  function moveToLocation(latitude,longitude,zoom){
+    map.flyTo({center:[longitude,latitude],zoom,duration:1400,curve:1.2,essential:true});
+  }
+  function locate(recenter=true){
+    if(currentLocation){moveToLocation(currentLocation.latitude,currentLocation.longitude,currentLocation.zoom);return;}
+    if(!navigator.geolocation)return;
     navigator.geolocation.getCurrentPosition(position=>{
       const {latitude,longitude,accuracy}=position.coords;
       const radius=Number.isFinite(accuracy)?Math.max(accuracy,1):1000;
       locationDot?.remove();
       const dot=node('span','');dot.className='location-dot';
       locationDot=new Marker({element:dot}).setLngLat([longitude,latitude]).addTo(map);
-      const points=[];
-      for(let step=0;step<=64;step++){
-        const angle=step*Math.PI/32;
-        points.push([longitude+radius*Math.cos(angle)/(111320*Math.cos(latitude*Math.PI/180)),
-          latitude+radius*Math.sin(angle)/111320]);
-      }
-      locationArea={type:'Feature',geometry:{type:'Polygon',coordinates:[points]},properties:{}};
-      map.getSource('location-accuracy')?.setData(locationArea);
       const zoom=radius<=75?17:radius<=250?16:radius<=750?15:radius<=2000?13:11;
-      locationMessage=`Location estimate within about ${Math.ceil(radius)} m. Move the map to explore.`;
-      map.easeTo({center:[longitude,latitude],zoom,duration:650});schedule();
-    },()=>{locationMessage='Location unavailable or declined; move the map to choose an area.';schedule();},
+      currentLocation={latitude,longitude,zoom};
+      if(recenter||!validCamera)moveToLocation(latitude,longitude,zoom);
+    },()=>{},
     {enableHighAccuracy:true,timeout:15000,maximumAge:0});
   }
-  document.getElementById('locate').addEventListener('click',locate);
-  map.on('load',()=>{
-    map.addSource('location-accuracy',{type:'geojson',data:locationArea||{type:'FeatureCollection',features:[]}});
-    map.addLayer({id:'location-accuracy-fill',type:'fill',source:'location-accuracy',
-      paint:{'fill-color':'#9bc4eb','fill-opacity':0.1}});
-    map.addLayer({id:'location-accuracy-line',type:'line',source:'location-accuracy',
-      paint:{'line-color':'#9bc4eb','line-width':1}});
+  document.getElementById('locate').addEventListener('click',()=>locate(true));
+  map.on('style.load',()=>{
+    const palette={
+      background:{'background-color':'#252b32'},
+      water:{'fill-color':'#20323b'},waterway:{'line-color':'#30444e'},
+      landuse_residential:{'fill-color':'#2b3037'},landuse_park:{'fill-color':'#2d3c35'},
+      landcover_wood:{'fill-color':'#2b3932'},
+      building:{'fill-color':'#333941','fill-outline-color':'#444c55'},
+      highway_path:{'line-color':'#48515a'},highway_minor:{'line-color':'#505a64'},
+      highway_major_casing:{'line-color':'#39414a'},highway_major_inner:{'line-color':'#65707b'},
+      highway_major_subtle:{'line-color':'#48525c'},
+      highway_motorway_casing:{'line-color':'#3e4852'},highway_motorway_inner:{'line-color':'#737e89'},
+      railway:{'line-color':'#4a545e'},railway_minor:{'line-color':'#424c56'},
+      highway_name_other:{'text-color':'#a9b1ba','text-halo-color':'#252b32'},
+      highway_name_motorway:{'text-color':'#b5bdc5'},
+    };
+    for(const [id,paint] of Object.entries(palette)){
+      if(!map.getLayer(id))continue;
+      for(const [property,color] of Object.entries(paint))map.setPaintProperty(id,property,color);
+    }
+    if(map.getLayer('landcover_wood'))map.setPaintProperty('landcover_wood','fill-pattern',null);
+    if(map.getLayer('highway_minor'))map.setLayerZoomRange('highway_minor',12,24);
+    if(map.getLayer('highway_path'))map.setLayerZoomRange('highway_path',13,24);
+    for(const layer of map.getStyle().layers){
+      if(layer.id.startsWith('place_')&&layer.type==='symbol'){
+        map.setPaintProperty(layer.id,'text-color','#c1c8cf');
+        map.setPaintProperty(layer.id,'text-halo-color','#252b32');
+      }
+    }
   });
   syncChips();dateLabel();schedule();
-  locate();
+  locate(false);
 })();

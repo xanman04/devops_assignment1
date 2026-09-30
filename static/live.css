@@ -54,6 +54,7 @@ body { background:#1c1d20; }
 .subgenre-head { padding-top:10px; border-top:1px solid var(--edge); }
 .apply-filters { display:none; }
 .live-map-page { position:relative; height:100%; min-height:600px; overflow:hidden; background:#24272b; }
+.live-map-page[hidden],.live-filters[hidden] { display:none; }
 .home-layout #map { position:absolute; inset:0; height:100%; border-radius:0; background:#262a2e; }
 .home-layout .maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib { background:#202329e8; color:#c5c8cf; }
 .home-layout .maplibregl-ctrl-attrib a { color:#d2d5dd; }
