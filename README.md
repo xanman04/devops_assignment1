@@ -18,7 +18,7 @@ Pins now use larger teardrops anchored at their tips. Selecting another pin repl
 
 Discover displays separate horizontal rows for Events, Genres, DJs, and Artists. My events displays Tracked events and Your listings together; Groups displays My groups and Requests together. Scroll each carousel or use its previous/next buttons, and click a placeholder card to open a layout preview. All cards and request statuses are visual examples with no real account activity behind them.
 
-The Django home page uses the approved dark sidebar and grayscale Leaflet map. Date/category/tag controls feed the existing public map API; clicking a venue pin opens a floating panel with real matching events. Discover reads public events, curated categories, and curated listening references (sets in DJs, tracks/artist pages in Artists). My events reads the signed-in user's follows/listings; Groups reads their memberships/requests. Empty sections say so because genres and events have not been added to the local demo database. The full activity page remains available for older records. Your 65px filter bottom padding is preserved in both the prototype and live layout, including the short-height CSS rules. Restart `app.py` after static-file edits because WhiteNoise caches file metadata.
+The Django home page uses the approved dark sidebar and MapLibre vector map. Date controls and searchable category/subgenre chips feed the existing public map API. Multiple genres match either or both; selecting subgenres narrows their selected parent genre, while other selected genres remain included. Subgenres show only those under selected categories, or all when no category is selected. Clicking a venue pin opens a floating panel with real matching events. The sidebar search routes to Discover on every page and searches public events, venue names, broad genres, and curated artist/DJ references. Discover reads those records; My events reads the signed-in user's follows/listings; Groups reads their memberships/requests. The full activity page remains available for older records. Your 65px filter bottom padding is preserved. Restart `app.py` after static-file edits because WhiteNoise caches file metadata; when using `manage.py runserver`, run `manage.py collectstatic --noinput` before restarting.
 
 ### Event discovery
 
@@ -57,7 +57,7 @@ In Django admin, enter each broad category color as `#RRGGBB` text and supply a 
 | Database | SQLite through Django ORM and migrations | Required storage, with integrated relationships and schema evolution |
 | Pages | Django templates, HTML, plain CSS | Familiar tools, responsive layouts, no separate frontend build pipeline |
 | Browser behavior | Plain JavaScript and Django JSON endpoints | Refresh map results without page reloads; no REST framework needed yet |
-| Map | Leaflet 1.9.4, MapLibre Leaflet adapter, OpenFreeMap Dark vector style | Panning, zooming, and custom genre markers; visible attribution and normal browser tile caching |
+| Map | MapLibre GL JS 6.3.0, OpenFreeMap Dark vector style | Smooth vector panning/zooming and custom genre markers; visible attribution and normal browser tile caching |
 | Files | Local group images; file paths in SQLite | Keep data inside the application's configurable data directory |
 
 Dependencies are pinned in the single root `requirements.txt`: Django 5.2.17 LTS, Pillow for image-field support, Waitress for a single-process Windows-compatible server, WhiteNoise for static assets, tzdata for Windows timezones, and Django's transitive dependencies. Verified with Python 3.13.1. Frontend assets must not introduce another package manifest.
@@ -72,7 +72,7 @@ One Django project runs as one process, with two logical domain apps sharing one
 Django authentication supplies shared accounts with display names and optional private email; shared notifications support event-change updates and group offers. Request handlers handle HTTP; domain business rules remain separate from page rendering and map JSON responses. Groups references events by identity and obtains necessary event information through a small discovery interface. A future service split would also need to address shared accounts and database relationships; it is not part of this assignment.
 
 ```text
-Browser: templates + CSS + JavaScript + Leaflet
+Browser: templates + CSS + JavaScript + MapLibre GL JS
               |
        Django pages / JSON
           /           \
@@ -105,7 +105,7 @@ groups/                # Models, membership/message services, photos, tests, adm
 test_schema.py         # Focused persistence/integrity checks
 test_web.py            # HTTP form/workflow, permission, privacy, and CSRF checks
 templates/             # Shared layout and discovery/group/account/inbox pages
-static/                # Plain CSS and Leaflet map integration JavaScript
+static/                # Plain CSS and MapLibre map integration JavaScript
 ```
 
 ## Running the application
@@ -122,7 +122,7 @@ On Linux/macOS use `.venv/bin/python` instead. Open http://localhost:8000/ for m
 
 Create an account through the public navigation. Use admin to curate genres and approve proposed venues; then list events and use optional groups through the public pages. Map JavaScript requests browser location permission and falls back to Paris when unavailable/declined. Pan to explore another area. Map results refresh automatically; the server-rendered upcoming-events list is also usable without JavaScript. Browser date filters span local midnight through the selected end date exclusively; event detail/form times use the venue timezone. No location history is saved to accounts.
 
-The live map uses Leaflet 1.9.4 with MapLibre's Leaflet adapter and [OpenFreeMap's Dark vector style](https://openfreemap.org/quick_start/). The map libraries and tiles require internet access; no API key, Node runtime, or frontend package manifest is needed. Browser geolocation requests high accuracy, centers according to the returned accuracy estimate, and draws the estimated location/radius. It cannot override device or browser location accuracy. The map position is not saved to accounts. Tile requests reveal the viewed map area to the provider; no offline download or prefetch is provided. The list panel closes with X, Escape, a second click on List, or a map click. Browser visual review confirmed the dark style, navigation, notification placement, and list state; desktop appearance and physical location/gesture accuracy still need author review.
+The live map uses MapLibre GL JS 6.3.0 directly with [OpenFreeMap's Dark vector style](https://openfreemap.org/quick_start/). Map vectors move continuously while the event endpoint refreshes after movement; existing pins remain visible until replacement results arrive. The map library and tiles require internet access; no API key, Node runtime, or frontend package manifest is needed. Browser geolocation requests high accuracy, centers according to the returned accuracy estimate, and draws the estimated location/radius. It cannot override device or browser location accuracy. The map position is not saved to accounts. Tile requests reveal the viewed map area to the provider; no offline download or prefetch is provided. The list panel closes with X, Escape, a second click on List, or a map click.
 
 | Environment variable | Default / purpose |
 |---|---|

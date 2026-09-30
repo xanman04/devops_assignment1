@@ -1,6 +1,6 @@
 {% extends 'base.html' %}{% load static %}
 {% block body_class %}home-layout{% endblock %}
-{% block head %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous"><link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.3.0/dist/maplibre-gl.css"><script type="importmap">{"imports":{"leaflet":"https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js","maplibre-gl":"https://unpkg.com/maplibre-gl@6.3.0/dist/maplibre-gl.mjs"}}</script>{% endblock %}
+{% block head %}<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.3.0/dist/maplibre-gl.css"><script type="importmap">{"imports":{"maplibre-gl":"https://unpkg.com/maplibre-gl@6.3.0/dist/maplibre-gl.mjs"}}</script>{% endblock %}
 {% block sidebar_controls %}
 <form id="map-filters" class="live-filters">
   <p class="live-label">WHEN</p>
@@ -10,10 +10,14 @@
   </details>
   <p class="live-label">GENRES</p>
   <details class="filter-menu" id="genre-menu"><summary><svg class="live-icon" aria-hidden="true"><use href="#icon-filter"/></svg><span id="genre-summary">All genres</span><span aria-hidden="true">+</span></summary>
-    <div class="filter-menu-content"><label>Match <select name="match"><option value="any">Any selected</option><option value="all">All selected</option></select></label>
-      <div class="filter-choices">{% for category in categories %}<label class="genre-choice" style="--genre:{{ category.color }}"><input type="checkbox" name="categories" value="{{ category.pk }}"> {{ category.name }}</label>{% empty %}<p>No curated genres yet.</p>{% endfor %}</div>
-      <details><summary>Subgenres</summary><div class="filter-choices">{% for tag in tags %}<label><input type="checkbox" name="tags" value="{{ tag.pk }}"> {{ tag.category.name }} / {{ tag.name }}</label>{% empty %}<p>No subgenres yet.</p>{% endfor %}</div></details>
-      <button type="button" id="clear-genres">Clear genres</button></div>
+    <div class="filter-menu-content genre-filter-content">
+      <div class="filter-head"><strong>Genres</strong><label class="select-all"><input type="checkbox" id="select-all-genres"> Select all</label></div>
+      <input class="filter-search" id="genre-search" type="search" placeholder="Search genres" aria-label="Search genres">
+      <div class="filter-choices chip-list" id="genre-choices">{% for category in categories %}<label class="filter-chip" style="--genre:{{ category.color }}" data-name="{{ category.name|lower }}"><input type="checkbox" name="categories" value="{{ category.pk }}">{{ category.name }}</label>{% empty %}<p>No curated genres yet.</p>{% endfor %}</div>
+      <div class="filter-head subgenre-head"><strong>Subgenres</strong></div>
+      <input class="filter-search" id="subgenre-search" type="search" placeholder="Search subgenres" aria-label="Search subgenres">
+      <div class="filter-choices chip-list" id="subgenre-choices">{% for tag in tags %}<label class="filter-chip" style="--genre:{{ tag.category.color }}" data-category="{{ tag.category_id }}" data-name="{{ tag.name|lower }}"><input type="checkbox" name="tags" value="{{ tag.pk }}">{{ tag.name }}</label>{% empty %}<p>No subgenres yet.</p>{% endfor %}</div>
+    </div>
   </details>
   <button type="submit" class="apply-filters">Update map</button>
 </form>
@@ -21,7 +25,6 @@
 {% block content %}
 <section class="live-map-page" aria-label="Near me">
   <div id="map" aria-label="Event map" data-endpoint="{% url 'map-events' %}"></div>
-  <div class="map-intro">Explore your surroundings</div>
   <div class="live-map-tools"><button type="button" id="locate" title="Near my location" aria-label="Near my location"><svg class="live-icon" aria-hidden="true"><use href="#icon-location"/></svg></button><button type="button" id="list-toggle" aria-expanded="false" aria-controls="map-results">List</button></div>
   <p id="map-status" class="live-map-status" role="status">Loading map. Use List to browse matching events.</p>
   <section id="event-panel" class="live-event-panel" aria-label="Events at selected venue" hidden><button type="button" id="panel-close" aria-label="Close event preview">×</button><p class="live-label">EVENTS AT THIS VENUE</p><h2 id="panel-venue"></h2><div id="panel-events"></div></section>
