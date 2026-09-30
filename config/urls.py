@@ -7,12 +7,15 @@ from discovery import pages as discovery
 from discovery.views import map_events
 from groups import pages as groups
 from notifications import views as notices
-from .pages import activity
+from .pages import activity, my_events, my_groups
 
 
 urlpatterns = [
     path("ui/", RedirectView.as_view(url="/static/prototype/index.html", permanent=False), name="ui-prototype"),
     path("", discovery.home, name="home"),
+    path("discover/", discovery.discover, name="discover"),
+    path("my-events/", my_events, name="my-events"),
+    path("groups/", my_groups, name="my-groups"),
     path("admin/", admin.site.urls),
     path("api/map/events/", map_events, name="map-events"),
     path("genres/", discovery.genres, name="genres"),

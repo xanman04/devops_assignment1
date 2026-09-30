@@ -1,24 +1,32 @@
 {% extends 'base.html' %}{% load static %}
-{% block head %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+{% block body_class %}home-layout{% endblock %}
+{% block head %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous"><link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.3.0/dist/maplibre-gl.css"><script type="importmap">{"imports":{"leaflet":"https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js","maplibre-gl":"https://unpkg.com/maplibre-gl@6.3.0/dist/maplibre-gl.mjs"}}</script>{% endblock %}
+{% block sidebar_controls %}
+<form id="map-filters" class="live-filters">
+  <p class="live-label">WHEN</p>
+  <details class="filter-menu" id="date-menu"><summary><svg class="live-icon" aria-hidden="true"><use href="#icon-events"/></svg><span id="date-summary">Next two weeks</span><span aria-hidden="true">⌄</span></summary>
+    <div class="filter-menu-content"><div class="date-presets"><button type="button" data-days="0">Tonight</button><button type="button" data-days="3">Next 3 days</button><button type="button" data-days="14">Next two weeks</button><button type="button" data-days="30">Next 30 days</button></div>
+      <label>From <input type="date" name="start" id="start-date"></label><label>Until <input type="date" name="end" id="end-date"></label></div>
+  </details>
+  <p class="live-label">GENRES</p>
+  <details class="filter-menu" id="genre-menu"><summary><svg class="live-icon" aria-hidden="true"><use href="#icon-filter"/></svg><span id="genre-summary">All genres</span><span aria-hidden="true">+</span></summary>
+    <div class="filter-menu-content"><label>Match <select name="match"><option value="any">Any selected</option><option value="all">All selected</option></select></label>
+      <div class="filter-choices">{% for category in categories %}<label class="genre-choice" style="--genre:{{ category.color }}"><input type="checkbox" name="categories" value="{{ category.pk }}"> {{ category.name }}</label>{% empty %}<p>No curated genres yet.</p>{% endfor %}</div>
+      <details><summary>Subgenres</summary><div class="filter-choices">{% for tag in tags %}<label><input type="checkbox" name="tags" value="{{ tag.pk }}"> {{ tag.category.name }} / {{ tag.name }}</label>{% empty %}<p>No subgenres yet.</p>{% endfor %}</div></details>
+      <button type="button" id="clear-genres">Clear genres</button></div>
+  </details>
+  <button type="submit" class="apply-filters">Update map</button>
+</form>
 {% endblock %}
 {% block content %}
-<h1>Find your music</h1><p class="muted">Discover events nearby, or move the map to explore somewhere else.</p>
-<form id="map-filters" class="filters">
-<label>From <input type="date" name="start" id="start-date"></label><label>Until <input type="date" name="end" id="end-date"></label>
-<label>Match <select name="match"><option value="any">Any selected genre or tag</option><option value="all">All selected genres and tags</option></select></label>
-<fieldset><legend>Genres / pin color key</legend><div class="tags">{% for category in categories %}<label class="genre" style="--genre:{{ category.color }}"><input type="checkbox" name="categories" value="{{ category.pk }}"> {{ category.name }}</label>{% empty %}<span>No curated genres yet.</span>{% endfor %}</div></fieldset>
-<details><summary>Subgenre filters</summary><div class="tags">{% for tag in tags %}<label class="tag"><input type="checkbox" name="tags" value="{{ tag.pk }}"> {{ tag.category.name }} / {{ tag.name }}</label>{% empty %}<p>No subgenres yet.</p>{% endfor %}</div></details>
-<button type="submit">Update map</button><button type="button" id="locate">My surroundings</button>
-</form>
-<p id="map-status" class="muted" role="status">Loading map. Upcoming events are also listed below.</p>
-<div id="map" aria-label="Event map" data-endpoint="{% url 'map-events' %}"></div>
-<p class="muted">Location is used only to center the map and is not saved to your account. Map tiles are supplied by OpenStreetMap.</p>
-<section id="map-results"><h2>Upcoming events</h2>
-{% for event in events %}<article class="card"><a href="{% url 'event-detail' event.pk %}">{{ event.title }}</a><p>{{ event.venue.name }} · {{ event.starts_at|date:'j M Y H:i' }} UTC</p></article>{% empty %}<p>No upcoming public events. Try a different area or date range, or list an event.</p>{% endfor %}
-{% include 'pagination.html' with page=events %}</section>
+<section class="live-map-page" aria-label="Near me">
+  <div id="map" aria-label="Event map" data-endpoint="{% url 'map-events' %}"></div>
+  <div class="map-intro">Explore your surroundings</div>
+  <div class="live-map-tools"><button type="button" id="locate" title="Near my location" aria-label="Near my location"><svg class="live-icon" aria-hidden="true"><use href="#icon-location"/></svg></button><button type="button" id="list-toggle" aria-expanded="false" aria-controls="map-results">List</button></div>
+  <p id="map-status" class="live-map-status" role="status">Loading map. Use List to browse matching events.</p>
+  <section id="event-panel" class="live-event-panel" aria-label="Events at selected venue" hidden><button type="button" id="panel-close" aria-label="Close event preview">×</button><p class="live-label">EVENTS AT THIS VENUE</p><h2 id="panel-venue"></h2><div id="panel-events"></div></section>
+  <section id="map-results" class="live-map-results" aria-label="Map results" hidden><button type="button" id="list-close" aria-label="Close event list">×</button><h2>Events in this area</h2><div id="result-items"><p>Loading nearby events…</p></div></section>
+  <noscript><section class="live-no-script"><h2>Upcoming public events</h2>{% for event in events %}<p><a href="{% url 'event-detail' event.pk %}">{{ event.title }}</a> · {{ event.venue.name }}</p>{% empty %}<p>No upcoming public events.</p>{% endfor %}</section></noscript>
+</section>
 {% endblock %}
-{% block scripts %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous" defer></script>
-<script src="{% static 'map.js' %}" defer></script>
-{% endblock %}
+{% block scripts %}<script type="module" src="{% static 'map.js' %}"></script>{% endblock %}

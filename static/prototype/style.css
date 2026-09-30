@@ -22,7 +22,7 @@ nav a { display: flex; align-items: center; gap: 19px; padding: 23px 19px; borde
 nav a svg { width: 26px; height: 26px; }
 nav a:hover { background: #222326; color: #eee; }
 nav a[aria-current="page"] { background: #2b2c30; color: #f3f3f5; font-weight: 600; }
-.sidebar-bottom { margin-top: auto; padding: 28px 27px 36px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.sidebar-bottom { margin-top: auto; padding: 28px 27px 65px; border-top: 1px solid var(--border); flex-shrink: 0; }
 .sidebar nav { margin-bottom: 48px; }
 .sidebar-bottom .eyebrow { font-size: 12px; margin-bottom: 16px; color: #a6a9b2; }
 .eyebrow { color: #858893; font-size: 10px; font-weight: 650; letter-spacing: 1.7px; margin: 0 0 13px; }
@@ -119,7 +119,7 @@ input, textarea { background: #25272d; border: 1px solid #42454f; border-radius:
 .toast { position: fixed; bottom: 26px; left: calc(50% + 100px); transform: translateX(-50%); z-index: 10; background: #393d47; border: 1px solid #5a6272; border-radius: 8px; padding: 14px 20px; font-size: 12px; box-shadow: 0 8px 30px #0004; }
 @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
-@media (max-height: 850px) { .brand { padding-top: 22px; padding-bottom: 20px; }.search-trigger { margin-bottom: 18px; }nav { gap: 7px; }nav a { padding-top: 13px; padding-bottom: 13px; }.sidebar nav { margin-bottom: 32px; }.sidebar-bottom { padding-top: 12px; padding-bottom: 28px; }.filter-heading { margin-top: 26px; } }
+@media (max-height: 850px) { .brand { padding-top: 22px; padding-bottom: 20px; }.search-trigger { margin-bottom: 18px; }nav { gap: 7px; }nav a { padding-top: 13px; padding-bottom: 13px; }.sidebar nav { margin-bottom: 32px; }.sidebar-bottom { padding-top: 12px; padding-bottom: 65px; }.filter-heading { margin-top: 26px; } }
 
 /* Expanded event details also allow switching pins without dismissing a modal. */
 #detail-dialog { position: fixed; inset: auto auto 60px calc(var(--sidebar-width) + 36px); margin: 0; z-index: 5; max-height: calc(100vh - 120px); width: min(520px, calc(100vw - var(--sidebar-width) - 100px)); }

@@ -1,4 +1,5 @@
 from zoneinfo import ZoneInfo
+from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
@@ -19,6 +20,52 @@ def home(request):
         "tags": models.GenreTag.objects.select_related("category").order_by("category__display_order", "name"),
         "events": Paginator(events, 20).get_page(request.GET.get("page")),
     })
+
+
+def _event_card(event):
+    local_start = event.starts_at.astimezone(ZoneInfo(event.venue.timezone))
+    category = next(iter(event.categories.all()), None)
+    return {"title": event.title, "subtitle": f"{event.venue.name} · {local_start:%d %b %Y %H:%M}",
+            "href": f"/events/{event.pk}/", "color": category.color if category else "#9ca0a9", "symbol": "events"}
+
+
+@endpoint
+@require_GET
+def discover(request):
+    query = request.GET.get("q", "").strip()[:80]
+    category_query = models.GenreCategory.objects.all()
+    event_query = services.search_events()
+    reference_query = models.GenreListeningReference.objects.all()
+    if query:
+        category_query = category_query.filter(Q(name__icontains=query) | Q(description__icontains=query))
+        event_query = event_query.filter(Q(title__icontains=query) | Q(venue__name__icontains=query) |
+                                         Q(categories__name__icontains=query) | Q(tags__name__icontains=query)).distinct()
+        reference_query = reference_query.filter(Q(title__icontains=query) | Q(artist_credit__icontains=query))
+    categories = list(category_query[:24])
+    events = list(event_query.select_related("venue").prefetch_related("categories")[:24])
+    references = list(reference_query.order_by("display_order", "id")[:200])
+    def credit_cards(kind):
+        seen, cards = set(), []
+        for reference in references:
+            if reference.kind not in kind or not reference.artist_credit.strip():
+                continue
+            credit = reference.artist_credit.strip()
+            if credit.casefold() in seen:
+                continue
+            seen.add(credit.casefold())
+            cards.append({"title": credit, "subtitle": reference.title, "href": reference.url,
+                          "external": True, "symbol": "profile", "round": True})
+        return cards[:24]
+    sections = [
+        {"id": "events", "title": "Events", "description": "Upcoming public events", "cards": [_event_card(e) for e in events], "empty": "No public events yet."},
+        {"id": "genres", "title": "Genres", "description": "Colors match the map pins",
+         "cards": [{"title": c.name, "subtitle": c.description[:90], "href": f"/genres/{c.pk}/", "color": c.color, "symbol": "discover", "genre": True} for c in categories],
+         "empty": "No curated genres yet."},
+        {"id": "djs", "title": "DJs", "description": "Curated sets and listening references", "cards": credit_cards({"set"}), "empty": "No curated DJ sets yet."},
+        {"id": "artists", "title": "Artists", "description": "Curated tracks and artist pages", "cards": credit_cards({"track", "artist_page"}), "empty": "No curated artist references yet."},
+    ]
+    return render(request, "browse.html", {"title": "Discover", "intro": "Explore the music. Find what moves you.",
+                                           "sections": sections, "query": query})
 
 
 @endpoint

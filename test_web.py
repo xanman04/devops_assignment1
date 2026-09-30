@@ -49,6 +49,37 @@ class WebTests(TestCase):
             self.assertNotContains(response, self.owner.email)
             self.assertNotContains(response, self.guest.email)
 
+    def test_live_browsing_uses_public_records_and_curated_music(self):
+        dm.GenreListeningReference.objects.create(title='A curated mix', artist_credit='Example DJ',
+            url='https://example.org/mix', kind='set')
+        response = self.client.get('/discover/')
+        self.assertContains(response, 'House night')
+        self.assertContains(response, 'House')
+        self.assertContains(response, 'Example DJ')
+        self.assertNotContains(response, 'Secret venue')
+        self.assertContains(self.client.get('/discover/?q=Approved+venue'), 'House night')
+        self.event.moderation_hidden = True
+        self.event.save(update_fields=['moderation_hidden'])
+        self.assertNotContains(self.client.get('/discover/'), 'House night')
+        self.assertNotContains(self.client.get('/discover/?q=House'), 'House night')
+
+    def test_my_carousels_require_login_and_hide_unavailable_tracked_events(self):
+        self.assertEqual(self.client.get('/my-events/').status_code, 302)
+        self.assertEqual(self.client.get('/groups/').status_code, 302)
+        ds.follow_event(actor=self.guest, event_id=self.event.pk)
+        gm.JoinRequest.objects.create(group=self.group, applicant=self.guest)
+        self.login(self.guest)
+        self.assertContains(self.client.get('/groups/'), 'Solo crew')
+        self.assertContains(self.client.get('/groups/'), 'Pending')
+        self.assertContains(self.client.get('/my-events/'), 'House night')
+        self.event.moderation_hidden = True
+        self.event.save(update_fields=['moderation_hidden'])
+        response = self.client.get('/my-events/')
+        self.assertContains(response, 'Tracked event unavailable')
+        self.assertNotContains(response, 'House night')
+        self.login(self.owner)
+        self.assertContains(self.client.get('/my-events/'), 'House night')
+
     def test_registration_ignores_privilege_fields_and_settings_are_private(self):
         response = self.client.post('/accounts/register/', {'username':'newuser','display_name':'New music fan','email':'new-private@example.org','password1':'Valid-passphrase-894!','password2':'Valid-passphrase-894!','is_staff':'on','is_superuser':'on'})
         self.assertRedirects(response, '/my-activity/')

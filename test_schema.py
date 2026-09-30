@@ -169,7 +169,7 @@ class SchemaTests(TestCase):
         self.client.force_login(staff)
         response = self.client.get("/admin/groups/attendancegroup/add/")
         self.assertEqual(response.status_code, 403)
-        self.assertContains(self.client.get("/"), "Find your music")
+        self.assertContains(self.client.get("/"), "Explore your surroundings")
 
     def test_admin_can_confirm_and_delete_unreferenced_account(self):
         staff = get_user_model().objects.create_superuser("admin", password="local-test-password")
