@@ -7,6 +7,9 @@ Most interactions use Django templates and POST forms, redirecting after success
 | Route | Methods | Responsibility |
 |---|---|---|
 | `/` | GET | Map landing page, date/genre controls, location fallback |
+| `/discover/` | GET | Public event, curated genre/DJ/artist carousel sections and text search |
+| `/my-events/` | GET, login required | Tracked events and the user's listings together |
+| `/groups/` | GET, login required | Memberships and join requests together |
 | `/api/map/events/` | GET | Existing filtered venue/event JSON |
 | `/genres/`, `/genres/<id>/` | GET | Curated categories, subgenre tags, music references |
 | `/accounts/register/` | GET, POST | Username/password, optional display name/private email |
@@ -58,6 +61,6 @@ Most interactions use Django templates and POST forms, redirecting after success
 
 Account registration/login/settings; event/venue/report/reference forms; group membership/request/moderation/message/photo routes; inbox and paginated My Activity are implemented. Services handle domain writes; views allowlist submitted fields, authenticate actors, and render validation/permission/not-found/retry responses. State-changing endpoints require POST and CSRF; successful writes redirect.
 
-The discovery page uses Leaflet 1.9.4 from its documented CDN with integrity hashes, browser geolocation with a Paris fallback, grayscale OpenStreetMap tiles, genre/subgenre ANY/ALL filters, a two-week window, automatic refresh after panning, and gradient/count venue markers. Listing text and popup contents use DOM text nodes. An ordinary server-rendered upcoming-events list remains available without JavaScript. Location is not persisted to accounts; external tiles/library require internet access. Attribution is visible and browser Referrer policy permits an origin header to the tile service. No tile prefetch or offline download is implemented.
+The discovery page uses Leaflet 1.9.4, MapLibre's Leaflet adapter, and OpenFreeMap's Dark vector style, with browser geolocation and a Paris fallback, genre/subgenre ANY/ALL filters, a two-week window, automatic refresh after panning, and gradient/count venue markers. High-accuracy geolocation centers at a zoom chosen from the reported accuracy and shows its uncertainty radius. The map list closes via X, Escape, List, or map click. Listing text and popup contents use DOM text nodes. An ordinary server-rendered upcoming-events list remains available without JavaScript. Location is not persisted to accounts; external map assets require internet access. Provider attribution is visible. No tile prefetch or offline download is implemented.
 
-101 backend/HTTP tests pass, including CSRF, forged actor/permission fields, venue privacy, messages, confirmed switching, and processed uploads. Live Waitress checks returned 200 for public pages, map JSON, and local CSS/JavaScript assets. JavaScript syntax and migration consistency checks pass. Visual browser inspection remains outstanding because the computer-use runtime failed to start. Review visual styling and interactive behavior in a normal browser next.
+111 automated tests pass, including CSRF, forged actor/permission fields, venue privacy, messages, confirmed switching, processed uploads, and dynamic tempo estimates. JavaScript syntax and migration consistency checks pass. The live desktop map and notification layout were inspected in a browser; location precision on the author's device and further UI polish remain to be reviewed.

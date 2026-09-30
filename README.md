@@ -4,13 +4,13 @@ A music-first event discovery application: find nearby events by genre and date,
 
 The idea comes from difficulty discovering smaller and niche events. It covers music broadly, including electronic music, rock, and jazz. Attendees and independent event organizers are the intended users.
 
-**Status:** discovery/group services and the approved Django pages, forms, and routes are implemented September 28, 2026. The first interface includes map discovery, accounts, event submission/editing, optional groups, message boards, and in-app notifications. Visual refinement and interactive browser review remain. The professor approved the proposal, as reported by the author on September 24. Product name is provisional.
+**Status:** discovery/group services and Django workflows are implemented. The map and browsing layout are now connected to Django at `/`, `/discover/`, `/my-events/`, and `/groups/`. The professor approved the proposal, as reported by the author on September 24. Product name is provisional.
 
 ## Planned features
 
 ### Desktop UI prototype
 
-Open `static/prototype/index.html` directly in a desktop browser, or restart `app.py` and visit **http://localhost:8000/ui/**. This is a standalone HTML/CSS/JavaScript design prototype with no database/API connection, external assets, or location permission requests. The existing functional app remains at `/`.
+The functional desktop interface is at **http://localhost:8000/**. The earlier standalone visual prototype is still available at **http://localhost:8000/ui/** as a design reference; it has placeholder content and no database/API connection.
 
 Click the sidebar to visit Near me, Discover, My events, Groups, and Profile. Near me has an illustrative draggable/zoomable map, placeholder pins, date controls, and a searchable/collapsible genre filter panel. Selected genre chips invert to colored fills; generic genre labels are not taxonomy decisions. Map position/date/genre state survives navigation and, where permitted, refresh within the same browser tab using sessionStorage. Pin previews contain only title, venue, local date/time, and genre tags; Show more opens a detail layout. Groups contains only My groups and Requests. Search, profile edits, and event creation demonstrate layouts without saving real data; tracking a placeholder changes only prototype state. Mobile layout work remains deferred.
 
@@ -18,7 +18,7 @@ Pins now use larger teardrops anchored at their tips. Selecting another pin repl
 
 Discover displays separate horizontal rows for Events, Genres, DJs, and Artists. My events displays Tracked events and Your listings together; Groups displays My groups and Requests together. Scroll each carousel or use its previous/next buttons, and click a placeholder card to open a layout preview. All cards and request statuses are visual examples with no real account activity behind them.
 
-Checks: JavaScript syntax and Django configuration validated. The revised desktop prototype was visually inspected through local HTTP; direct pin switching, switching from expanded details to a multi-event pin, and mouse-wheel zoom were verified. Simulated input checks cover touch pinch, zoom anchoring/limits, lifting one finger to continue dragging, cancellation, and accidental-click suppression. Physical trackpad/touch hardware gestures still need author review. Restart `app.py` after static-file edits: the running WhiteNoise server caches file metadata, so refreshing alone can serve incomplete updated assets.
+The Django home page uses the approved dark sidebar and grayscale Leaflet map. Date/category/tag controls feed the existing public map API; clicking a venue pin opens a floating panel with real matching events. Discover reads public events, curated categories, and curated listening references (sets in DJs, tracks/artist pages in Artists). My events reads the signed-in user's follows/listings; Groups reads their memberships/requests. Empty sections say so because genres and events have not been added to the local demo database. The full activity page remains available for older records. Your 65px filter bottom padding is preserved in both the prototype and live layout, including the short-height CSS rules. Restart `app.py` after static-file edits because WhiteNoise caches file metadata.
 
 ### Event discovery
 
@@ -42,6 +42,10 @@ Checks: JavaScript syntax and Django configuration validated. The revised deskto
 ### Tracking and classification
 
 - Events require one or more broad color categories and can have multiple detailed subgenre tags. Tempo is estimated from curated ranges, not supplied by event creators.
+
+In Django admin, enter each broad category color as `#RRGGBB` text and supply a typical BPM minimum and maximum for categories and subgenre tags. A selected tag's range replaces its parent category's broad range for that component. If multiple tags or categories describe an event, the displayed typical estimate spans the lowest selected minimum to the highest selected maximum. Updating a curated range updates existing events' estimates automatically; event BPM is never stored or entered by organizers. The underlying database still allows an unknown range for legacy/imported classifications, which display “Varies” when no complete estimate is possible.
+
+In Django admin, enter each broad category color as `#RRGGBB` text and supply a typical BPM minimum and maximum for categories and subgenre tags. A selected tag's range replaces its parent category's broad range for that component. If multiple tags or categories describe an event, the displayed typical estimate spans the lowest selected minimum to the highest selected maximum. Updating a curated range updates existing events' estimates automatically; event BPM is never stored or entered by organizers. The underlying database still allows an unknown range for legacy/imported classifications, which display “Varies” when no complete estimate is possible.
 - Users can follow events independently of attendance or groups and receive in-app venue/time/cancellation updates.
 - Groups are optional company for solo attendees, not an attendance requirement or RSVP system.
 - Authors can edit/delete their own messages; admins can remove messages. Group removal permits rejoining; a separate group ban prevents it.
@@ -55,7 +59,7 @@ Checks: JavaScript syntax and Django configuration validated. The revised deskto
 | Database | SQLite through Django ORM and migrations | Required storage, with integrated relationships and schema evolution |
 | Pages | Django templates, HTML, plain CSS | Familiar tools, responsive layouts, no separate frontend build pipeline |
 | Browser behavior | Plain JavaScript and Django JSON endpoints | Refresh map results without page reloads; no REST framework needed yet |
-| Map | Leaflet 1.9.4 with grayscale OpenStreetMap tiles | Panning, zooming, and custom genre markers; visible attribution and normal browser tile caching |
+| Map | Leaflet 1.9.4, MapLibre Leaflet adapter, OpenFreeMap Dark vector style | Panning, zooming, and custom genre markers; visible attribution and normal browser tile caching |
 | Files | Local group images; file paths in SQLite | Keep data inside the application's configurable data directory |
 
 Dependencies are pinned in the single root `requirements.txt`: Django 5.2.17 LTS, Pillow for image-field support, Waitress for a single-process Windows-compatible server, WhiteNoise for static assets, tzdata for Windows timezones, and Django's transitive dependencies. Verified with Python 3.13.1. Frontend assets must not introduce another package manifest.
@@ -120,7 +124,7 @@ On Linux/macOS use `.venv/bin/python` instead. Open http://localhost:8000/ for m
 
 Create an account through the public navigation. Use admin to curate genres and approve proposed venues; then list events and use optional groups through the public pages. Map JavaScript requests browser location permission and falls back to Paris when unavailable/declined. Pan to explore another area. Map results refresh automatically; the server-rendered upcoming-events list is also usable without JavaScript. Browser date filters span local midnight through the selected end date exclusively; event detail/form times use the venue timezone. No location history is saved to accounts.
 
-The browser loads [Leaflet 1.9.4](https://leafletjs.com/download.html) from a pinned CDN URL with integrity checks and requests [OpenStreetMap tiles](https://operations.osmfoundation.org/policies/tiles/) with visible attribution and normal browser caching. These require internet access; no key, Node runtime, or frontend package manifest is needed. Location and map filters are not sent to a geocoding provider. Tile requests reveal the viewed map area to the provider. No offline tile download or prefetch is provided. Browser visual inspection remains outstanding because the automation runtime was unavailable; local HTTP/assets and workflow tests passed.
+The live map uses Leaflet 1.9.4 with MapLibre's Leaflet adapter and [OpenFreeMap's Dark vector style](https://openfreemap.org/quick_start/). The map libraries and tiles require internet access; no API key, Node runtime, or frontend package manifest is needed. Browser geolocation requests high accuracy, centers according to the returned accuracy estimate, and draws the estimated location/radius. It cannot override device or browser location accuracy. The map position is not saved to accounts. Tile requests reveal the viewed map area to the provider; no offline download or prefetch is provided. The list panel closes with X, Escape, a second click on List, or a map click. Browser visual review confirmed the dark style, navigation, notification placement, and list state; desktop appearance and physical location/gesture accuracy still need author review.
 
 | Environment variable | Default / purpose |
 |---|---|
@@ -200,7 +204,7 @@ Unchanged reruns create no duplicates, reset no passwords, and preserve demo pro
 .venv/Scripts/python.exe manage.py test groups discovery test_schema test_web
 ```
 
-**108 tests pass**: 18 schema checks, 32 discovery tests, 26 group tests, 25 HTTP tests, and 7 demo-data checks. These cover permissions, rollback, filters, timezone/DST, notifications, membership switching, offers/capacity, bans/ownership, messages, photo processing/cleanup, separate-connection SQLite races, CSRF, forged form fields, and private venue/message access. JavaScript syntax, migration consistency, and live public page/static asset responses were also checked. No coverage percentage has been measured; the **70% core-logic coverage** requirement and ADR-4 remain outstanding.
+**111 tests pass**: 18 schema checks, 33 discovery tests, 26 group tests, 27 HTTP tests, and 7 demo-data checks. These cover permissions, rollback, filters, timezone/DST, notifications, membership switching, offers/capacity, bans/ownership, messages, photo processing/cleanup, separate-connection SQLite races, CSRF, forged form fields, private venue/message access, and automatic tempo recalculation. JavaScript syntax, migration consistency, and live public page/static asset responses were also checked. No coverage percentage has been measured; the **70% core-logic coverage** requirement and ADR-4 remain outstanding.
 
 Database constraints guard row-level invariants. Both domains' services validate and use transactions; raw ORM writes can bypass these rules and are not a supported interface. SQLite uses IMMEDIATE transactions and a timeout; handlers translate competing lock failures into retry responses. Pages use GET for reads, POST plus CSRF for writes, and redirects after successful saves. Visual polish, a browser interaction review, measured coverage, and the remaining submission records/report are still outstanding.
 

@@ -38,6 +38,10 @@ Admins curate both. Categories determine pin colors (e.g. Rock, House, DnB); tag
 
 BPM pairs must be either both absent or both present, with `0 < bpm_min <= bpm_max`. For each event category, use ranges of selected tags when known; fall back to the category range for tags without a range, or when no tags are selected. Combine contributing ranges by lowest minimum/highest maximum. If a selected musical component has neither a tag range nor category fallback, display “Varies” instead of presenting an incomplete range as comprehensive. Display “Typical tempo estimate”, not a measured performance tempo. Do not store an event BPM field; derive it from current curated data. Artists/AI-based classification is future work, not an integration or schema requirement now.
 
+The Django admin requires both BPM bounds when adding or editing a category or tag. Existing records and direct service imports may retain an unknown range, so the database still permits a null pair. Category color is entered as `#RRGGBB` text; the model validates six hex digits. Changing a curated range recalculates displayed event estimates on the next read without editing each event.
+
+The Django admin requires both BPM bounds when adding or editing a category or tag. Existing records and direct service imports may retain an unknown range, so the database still permits a null pair. Category color is entered as `#RRGGBB` text; the model validates six hex digits. Changing a curated range recalculates displayed event estimates on the next read without editing each event.
+
 ### Venue
 
 | Field | Type / rule |
