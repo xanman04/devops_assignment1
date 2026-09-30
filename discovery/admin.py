@@ -2,7 +2,7 @@ from django.contrib import admin
 from django import forms
 from config.admin import SchemaReadOnlyAdmin
 from . import models, services
-from .forms import EventForm, GenreReferenceForm, ReportForm, TagForm
+from .forms import CategoryForm, EventForm, GenreReferenceForm, ReportForm, TagForm
 
 
 def apply_saved(instance, saved):
@@ -27,14 +27,18 @@ class TempoReferenceAdmin(RetainedAdmin):
                 form.base_fields[name].required = True
                 form.base_fields[name].help_text = (
                     "Admin-curated reference range used to estimate event tempo automatically. "
-                    "Enter both bounds; event creators never enter BPM."
+                    "Enter both bounds (maximum up to 200, or 200+); event creators never enter BPM."
                 )
+        if "bpm_min" in form.base_fields:
+            form.base_fields["bpm_min"].max_value = 200
+            form.base_fields["bpm_min"].widget.attrs["max"] = 200
         return form
 
 
 @admin.register(models.GenreCategory)
 class CategoryAdmin(TempoReferenceAdmin):
-    list_display = ("name", "color", "bpm_min", "bpm_max", "display_order")
+    form = CategoryForm
+    list_display = ("name", "color", "bpm_display", "display_order")
     search_fields = ("name",)
 
     def get_form(self, request, obj=None, **kwargs):
@@ -51,7 +55,7 @@ class CategoryAdmin(TempoReferenceAdmin):
 @admin.register(models.GenreTag)
 class TagAdmin(TempoReferenceAdmin):
     form = TagForm
-    list_display = ("name", "category", "bpm_min", "bpm_max")
+    list_display = ("name", "category", "bpm_display")
     list_filter = ("category",)
     search_fields = ("name",)
 
@@ -88,8 +92,7 @@ class EventAdmin(RetainedAdmin):
     def typical_tempo(self, obj):
         if not obj or not obj.pk:
             return "Calculated after saving the selected categories and tags."
-        estimate = services.tempo_estimate(obj)
-        return f"{estimate[0]}–{estimate[1]} BPM" if estimate else "Varies / insufficient reference data"
+        return services.tempo_display(obj)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "venue" and not request.user.has_perm("discovery.change_event"):

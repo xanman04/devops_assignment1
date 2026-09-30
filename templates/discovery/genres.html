@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% block content %}
 {% if category %}<h1><span class="genre" style="--genre:{{ category.color }}">{{ category.name }}</span></h1>
-{{ category.description|linebreaks }}<p>Reference tempo: {% if category.bpm_min %}{{ category.bpm_min }}–{{ category.bpm_max }} BPM{% else %}Varies{% endif %}</p>
-<h2>Subgenres</h2>{% for tag in tags %}<section class="card"><h3>{{ tag.name }}</h3>{{ tag.description|linebreaks }}</section>{% empty %}<p>No subgenres yet.</p>{% endfor %}
+{{ category.description|linebreaks }}<p>Reference tempo: {{ category.bpm_display }}</p>
+<h2>Subgenres</h2>{% for tag in tags %}<section class="card"><h3>{{ tag.name }}</h3><p>Reference tempo: {{ tag.bpm_display }}</p>{{ tag.description|linebreaks }}</section>{% empty %}<p>No subgenres yet.</p>{% endfor %}
 <h2>What does this music sound like?</h2>{% for reference in references %}<div class="card"><a href="{{ reference.url }}" target="_blank" rel="noopener noreferrer">{{ reference.title }} ↗</a><p>{{ reference.artist_credit }}</p>
 {% for genre in reference.categories.all %}<span class="genre" style="--genre:{{ genre.color }}">{{ genre.name }}</span>{% endfor %}
 {% for tag in reference.tags.all %}<span class="tag">{{ tag.name }}</span>{% endfor %}</div>{% empty %}<p>No listening references yet.</p>{% endfor %}

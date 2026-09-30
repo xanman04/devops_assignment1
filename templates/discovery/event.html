@@ -10,7 +10,7 @@
 {% timezone venue_zone %}<p>{{ event.starts_at|date:'D j M Y, H:i' }} – {{ event.ends_at|date:'D j M Y, H:i' }} ({{ event.venue.timezone }})</p>{% endtimezone %}
 <div class="tags">{% for category in event.categories.all %}<a class="genre" style="--genre:{{ category.color }}" href="{% url 'genre-detail' category.pk %}">{{ category.name }}</a>{% endfor %}
 {% for tag in event.tags.all %}<span class="tag">{{ tag.name }}</span>{% endfor %}</div>
-<p>Typical tempo estimate: {% if tempo %}{{ tempo.0 }}–{{ tempo.1 }} BPM{% else %}Varies{% endif %}</p>
+<p>Typical tempo estimate: {{ tempo }}</p>
 <div>{{ event.description|linebreaks }}</div>
 {% if event.ticket_url %}<p><a href="{{ event.ticket_url }}" target="_blank" rel="noopener noreferrer">Tickets at external provider ↗</a></p>{% endif %}
 {% if editor %}<div class="actions"><a href="{% url 'event-edit' event.pk %}">Edit event</a>

@@ -1,6 +1,7 @@
 """Validate public/admin inputs before service-backed saves."""
 from django import forms
 from datetime import datetime
+import re
 from zoneinfo import ZoneInfo
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -99,10 +100,43 @@ class GenreReferenceForm(ClassificationForm):
         fields = ["title", "artist_credit", "url", "kind", "display_order", "categories", "tags"]
 
 
-class TagForm(forms.ModelForm):
+class TempoRangeAdminForm(forms.ModelForm):
+    bpm_max = forms.CharField(widget=forms.TextInput(attrs={"placeholder": "180 or 200+", "inputmode": "text"}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk and self.instance.bpm_max is not None:
+            self.initial["bpm_max"] = f"{self.instance.bpm_max}{'+' if self.instance.bpm_max_open else ''}"
+
+    def clean_bpm_max(self):
+        value = self.cleaned_data["bpm_max"].strip()
+        if not re.fullmatch(r"[1-9][0-9]{0,2}\+?", value):
+            raise ValidationError("Enter a BPM maximum from 1 to 200, or 200+.")
+        number = int(value.rstrip("+"))
+        if number > 200 or (value.endswith("+") and number != 200):
+            raise ValidationError("The highest displayable maximum is 200+.")
+        return number
+
+    def clean(self):
+        data = super().clean()
+        if "bpm_max" in data:
+            raw = self.data.get(self.add_prefix("bpm_max"), str(data["bpm_max"]))
+            open_ended = str(raw).strip().endswith("+")
+            data["bpm_max_open"] = open_ended
+            self.instance.bpm_max_open = open_ended
+        return data
+
+
+class CategoryForm(TempoRangeAdminForm):
+    class Meta:
+        model = models.GenreCategory
+        fields = ["name", "color", "description", "display_order", "bpm_min", "bpm_max"]
+
+
+class TagForm(TempoRangeAdminForm):
     class Meta:
         model = models.GenreTag
-        fields = "__all__"
+        fields = ["category", "name", "description", "bpm_min", "bpm_max"]
 
     def clean(self):
         data = super().clean()

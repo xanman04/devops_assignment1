@@ -85,7 +85,7 @@ def event_detail(request, event_id):
     event = services.get_event(event_id=event_id, actor=request.user)
     return render(request, "discovery/event.html", {
         "event": event, "venue_zone": ZoneInfo(event.venue.timezone),
-        "tempo": services.tempo_estimate(event),
+        "tempo": services.tempo_display(event),
         "editor": request.user.is_authenticated and (request.user.pk == event.creator_id or services.can_manage(request.user, "discovery.change_event")),
         "following": request.user.is_authenticated and event.follows.filter(user=request.user).exists(),
         "public": services.public_events().filter(pk=event.pk).exists(),

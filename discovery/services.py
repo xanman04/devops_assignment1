@@ -99,7 +99,7 @@ def _venue_allowed(actor, venue):
 def save_category(*, actor, data, category_id=None):
     require_permission(actor, f"discovery.{'change' if category_id else 'add'}_genrecategory")
     category = GenreCategory.objects.get(pk=category_id) if category_id else GenreCategory()
-    _assign(category, data, {"name", "color", "description", "display_order", "bpm_min", "bpm_max"})
+    _assign(category, data, {"name", "color", "description", "display_order", "bpm_min", "bpm_max", "bpm_max_open"})
     category.full_clean()
     category.save()
     return category
@@ -117,7 +117,7 @@ def save_tag(*, actor, data, tag_id=None):
     tag = GenreTag.objects.get(pk=tag_id) if tag_id else GenreTag()
     if "category" in data:
         validate_tag_move(tag, data["category"].pk)
-    _assign(tag, data, {"category", "name", "description", "bpm_min", "bpm_max"})
+    _assign(tag, data, {"category", "name", "description", "bpm_min", "bpm_max", "bpm_max_open"})
     tag.full_clean()
     tag.save()
     return tag
@@ -277,7 +277,7 @@ def search_events(*, starts_at=None, ends_at=None, category_ids=(), tag_ids=(), 
     return events.distinct().order_by("starts_at", "id")
 
 
-def tempo_estimate(event):
+def _tempo_parts(event):
     """Envelope the selected musical components, using tag ranges before category defaults.
 
     A midpoint or average could describe a tempo that no selected genre actually uses.
@@ -288,13 +288,30 @@ def tempo_estimate(event):
     for category in event.categories.all():
         selected = [tag for tag in tags if tag.category_id == category.pk] or [category]
         for item in selected:
-            low, high = item.bpm_min, item.bpm_max
+            low, high, open_ended = item.bpm_min, item.bpm_max, item.bpm_max_open
             if low is None:
-                low, high = category.bpm_min, category.bpm_max
+                low, high, open_ended = category.bpm_min, category.bpm_max, category.bpm_max_open
             if low is None or high is None:
                 return None
-            ranges.append((low, high))
-    return (min(low for low, _ in ranges), max(high for _, high in ranges)) if ranges else None
+            ranges.append((low, high, open_ended))
+    return (min(low for low, _, _ in ranges), max(high for _, high, _ in ranges),
+            any(open_ended for _, _, open_ended in ranges)) if ranges else None
+
+
+def tempo_estimate(event):
+    parts = _tempo_parts(event)
+    return parts[:2] if parts else None
+
+
+def _format_tempo(parts):
+    if not parts:
+        return "Varies"
+    low, high, open_ended = parts
+    return f"{low}–{high}{'+' if open_ended else ''} BPM"
+
+
+def tempo_display(event):
+    return _format_tempo(_tempo_parts(event))
 
 
 def map_pins(events):
@@ -307,13 +324,15 @@ def map_pins(events):
             "longitude": float(venue.longitude), "categories": {}, "events": [],
         })
         categories = [{"id": c.pk, "name": c.name, "color": c.color} for c in event.categories.all()]
+        tempo = _tempo_parts(event)
         pin["categories"].update({c["id"]: c for c in categories})
         pin["events"].append({
             "id": event.pk, "title": event.title, "starts_at": event.starts_at.isoformat(),
             "ends_at": event.ends_at.isoformat(), "timezone": venue.timezone,
             "categories": categories,
             "tags": [{"id": t.pk, "name": t.name, "category_id": t.category_id} for t in event.tags.all()],
-            "tempo_estimate": tempo_estimate(event),
+            "tempo_estimate": tempo[:2] if tempo else None,
+            "tempo_display": _format_tempo(tempo),
         })
     for pin in pins.values():
         pin["categories"] = sorted(pin["categories"].values(), key=lambda c: c["id"])
