@@ -43,7 +43,7 @@ The Django home page uses the approved dark sidebar and grayscale Leaflet map. D
 
 - Events require one or more broad color categories and can have multiple detailed subgenre tags. Tempo is estimated from curated ranges, not supplied by event creators.
 
-In Django admin, enter each broad category color as `#RRGGBB` text and supply a typical BPM minimum and maximum for categories and subgenre tags. The maximum accepts `200+` for open-ended high tempos; ordinary numeric inputs must be 200 or below. A selected tag's range replaces its parent category's broad range for that component. With multiple tags or categories, the displayed estimate spans the lowest minimum to highest maximum and retains `+` if a selected component is open-ended. Updating a curated range updates existing events automatically; event BPM is never stored or entered by organizers. Tags imported without a fixed BPM range use their parent category range; classifications without either range display “Varies”.
+In Django admin, enter each broad category color as `#RRGGBB` text and supply a typical numeric BPM minimum and maximum for categories and subgenre tags. BPM maxima may exceed 200. A selected tag's range replaces its parent category's broad range for that component. With multiple tags or categories, the displayed estimate spans the lowest minimum to highest maximum. Updating a curated range updates existing events automatically; event BPM is never stored or entered by organizers. Tags imported without a fixed BPM range use their parent category range; classifications without either range display “Varies”.
 - Users can follow events independently of attendance or groups and receive in-app venue/time/cancellation updates.
 - Groups are optional company for solo attendees, not an attendance requirement or RSVP system.
 - Authors can edit/delete their own messages; admins can remove messages. Group removal permits rejoining; a separate group ban prevents it.
@@ -182,7 +182,7 @@ The supplied `discovery/fixtures/electronic_subgenres_v1.csv` contains 251 subge
 .venv/Scripts/python.exe manage.py import_subgenres
 ```
 
-The importer uses each CSV `pitch` as the tag description and its BPM columns as curated tempo references. It maps the CSV label `EBM / Industrial` to the existing `Industrial / EBM` category, displays six high-end ranges as `200+`, and leaves Drone's unspecified tempo blank so its parent Ambient / Experimental range applies. It does not create categories, change their colors, or copy research-source notes into the database. A repeat run leaves matching tags untouched and stops if an existing tag has been edited; `--update` explicitly replaces those edits with CSV values. The supplied classifications and descriptions have not been independently fact-checked.
+The importer uses each CSV `pitch` as the tag description and its BPM columns as curated tempo references. It maps the CSV label `EBM / Industrial` to the existing `Industrial / EBM` category, preserves all six ranges whose maxima exceed 200, and leaves Drone's unspecified tempo blank so its parent Ambient / Experimental range applies. The Hard Dance / Hardcore broad category remains at 150–200 BPM. It does not create categories, change their colors, or copy research-source notes into the database. A repeat run leaves matching tags untouched and stops if an existing tag has been edited; `--update` explicitly replaces those edits with CSV values. The supplied classifications and descriptions have not been independently fact-checked.
 
 ## Optional demo data
 

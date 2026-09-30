@@ -99,7 +99,7 @@ def _venue_allowed(actor, venue):
 def save_category(*, actor, data, category_id=None):
     require_permission(actor, f"discovery.{'change' if category_id else 'add'}_genrecategory")
     category = GenreCategory.objects.get(pk=category_id) if category_id else GenreCategory()
-    _assign(category, data, {"name", "color", "description", "display_order", "bpm_min", "bpm_max", "bpm_max_open"})
+    _assign(category, data, {"name", "color", "description", "display_order", "bpm_min", "bpm_max"})
     category.full_clean()
     category.save()
     return category
@@ -117,7 +117,7 @@ def save_tag(*, actor, data, tag_id=None):
     tag = GenreTag.objects.get(pk=tag_id) if tag_id else GenreTag()
     if "category" in data:
         validate_tag_move(tag, data["category"].pk)
-    _assign(tag, data, {"category", "name", "description", "bpm_min", "bpm_max", "bpm_max_open"})
+    _assign(tag, data, {"category", "name", "description", "bpm_min", "bpm_max"})
     tag.full_clean()
     tag.save()
     return tag
@@ -288,14 +288,13 @@ def _tempo_parts(event):
     for category in event.categories.all():
         selected = [tag for tag in tags if tag.category_id == category.pk] or [category]
         for item in selected:
-            low, high, open_ended = item.bpm_min, item.bpm_max, item.bpm_max_open
+            low, high = item.bpm_min, item.bpm_max
             if low is None:
-                low, high, open_ended = category.bpm_min, category.bpm_max, category.bpm_max_open
+                low, high = category.bpm_min, category.bpm_max
             if low is None or high is None:
                 return None
-            ranges.append((low, high, open_ended))
-    return (min(low for low, _, _ in ranges), max(high for _, high, _ in ranges),
-            any(open_ended for _, _, open_ended in ranges)) if ranges else None
+            ranges.append((low, high))
+    return (min(low for low, _ in ranges), max(high for _, high in ranges)) if ranges else None
 
 
 def tempo_estimate(event):
@@ -306,8 +305,8 @@ def tempo_estimate(event):
 def _format_tempo(parts):
     if not parts:
         return "Varies"
-    low, high, open_ended = parts
-    return f"{low}–{high}{'+' if open_ended else ''} BPM"
+    low, high = parts
+    return f"{low}–{high} BPM"
 
 
 def tempo_display(event):

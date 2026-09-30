@@ -27,11 +27,8 @@ class TempoReferenceAdmin(RetainedAdmin):
                 form.base_fields[name].required = True
                 form.base_fields[name].help_text = (
                     "Admin-curated reference range used to estimate event tempo automatically. "
-                    "Enter both bounds (maximum up to 200, or 200+); event creators never enter BPM."
+                    "Enter both numeric bounds; event creators never enter BPM."
                 )
-        if "bpm_min" in form.base_fields:
-            form.base_fields["bpm_min"].max_value = 200
-            form.base_fields["bpm_min"].widget.attrs["max"] = 200
         return form
 
 
@@ -66,7 +63,7 @@ class TagAdmin(TempoReferenceAdmin):
                 form.base_fields[field].required = False
             form.base_fields["bpm_max"].help_text = (
                 "Leave both bounds blank to use the parent category's BPM range, "
-                "or enter a tag-specific range up to 200/200+."
+                "or enter a tag-specific range."
             )
         return form
 

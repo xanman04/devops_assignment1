@@ -217,23 +217,23 @@ class DiscoveryServicesTests(TestCase):
         s.save_tag(actor=self.admin, tag_id=second.pk, data={"bpm_min": 118, "bpm_max": 122})
         self.assertEqual(s.tempo_estimate(Event.objects.get(pk=event.pk)), (115, 125))
 
-    def test_open_ended_tempo_follows_selected_tag_and_category(self):
+    def test_uncapped_tempo_follows_selected_tag_and_category(self):
         fast = s.save_tag(actor=self.admin, data={
             "category": self.house, "name": "Fast", "description": "Example",
-            "bpm_min": 150, "bpm_max": 200, "bpm_max_open": True,
+            "bpm_min": 150, "bpm_max": 300,
         })
         event = self.make_event()
         s.save_event(actor=self.owner, event_id=event.pk, data={},
                      category_ids=[self.house.pk], tag_ids=[self.afro.pk, fast.pk])
-        self.assertEqual(s.tempo_estimate(event), (115, 200))
-        self.assertEqual(s.tempo_display(event), "115–200+ BPM")
+        self.assertEqual(s.tempo_estimate(event), (115, 300))
+        self.assertEqual(s.tempo_display(event), "115–300 BPM")
         s.save_category(actor=self.admin, category_id=self.house.pk,
-                        data={"bpm_min": 110, "bpm_max": 200, "bpm_max_open": True})
-        self.assertEqual(s.tempo_display(event), "115–200+ BPM")
+                        data={"bpm_min": 110, "bpm_max": 220})
+        self.assertEqual(s.tempo_display(event), "115–300 BPM")
         s.save_event(actor=self.owner, event_id=event.pk, data={},
                      category_ids=[self.house.pk], tag_ids=[])
-        self.assertEqual(s.tempo_display(event), "110–200+ BPM")
-        self.assertContains(self.client.get(f"/events/{event.pk}/"), "110–200+ BPM")
+        self.assertEqual(s.tempo_display(event), "110–220 BPM")
+        self.assertContains(self.client.get(f"/events/{event.pk}/"), "110–220 BPM")
 
     def test_pins_count_only_matching_events_without_private_fields(self):
         self.make_event()
@@ -393,7 +393,7 @@ class DiscoveryServicesTests(TestCase):
         tag_form = self.client.get("/admin/discovery/genretag/add/").context["adminform"].form
         self.assertTrue(tag_form.fields["bpm_min"].required)
         self.assertTrue(tag_form.fields["bpm_max"].required)
-        self.assertEqual(tag_form.fields["bpm_max"].widget.input_type, "text")
+        self.assertEqual(tag_form.fields["bpm_max"].widget.input_type, "number")
         response = self.client.post("/admin/discovery/genretag/add/", {
             "name": "Deep", "category": self.house.pk, "description": "Deep house",
             "bpm_min": 115, "bpm_max": 125, "_save": "Save",
@@ -406,9 +406,9 @@ class DiscoveryServicesTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(self.house.listening_references.get().tags.get(), self.afro)
 
-    def test_admin_accepts_200_plus_and_rejects_higher_numbers(self):
+    def test_admin_accepts_numeric_bpm_above_200_and_rejects_plus(self):
         self.client.force_login(self.admin)
-        for maximum in ("201", "201+", "180+"):
+        for maximum in ("201+", "180+"):
             with self.subTest(maximum=maximum):
                 response = self.client.post("/admin/discovery/genrecategory/add/", {
                     "name": "Fast", "color": "#AA33BB", "description": "Fast music",
@@ -418,29 +418,28 @@ class DiscoveryServicesTests(TestCase):
                 self.assertFalse(response.context["adminform"].form.is_valid())
         response = self.client.post("/admin/discovery/genrecategory/add/", {
             "name": "Fast", "color": "#AA33BB", "description": "Fast music",
-            "display_order": 0, "bpm_min": 160, "bpm_max": "200+", "_save": "Save",
+            "display_order": 0, "bpm_min": 160, "bpm_max": "200", "_save": "Save",
         })
         self.assertEqual(response.status_code, 302)
         category = s.GenreCategory.objects.get(name="Fast")
-        self.assertEqual((category.bpm_min, category.bpm_max, category.bpm_max_open), (160, 200, True))
+        self.assertEqual((category.bpm_min, category.bpm_max), (160, 200))
         edit = self.client.get(f"/admin/discovery/genrecategory/{category.pk}/change/")
-        self.assertEqual(edit.context["adminform"].form["bpm_max"].value(), "200+")
+        self.assertEqual(edit.context["adminform"].form["bpm_max"].value(), 200)
         response = self.client.post("/admin/discovery/genretag/add/", {
             "name": "Faster", "category": category.pk, "description": "Example",
-            "bpm_min": 180, "bpm_max": "200+", "_save": "Save",
+            "bpm_min": 180, "bpm_max": "300", "_save": "Save",
         })
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(GenreTag.objects.get(name="Faster").bpm_max_open)
+        self.assertEqual(GenreTag.objects.get(name="Faster").bpm_max, 300)
         genre_page = self.client.get(f"/genres/{category.pk}/")
-        self.assertContains(genre_page, "160–200+ BPM")
-        self.assertContains(genre_page, "180–200+ BPM")
+        self.assertContains(genre_page, "160–200 BPM")
+        self.assertContains(genre_page, "180–300 BPM")
         response = self.client.post(f"/admin/discovery/genrecategory/{category.pk}/change/", {
             "name": "Fast", "color": "#AA33BB", "description": "Fast music",
             "display_order": 0, "bpm_min": 160, "bpm_max": "190", "_save": "Save",
         })
         self.assertEqual(response.status_code, 302)
         category.refresh_from_db()
-        self.assertFalse(category.bpm_max_open)
         self.assertEqual(category.bpm_max, 190)
 
     def test_limited_report_reviewer_cannot_hide_events(self):

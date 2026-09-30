@@ -36,7 +36,11 @@ class SubgenreImportTests(TestCase):
         self.assertEqual(GenreTag.objects.get(category__name="House", name="Deep House").description, pitch)
         self.assertEqual(GenreTag.objects.get(category__name="Industrial / EBM", name="EBM").category.name,
                          "Industrial / EBM")
-        self.assertEqual(GenreTag.objects.filter(bpm_max_open=True).count(), 6)
+        self.assertEqual(GenreTag.objects.get(category__name="Hard Dance / Hardcore",
+                                             name="Frenchcore").bpm_max, 220)
+        self.assertEqual(GenreTag.objects.get(category__name="Hard Dance / Hardcore",
+                                             name="Terror / Terrorcore").bpm_max, 300)
+        self.assertEqual(GenreTag.objects.get(category__name="Psy-Trance", name="Psycore").bpm_max, 300)
         drone = GenreTag.objects.get(category__name="Ambient / Experimental", name="Drone")
         self.assertIsNone(drone.bpm_min)
         self.assertIsNone(drone.bpm_max)

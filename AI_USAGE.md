@@ -1,5 +1,7 @@
 # AI usage log
 
+September 30 numeric BPM restoration (author review pending): the author reversed the `200+` cap and requested the true CSV maxima for affected subgenres while keeping Hard Dance / Hardcore's broad maximum at 200. Codex removed the open-ended flag and cap from the model, admin, importer, and display logic. A migration restores only the six previously capped tag ranges and removes the category's plus notation. Author own-word explanation: TODO — explain why the category can end at 200 while a selected subgenre gives a higher estimate.
+
 September 30 curated subgenre import (author review pending): the author provided a CSV and asked Codex to populate the genre tags without entering them individually. Codex added a repeatable import command and a committed copy of the 251-row source, mapped one category-name difference, stored `pitch` as the description, capped six open-ended ranges at `200+`, and used the broad category BPM fallback for Drone at the author's request. Existing category colors and records were preserved. Author own-word explanation: TODO — explain why the importer requires existing categories, how it protects manually edited tags, and why Drone inherits the broad category range.
 
 ## Desktop visual prototype

@@ -20,18 +20,15 @@ class Timestamped(models.Model):
 
 
 class TempoRange(models.Model):
-    bpm_min = models.PositiveSmallIntegerField(null=True, blank=True)
-    bpm_max = models.PositiveSmallIntegerField(null=True, blank=True)
-    bpm_max_open = models.BooleanField(default=False)
+    bpm_min = models.PositiveIntegerField(null=True, blank=True)
+    bpm_max = models.PositiveIntegerField(null=True, blank=True)
 
     class Meta:
         abstract = True
         constraints = [models.CheckConstraint(
-            condition=(Q(bpm_min__isnull=True, bpm_max__isnull=True, bpm_max_open=False) |
+            condition=(Q(bpm_min__isnull=True, bpm_max__isnull=True) |
                        Q(bpm_min__isnull=False, bpm_max__isnull=False,
-                         bpm_min__gt=0, bpm_min__lte=200,
-                         bpm_max__gte=F("bpm_min"), bpm_max__lte=200) &
-                       (Q(bpm_max_open=False) | Q(bpm_max=200))),
+                         bpm_min__gt=0, bpm_max__gte=F("bpm_min"))),
             name="%(app_label)s_%(class)s_bpm_range",
         )]
 
@@ -39,7 +36,7 @@ class TempoRange(models.Model):
     def bpm_display(self):
         if self.bpm_min is None or self.bpm_max is None:
             return "Varies"
-        return f"{self.bpm_min}–{self.bpm_max}{'+' if self.bpm_max_open else ''} BPM"
+        return f"{self.bpm_min}–{self.bpm_max} BPM"
 
 
 class GenreCategory(TempoRange):

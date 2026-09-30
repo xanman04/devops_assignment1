@@ -55,17 +55,10 @@ class SchemaTests(TestCase):
                 ))
         GenreCategory.objects.create(name="Unknown", color="#aaaaaa", description="Unknown")
 
-    def test_open_ended_bpm_requires_200_cap(self):
-        for low, high, open_ended in ((100, 201, False), (201, 201, False),
-                                       (100, 190, True), (None, None, True)):
-            with self.subTest(low=low, high=high, open_ended=open_ended):
-                self.assert_database_rejects(lambda: GenreCategory.objects.create(
-                    name="Invalid", color="#aaaaaa", description="Example",
-                    bpm_min=low, bpm_max=high, bpm_max_open=open_ended,
-                ))
+    def test_bpm_maximum_can_exceed_200(self):
         category = GenreCategory.objects.create(name="Fast", color="#aaaaaa", description="Example",
-                                                bpm_min=160, bpm_max=200, bpm_max_open=True)
-        self.assertEqual(category.bpm_display, "160–200+ BPM")
+                                                bpm_min=160, bpm_max=300)
+        self.assertEqual(category.bpm_display, "160–300 BPM")
 
     def test_subgenre_case_uniqueness_within_category(self):
         category = GenreCategory.objects.create(name="House", color="#0000ff", description="House")

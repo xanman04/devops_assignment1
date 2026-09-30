@@ -1,7 +1,6 @@
 """Import the author-curated electronic subgenre CSV into existing categories."""
 
 import csv
-import re
 from pathlib import Path
 
 from django.core.exceptions import ValidationError
@@ -32,22 +31,18 @@ def read_rows(path):
 
 def parse_bpm(row, line):
     raw_max = (row["bpm_max"] or "").strip()
-    if not re.fullmatch(r"[0-9]+\+?", raw_max):
-        raise CommandError(f"Row {line}: BPM maximum must be an integer or 200+.")
     try:
         minimum = int(row["bpm_min"].strip())
-        maximum = int(raw_max.rstrip("+"))
+        maximum = int(raw_max)
     except (ValueError, AttributeError) as error:
-        raise CommandError(f"Row {line}: BPM bounds must be integers (maximum may be 200+).") from error
+        raise CommandError(f"Row {line}: BPM bounds must be integers.") from error
     if minimum == 0:
         if "no fixed BPM" not in (row.get("bpm_note") or ""):
             raise CommandError(f"Row {line}: zero BPM requires an explicit no-fixed-BPM note.")
-        return None, None, False
-    if minimum < 1 or minimum > 200 or maximum < minimum or maximum < 1:
+        return None, None
+    if minimum < 1 or maximum < minimum:
         raise CommandError(f"Row {line}: invalid BPM range {minimum}–{raw_max}.")
-    if raw_max.endswith("+") and maximum != 200:
-        raise CommandError(f"Row {line}: only 200+ is supported as an open maximum.")
-    return minimum, min(maximum, 200), maximum > 200 or raw_max.endswith("+")
+    return minimum, maximum
 
 
 class Command(BaseCommand):
@@ -80,9 +75,9 @@ class Command(BaseCommand):
             if key in seen:
                 raise CommandError(f"Row {line}: duplicate subgenre {name!r} in {category.name!r}.")
             seen.add(key)
-            low, high, open_ended = parse_bpm(row, line)
+            low, high = parse_bpm(row, line)
             values = {"name": name, "description": description, "bpm_min": low,
-                      "bpm_max": high, "bpm_max_open": open_ended}
+                      "bpm_max": high}
             tag = existing.get(key)
             changed = tag is not None and any(getattr(tag, field) != value for field, value in values.items())
             if changed and not options["update"]:
@@ -113,6 +108,5 @@ class Command(BaseCommand):
             f"{status} {created} tags; {'would update' if options['dry_run'] else 'updated'} "
             f"{updated}; unchanged {unchanged}; source rows {len(prepared)}."
         ))
-        self.stdout.write(f"Open-ended 200+ ranges: {sum(values['bpm_max_open'] for _, _, values, _ in prepared)}; "
-                          f"category BPM fallbacks: {sum(values['bpm_min'] is None for _, _, values, _ in prepared)}.")
+        self.stdout.write(f"Category BPM fallbacks: {sum(values['bpm_min'] is None for _, _, values, _ in prepared)}.")
         self.stdout.write("CSV pitch was used verbatim as the tag description (after trimming outer whitespace).")
