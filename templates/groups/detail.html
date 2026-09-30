@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{{ group.name }} · Music Event Discovery{% endblock %}
+{% block title %}{{ group.name }} · Bassline{% endblock %}
 {% block content %}
 <h1>{{ group.name }}</h1>
 {% if event_access %}<p><a href="{% url 'event-detail' group.event_id %}">{{ group.event.title }}</a></p>{% else %}<p class="notice">Event details are currently unavailable. Existing members can still coordinate here.</p>{% endif %}

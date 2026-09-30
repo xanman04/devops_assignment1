@@ -473,3 +473,18 @@ class DiscoveryServicesTests(TestCase):
         form = EventForm(instance=event, data=self.event_admin_payload(venue=venue.pk))
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data["starts_at"].astimezone(dt_timezone.utc), datetime(2026, 10, 2, 0, tzinfo=dt_timezone.utc))
+
+    def test_discover_finds_ampersand_genre_with_and(self):
+        category = s.save_category(actor=self.admin, data={
+            "name": "Drum & Bass", "color": "#FF7A00", "description": "Fast rhythms.",
+            "bpm_min": 160, "bpm_max": 180,
+        })
+        event = s.save_event(actor=self.owner, data={
+            "venue": self.venue, "title": "The Night Shift", "description": "A late set.",
+            "starts_at": self.start, "ends_at": self.start + timedelta(hours=5),
+        }, category_ids=[category.pk], tag_ids=[])
+        response = self.client.get("/discover/", {"q": "drum and bass"})
+        self.assertEqual(response.status_code, 200)
+        sections = {section["id"]: section["cards"] for section in response.context["sections"]}
+        self.assertIn("Drum & Bass", [card["title"] for card in sections["genres"]])
+        self.assertIn(event.title, [card["title"] for card in sections["events"]])

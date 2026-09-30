@@ -1,10 +1,10 @@
-# Music Event Discovery
+# Bassline
 
 A music-first event discovery application: find nearby events by genre and date, hear what their music sounds like through listening references, and find people to attend with.
 
 The idea comes from difficulty discovering smaller and niche events. It covers music broadly, including electronic music, rock, and jazz. Attendees and independent event organizers are the intended users.
 
-**Status:** discovery/group services and Django workflows are implemented. The map and browsing layout are now connected to Django at `/`, `/discover/`, `/my-events/`, and `/groups/`. The professor approved the proposal, as reported by the author on September 24. Product name is provisional.
+**Status:** discovery/group services and Django workflows are implemented. The map and browsing layout are now connected to Django at `/`, `/discover/`, `/my-events/`, and `/groups/`. The professor approved the proposal, as reported by the author on September 24. Bassline is the current working title.
 
 ## Planned features
 
@@ -19,6 +19,10 @@ Pins now use larger teardrops anchored at their tips. Selecting another pin repl
 Discover displays separate horizontal rows for Events, Genres, DJs, and Artists. My events displays Tracked events and Your listings together; Groups displays My groups and Requests together. Scroll each carousel or use its previous/next buttons, and click a placeholder card to open a layout preview. All cards and request statuses are visual examples with no real account activity behind them.
 
 The Django home page uses the approved dark sidebar and MapLibre vector map. Date controls and searchable category/subgenre chips feed the existing public map API. Multiple genres match either or both; selecting subgenres narrows their selected parent genre, while other selected genres remain included. Subgenres show only those under selected categories, or all when no category is selected. Clicking a venue pin opens a floating panel with real matching events. The sidebar search routes to Discover on every page and searches public events, venue names, broad genres, and curated artist/DJ references. Discover reads those records; My events reads the signed-in user's follows/listings; Groups reads their memberships/requests. The full activity page remains available for older records. Your 65px filter bottom padding is preserved. Restart `app.py` after static-file edits because WhiteNoise caches file metadata; when using `manage.py runserver`, run `manage.py collectstatic --noinput` before restarting.
+
+The live map keeps additional tile zoom levels in memory and retains pending lower-detail tiles during zooming so revisiting an area can render more smoothly. New areas still depend on tile-provider and network response times.
+
+The interface bundles the Funnel Display variable font in `static/fonts/`, with its SIL Open Font License beside the font file. Change the `font-family` in `static/app.css` to trial another typeface; the standalone `/ui/` prototype has a separate setting in `static/prototype/style.css`.
 
 ### Event discovery
 
@@ -204,6 +208,22 @@ Adds five fictional users (`demo_organizer`, `demo_alex`, `demo_sam`, `demo_jo`,
 Optional scenarios include six listings (four public/upcoming, one awaiting venue approval, one cancelled), overlapping events, two groups, a pending request, an approved switch offer, messages, follows, and notifications. Event/group transitions use domain services. Synthetic venue review states and account fixtures use direct validated model creation; they do not claim a real review occurred. Genre references/BPM/colors remain unchanged.
 
 Unchanged reruns create no duplicates, reset no passwords, and preserve demo profiles, venue edits, memberships, and requests. Reserved usernames require their original `@example.invalid` demo email marker; conflicting accounts abort without changes. Renaming/removing fixtures or editing those markers can require manual reconciliation. No reset/deletion command is included. `--refresh-dates` updates matching fixture event times with normal follower notices; classification/cancellation remain unchanged. All seed writes roll back together on failure. SQLite demo data stays ignored by Git.
+
+### Madrid classroom listings
+
+After running `seed_demo` and importing the curated electronic subgenres, run:
+
+```powershell
+.venv/Scripts/python.exe manage.py seed_madrid_demo
+# Later, explicitly move existing fixture dates into the upcoming two weeks:
+.venv/Scripts/python.exe manage.py seed_madrid_demo --refresh-dates
+```
+
+This adds **24 fictional events at 14 real Madrid venues**. The command uses the five existing `demo_*` accounts as organizers; it creates no users, genres, tags, ticket links, or real-event copies. It assigns organizers deterministically so reruns do not change ownership. Existing event edits, venue edits, passwords, and profiles are preserved, and reruns add no duplicate listings. The `--refresh-dates` option uses the normal event service, so followers receive ordinary date-change notifications. Events are placed on typical late-night, early-evening and Sunday listening slots, all in `Europe/Madrid`. Event titles, lineups, descriptions and 24 bundled fictional flyers are original. Four venues have one single-category event each, producing solid-color pins alongside blended multi-genre pins. The in-app demo labels are hidden so the interface can be evaluated as a realistic product; these nights are still invented, and nobody should travel to a venue expecting one. The map opens on Madrid if there is no saved camera or usable browser location; normal near-me centering still takes precedence when available.
+
+On rerun, descriptions carrying the old in-app disclaimer are replaced with the clean fixture description. Other event edits are preserved.
+
+Venue names and addresses were checked against the [RA Madrid club directory](https://ra.co/clubs/es/madrid), [Madrid tourism listings](https://www.esmadrid.com/noche/clamores), and [Goya Social Club](https://goyasocialclub.com/contact/) and [Lula Club](https://lula.club/contact) venue pages. Coordinates came from [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org/) venue matches or street-address matches on September 30, 2026. Street-address coordinates can differ from the actual entrance. These records are approved only as classroom fixtures; that status does not imply organizer affiliation, a real event, or a safety assessment. No RA/Fever listing text, lineup, ticket URL, or poster was imported. Four original backgrounds were made with the built-in image-generation tool, then `tools/build_demo_posters.py` added the invented titles and lineups to produce 24 compressed WebP flyers. `Event.demo_poster` stores a bundled static path solely for these fixtures; general event-poster uploads remain future work.
 
 ## Testing status
 

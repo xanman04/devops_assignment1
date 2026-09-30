@@ -22,7 +22,7 @@
     document.body.className='home-layout';
     mapPage.hidden=false;
     filters.hidden=false;
-    document.title='Music Event Discovery';
+    document.title='Bassline';
     document.getElementById('site-search').value='';
     updateNav('/');
     if(push)history.pushState({},'',url);

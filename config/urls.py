@@ -9,6 +9,10 @@ from groups import pages as groups
 from notifications import views as notices
 from .pages import activity, my_events, my_groups
 
+admin.site.site_header = "Bassline administration"
+admin.site.site_title = "Bassline admin"
+admin.site.index_title = "Bassline records"
+
 
 urlpatterns = [
     path("ui/", RedirectView.as_view(url="/static/prototype/index.html", permanent=False), name="ui-prototype"),

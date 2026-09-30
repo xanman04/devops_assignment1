@@ -114,6 +114,7 @@ class Event(Timestamped):
     venue = models.ForeignKey(Venue, on_delete=models.PROTECT, related_name="events")
     title = models.CharField(max_length=200)
     description = models.TextField()
+    demo_poster = models.CharField(max_length=120, blank=True, default="", help_text="Bundled event poster path.")
     starts_at = models.DateTimeField(db_index=True)
     ends_at = models.DateTimeField(db_index=True)
     ticket_url = models.URLField(max_length=2048, blank=True, validators=[http_url])

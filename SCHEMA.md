@@ -66,6 +66,7 @@ Users select an approved venue or propose a new one by name and map position. On
 | venue | Venue FK |
 | title | String(200) |
 | description | Text |
+| demo_poster | Optional bundled static artwork path for a fictional classroom fixture; not a general user-upload field |
 | starts_at, ends_at | Datetimes; end strictly after start |
 | ticket_url | Optional URL, 2048 characters |
 | cancelled_at | Optional datetime; populated means cancelled |

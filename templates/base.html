@@ -3,9 +3,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Music Event Discovery{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'app.css' %}">
-  <link rel="stylesheet" href="{% static 'live.css' %}">
+  <title>{% block title %}Bassline{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'app.css' %}?v=20260930c">
+  <link rel="stylesheet" href="{% static 'live.css' %}?v=20261001a">
   {% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
@@ -22,8 +22,8 @@
 </defs></svg>
 <div class="live-shell">
   <aside class="live-sidebar">
-    <a class="live-brand" href="{% url 'home' %}">Music Event Discovery<span aria-hidden="true">•</span></a>
-    <form class="live-search" action="{% url 'discover' %}" method="get" role="search"><label for="site-search">Search Discover</label><input id="site-search" name="q" type="search" placeholder="Events, venues & music" value="{{ query|default:'' }}"><button aria-label="Search Discover"><svg class="live-icon" aria-hidden="true"><use href="#icon-search"/></svg></button></form>
+    <a class="live-brand" href="{% url 'home' %}">Bassline</a>
+    <form class="live-search" action="{% url 'discover' %}" method="get" role="search"><label for="site-search">Search Discover</label><input id="site-search" name="q" type="search" placeholder="Events, venues, music…" value="{{ query|default:'' }}"><button aria-label="Search Discover"><svg class="live-icon" aria-hidden="true"><use href="#icon-search"/></svg></button></form>
     <nav class="live-nav" aria-label="Main navigation">
       <a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}aria-current="page"{% endif %}><svg class="live-icon" aria-hidden="true"><use href="#icon-near"/></svg>Near me</a>
       <a href="{% url 'discover' %}" {% if request.resolver_match.url_name == 'discover' or request.resolver_match.url_name == 'genres' or request.resolver_match.url_name == 'genre-detail' %}aria-current="page"{% endif %}><svg class="live-icon" aria-hidden="true"><use href="#icon-discover"/></svg>Discover</a>
@@ -42,6 +42,6 @@
   <main id="main-content" class="live-main">{% block content %}{% endblock %}</main>
 </div>
 <script src="{% static 'browse.js' %}" defer></script>
-<script src="{% static 'navigation.js' %}" defer></script>
+<script src="{% static 'navigation.js' %}?v=20260930b" defer></script>
 {% block scripts %}{% endblock %}
 </body></html>

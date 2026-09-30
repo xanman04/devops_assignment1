@@ -32,4 +32,4 @@
   <noscript><section class="live-no-script"><h2>Upcoming public events</h2>{% for event in events %}<p><a href="{% url 'event-detail' event.pk %}">{{ event.title }}</a> · {{ event.venue.name }}</p>{% empty %}<p>No upcoming public events.</p>{% endfor %}</section></noscript>
 </section>
 {% endblock %}
-{% block scripts %}<script type="module" src="{% static 'map.js' %}"></script>{% endblock %}
+{% block scripts %}<script type="module" src="{% static 'map.js' %}?v=20260930g"></script>{% endblock %}

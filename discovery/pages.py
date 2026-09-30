@@ -1,3 +1,4 @@
+import re
 from zoneinfo import ZoneInfo
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
@@ -26,7 +27,31 @@ def _event_card(event):
     local_start = event.starts_at.astimezone(ZoneInfo(event.venue.timezone))
     category = next(iter(event.categories.all()), None)
     return {"title": event.title, "subtitle": f"{event.venue.name} · {local_start:%d %b %Y %H:%M}",
-            "href": f"/events/{event.pk}/", "color": category.color if category else "#9ca0a9", "symbol": "events"}
+            "href": f"/events/{event.pk}/", "color": category.color if category else "#9ca0a9", "symbol": "events",
+            "poster": event.demo_poster}
+
+
+def _first_sentence(description):
+    return re.split(r"(?<=[.!?])\s+", description.strip(), maxsplit=1)[0]
+
+
+def _search_variants(query):
+    # People commonly type "and" for the ampersand used in curated genre names.
+    return {query, re.sub(r"\band\b", "&", query, flags=re.IGNORECASE), query.replace("&", "and")}
+
+
+GENRE_ART = {
+    "Afro Electronic": "percussion", "Ambient / Experimental": "atmosphere",
+    "Bass / Club": "speaker", "Brazilian Funk": "percussion",
+    "Breaks / Breakbeat": "breakbeat", "Dance / Pop": "spark",
+    "Drum & Bass": "breakbeat", "Dubstep / 140": "speaker",
+    "Electro": "circuit", "Hard Dance / Hardcore": "shards",
+    "Hard Techno": "shards", "House": "vinyl", "Indie Dance": "strings",
+    "Industrial / EBM": "industrial", "Latin Electronic": "percussion",
+    "Mainstage / Commercial EDM": "spotlight", "Nu Disco / Disco": "disco",
+    "Psy-Trance": "spiral", "Techno": "circuit", "Trance": "horizon",
+    "Trap / Future Bass": "synth", "UK Garage / Bassline": "breakbeat",
+}
 
 
 @endpoint
@@ -37,10 +62,17 @@ def discover(request):
     event_query = services.search_events()
     reference_query = models.GenreListeningReference.objects.all()
     if query:
-        category_query = category_query.filter(Q(name__icontains=query) | Q(description__icontains=query))
-        event_query = event_query.filter(Q(title__icontains=query) | Q(venue__name__icontains=query) |
-                                         Q(categories__name__icontains=query) | Q(tags__name__icontains=query)).distinct()
-        reference_query = reference_query.filter(Q(title__icontains=query) | Q(artist_credit__icontains=query))
+        category_matches = Q()
+        event_matches = Q()
+        reference_matches = Q()
+        for term in _search_variants(query):
+            category_matches |= Q(name__icontains=term) | Q(description__icontains=term)
+            event_matches |= (Q(title__icontains=term) | Q(venue__name__icontains=term) |
+                              Q(categories__name__icontains=term) | Q(tags__name__icontains=term))
+            reference_matches |= Q(title__icontains=term) | Q(artist_credit__icontains=term)
+        category_query = category_query.filter(category_matches)
+        event_query = event_query.filter(event_matches).distinct()
+        reference_query = reference_query.filter(reference_matches)
     categories = list(category_query[:24])
     events = list(event_query.select_related("venue").prefetch_related("categories")[:24])
     references = list(reference_query.order_by("display_order", "id")[:200])
@@ -59,7 +91,8 @@ def discover(request):
     sections = [
         {"id": "events", "title": "Events", "description": "Upcoming public events", "cards": [_event_card(e) for e in events], "empty": "No public events yet."},
         {"id": "genres", "title": "Genres", "description": "Colors match the map pins",
-         "cards": [{"title": c.name, "subtitle": c.description[:90], "href": f"/genres/{c.pk}/", "color": c.color, "symbol": "discover", "genre": True} for c in categories],
+         "cards": [{"title": c.name, "subtitle": _first_sentence(c.description), "href": f"/genres/{c.pk}/",
+                    "color": c.color, "genre": True, "motif": GENRE_ART.get(c.name, "wave")} for c in categories],
          "empty": "No curated genres yet."},
         {"id": "djs", "title": "DJs", "description": "Curated sets and listening references", "cards": credit_cards({"set"}), "empty": "No curated DJ sets yet."},
         {"id": "artists", "title": "Artists", "description": "Curated tracks and artist pages", "cards": credit_cards({"track", "artist_page"}), "empty": "No curated artist references yet."},
@@ -85,6 +118,7 @@ def event_detail(request, event_id):
     event = services.get_event(event_id=event_id, actor=request.user)
     return render(request, "discovery/event.html", {
         "event": event, "venue_zone": ZoneInfo(event.venue.timezone),
+        "event_tags": event.tags.select_related("category"),
         "tempo": services.tempo_display(event),
         "editor": request.user.is_authenticated and (request.user.pk == event.creator_id or services.can_manage(request.user, "discovery.change_event")),
         "following": request.user.is_authenticated and event.follows.filter(user=request.user).exists(),

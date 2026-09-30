@@ -21,17 +21,20 @@ import { Map as MapLibreMap, Marker } from 'maplibre-gl';
   const today=new Date();
   const start=form.elements.start,end=form.elements.end;
   start.value=localDate(today);end.value=localDate(addDays(today,14));
+  const cameraKey='bassline-map-camera-v2';
   let savedCamera;
-  try{savedCamera=JSON.parse(sessionStorage.getItem('music-map-camera'));}catch{savedCamera=null;}
+  try{savedCamera=JSON.parse(sessionStorage.getItem(cameraKey));}catch{savedCamera=null;}
   const validCamera=Array.isArray(savedCamera?.center)&&savedCamera.center.length===2&&
     savedCamera.center.every(Number.isFinite)&&Math.abs(savedCamera.center[0])<=180&&
     Math.abs(savedCamera.center[1])<=90&&savedCamera.zoom>=1&&savedCamera.zoom<=20;
   const map=new MapLibreMap({container:element,style:'https://tiles.openfreemap.org/styles/dark',
-    center:validCamera?savedCamera.center:[2.3522,48.8566],zoom:validCamera?savedCamera.zoom:11,
-    minZoom:1,attributionControl:true});
+    center:validCamera?savedCamera.center:[-3.72,40.40],zoom:validCamera?savedCamera.zoom:10.5,
+    minZoom:1,attributionControl:true,
+    // Keep more nearby zoom levels available when the user reverses a zoom gesture.
+    maxTileCacheZoomLevels:8,cancelPendingTileRequestsWhileZooming:false});
   const markers=new Map();
   let locationDot,currentLocation;
-  let timer,controller,selectedVenueId=null,lastRefresh=0;
+  let timer,controller,selectedVenueId=null,lastRefresh=0,lastFilterKey=null;
   const node=(tag,value)=>{const item=document.createElement(tag);item.textContent=value;return item;};
   function eventLink(event) {const link=node('a',event.title);link.href=`/events/${event.id}/`;return link;}
   function eventTime(event) {
@@ -58,8 +61,11 @@ import { Map as MapLibreMap, Marker } from 'maplibre-gl';
       const color=getComputedStyle(chip).getPropertyValue('--genre').trim();
       if(/^#[0-9a-f]{6}$/i.test(color)){
         const channels=[1,3,5].map(index=>parseInt(color.slice(index,index+2),16));
+        const brightness=channels[0]*0.299+channels[1]*0.587+channels[2]*0.114;
+        const lift=brightness<70?0.38:brightness<120?0.2:0;
+        chip.style.setProperty('--chip-outline',`rgb(${channels.map(channel=>Math.round(channel+(255-channel)*lift)).join(',')})`);
         chip.style.setProperty('--chip-selected-ink',
-          channels[0]*0.299+channels[1]*0.587+channels[2]*0.114<130?'#edf0f5':'#262932');
+          brightness<130?'#edf0f5':'#262932');
       }
     }
     for(const chip of document.querySelectorAll('#subgenre-choices .filter-chip')) {
@@ -78,12 +84,18 @@ import { Map as MapLibreMap, Marker } from 'maplibre-gl';
       const article=document.createElement('article');
       article.append(eventLink(event),node('p',eventTime(event)));
       const tags=document.createElement('div');tags.className='tags';
+      const categoryColors=new Map(event.categories.map(category=>[category.id,category.color]));
       for(const category of event.categories){
         const link=node('a',category.name);link.className='genre';link.href=`/genres/${category.id}/`;
         if(/^#[0-9a-f]{6}$/i.test(category.color)) link.style.setProperty('--genre',category.color);
         tags.append(link);
       }
-      for(const tag of event.tags){const label=node('span',tag.name);label.className='tag';tags.append(label);}
+      for(const tag of event.tags){
+        const label=node('span',tag.name);label.className='tag';
+        const color=categoryColors.get(tag.category_id);
+        if(/^#[0-9a-f]{6}$/i.test(color||''))label.style.setProperty('--genre',color);
+        tags.append(label);
+      }
       article.append(tags);rows.append(article);
     }
     panel.style.borderTopColor=venue.categories[0]?.color || '#9da5b4';
@@ -113,17 +125,24 @@ import { Map as MapLibreMap, Marker } from 'maplibre-gl';
       if(broadCategories.length)query.set('categories',broadCategories.join(','));
       if(selectedTags.length)query.set('tags',selectedTags.join(','));
       query.set('match','any');
+      const filterKey=query.toString();
       const bounds=map.getBounds(),wrap=value=>((value+180)%360+360)%360-180;
-      const wide=bounds.getEast()-bounds.getWest()>=360;
-      query.set('bounds',[Math.max(-90,bounds.getSouth()),wide?-180:wrap(bounds.getWest()),Math.min(90,bounds.getNorth()),wide?180:wrap(bounds.getEast())].join(','));
+      const south=bounds.getSouth(),north=bounds.getNorth(),west=bounds.getWest(),east=bounds.getEast();
+      const longitudeSpan=east-west;
+      // At street-level zoom, still preload roughly the neighboring districts.
+      const latitudePad=Math.max((north-south)*0.75,0.12);
+      const longitudePad=Math.max(longitudeSpan*0.75,0.18);
+      const wide=longitudeSpan+2*longitudePad>=360;
+      query.set('bounds',[Math.max(-90,south-latitudePad),wide?-180:wrap(west-longitudePad),
+        Math.min(90,north+latitudePad),wide?180:wrap(east+longitudePad)].join(','));
       const response=await fetch(`${element.dataset.endpoint}?${query}`,{signal:active.signal});
       const payload=await response.json();
       if(!response.ok)throw new Error((payload.errors||[payload.error||'Unable to load events.']).join(' '));
       resultItems.replaceChildren();
-      let count=0,selected=null;
-      const visible=new Set();
+      let count=0,visibleVenueCount=0,selected=null;
+      const fetched=new Set();
       for(const venue of payload.venues){
-        visible.add(venue.venue_id);
+        fetched.add(venue.venue_id);
         const colors=venue.categories.map(c=>c.color).filter(c=>/^#[0-9a-f]{6}$/i.test(c));
         const color=colors.length>1?`linear-gradient(135deg,${colors.join(',')})`:colors[0]||'#a9aab0';
         const label=`${venue.name}: ${venue.count} event${venue.count===1?'':'s'}`;
@@ -140,27 +159,51 @@ import { Map as MapLibreMap, Marker } from 'maplibre-gl';
         entry.marker.setLngLat([venue.longitude,venue.latitude]);
         entry.pin.style.setProperty('--pin-color',color);
         entry.pin.setAttribute('aria-label',label);
-        entry.pin.title=label;
         entry.number.textContent=venue.count>1?String(venue.count):'•';
         if(venue.venue_id===selectedVenueId)selected=venue;
+        // Keep markers mounted beyond the screen, but report only the visible viewport.
+        const longitudeOffset=((venue.longitude-west)%360+360)%360;
+        if(venue.latitude<south||venue.latitude>north||longitudeSpan<360&&longitudeOffset>longitudeSpan)continue;
+        visibleVenueCount+=1;
         for(const event of venue.events){
           count+=1;
           const card=node('article','');card.className='card';
-          card.append(eventLink(event),node('p',`${venue.name} · ${eventTime(event)}`),node('p',event.tags.map(tag=>tag.name).join(' / ')));
+          const eventColors=event.categories.map(category=>category.color).filter(color=>/^#[0-9a-f]{6}$/i.test(color));
+          if(eventColors.length)card.style.setProperty('--event-color',eventColors.length>1?`linear-gradient(180deg,${eventColors.join(',')})`:eventColors[0]);
+          card.append(eventLink(event),node('p',`${venue.name} · ${eventTime(event)}`));
+          const genres=node('div','');genres.className='tags';
+          const categoryColors=new Map(event.categories.map(category=>[category.id,category.color]));
+          for(const category of event.categories){
+            const genre=node('span',category.name);genre.className='genre';
+            if(/^#[0-9a-f]{6}$/i.test(category.color))genre.style.setProperty('--genre',category.color);
+            genres.append(genre);
+          }
+          for(const tag of event.tags){
+            const label=node('span',tag.name);label.className='tag';
+            const color=categoryColors.get(tag.category_id);
+            if(/^#[0-9a-f]{6}$/i.test(color||''))label.style.setProperty('--genre',color);
+            genres.append(label);
+          }
+          card.append(genres);
           resultItems.append(card);
         }
       }
-      for(const [id,entry] of markers)if(!visible.has(id)){entry.marker.remove();markers.delete(id);}
+      // Panning can revisit a previously fetched area: retain those markers to avoid a blank interval.
+      // A changed date/genre selection invalidates the cache after its replacement data arrives.
+      if(filterKey!==lastFilterKey){
+        for(const [id,entry] of markers)if(!fetched.has(id)){entry.marker.remove();markers.delete(id);}
+      }
+      lastFilterKey=filterKey;
       if(selected)showVenue(selected);else clearPanel();
       if(!count)resultItems.append(node('p','No events match this area and date range. Move the map or adjust the filters.'));
-      status.textContent=`${count} event${count===1?'':'s'} at ${payload.venues.length} venue${payload.venues.length===1?'':'s'}.`;
+      status.textContent=`${count} event${count===1?'':'s'} at ${visibleVenueCount} venue${visibleVenueCount===1?'':'s'}.`;
       lastRefresh=Date.now();
     }catch(error){if(error.name!=='AbortError')status.textContent=error.message;}
   }
   const schedule=()=>{clearTimeout(timer);timer=setTimeout(refresh,300);};
   map.on('moveend',()=>{
     const center=map.getCenter();
-    try{sessionStorage.setItem('music-map-camera',JSON.stringify({center:[center.lng,center.lat],zoom:map.getZoom()}));}catch{}
+    try{sessionStorage.setItem(cameraKey,JSON.stringify({center:[center.lng,center.lat],zoom:map.getZoom()}));}catch{}
     schedule();
   });
   const resumeMap=()=>requestAnimationFrame(()=>{

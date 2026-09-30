@@ -1,32 +1,60 @@
-{% extends 'base.html' %}{% load tz %}
-{% block title %}{{ event.title }} · Music Event Discovery{% endblock %}
+{% extends 'base.html' %}{% load tz static %}
+{% block title %}{{ event.title }} · Bassline{% endblock %}
 {% block content %}
-<article>
-<h1>{{ event.title }}</h1>
-{% if event.cancelled_at %}<p class="notice">Cancelled. Retained for updates and group coordination.</p>{% endif %}
-{% if event.moderation_hidden %}<p class="notice">Hidden by moderation.</p>{% endif %}
-{% if event.venue.review_status != 'approved' %}<p class="notice">Location {{ event.venue.get_review_status_display|lower }}. This event is not on the public map.</p>{% endif %}
-<p>{{ event.venue.name }} · {{ event.venue.address }}</p>
-{% timezone venue_zone %}<p>{{ event.starts_at|date:'D j M Y, H:i' }} – {{ event.ends_at|date:'D j M Y, H:i' }} ({{ event.venue.timezone }})</p>{% endtimezone %}
-<div class="tags">{% for category in event.categories.all %}<a class="genre" style="--genre:{{ category.color }}" href="{% url 'genre-detail' category.pk %}">{{ category.name }}</a>{% endfor %}
-{% for tag in event.tags.all %}<span class="tag">{{ tag.name }}</span>{% endfor %}</div>
-<p>Typical tempo estimate: {{ tempo }}</p>
-<div>{{ event.description|linebreaks }}</div>
-{% if event.ticket_url %}<p><a href="{{ event.ticket_url }}" target="_blank" rel="noopener noreferrer">Tickets at external provider ↗</a></p>{% endif %}
-{% if editor %}<div class="actions"><a href="{% url 'event-edit' event.pk %}">Edit event</a>
-{% if not event.cancelled_at %}<form method="post" action="{% url 'event-cancel' event.pk %}">{% csrf_token %}<button>Cancel event</button></form>{% endif %}</div>{% endif %}
-{% if user.is_authenticated and public %}<div class="actions">
-{% if following %}<form method="post" action="{% url 'event-unfollow' event.pk %}">{% csrf_token %}<button>Stop tracking</button></form>
-{% else %}<form method="post" action="{% url 'event-follow' event.pk %}">{% csrf_token %}<button>Track event updates</button></form>{% endif %}
-<a href="{% url 'event-report' event.pk %}">Report event</a></div>{% endif %}
-<h2>What does this music sound like?</h2>
-{% for reference in event.listening_references.all %}<div class="card"><a href="{{ reference.url }}" target="_blank" rel="noopener noreferrer">{{ reference.title }} ↗</a><p>{{ reference.artist_credit }} · {{ reference.get_kind_display }}</p>
-{% if editor %}<a href="{% url 'reference-edit' event.pk reference.pk %}">Edit</a><form class="inline" method="post" action="{% url 'reference-delete' reference.pk %}">{% csrf_token %}<button>Remove reference</button></form>{% endif %}</div>
-{% empty %}<p class="muted">No listening references yet. Explore the genre links above for examples.</p>{% endfor %}
-{% if editor %}<p><a href="{% url 'reference-new' event.pk %}">Add a listening reference</a></p>{% endif %}
-<h2>Attending alone?</h2><p class="muted">Find company if you want it. Joining a group is optional and does not book a ticket.</p>
-{% if joining_open and user.is_authenticated %}<p><a href="{% url 'group-new' event.pk %}">Create a group</a></p>{% elif not joining_open %}<p>New group participation is closed.</p>{% endif %}
-<div class="cards">{% for group in groups %}<a class="card" href="{% url 'group-detail' group.pk %}">
-{% if group.photo %}<img class="group-photo" src="{% url 'group-photo' group.pk %}" alt="" loading="lazy">{% else %}<div class="photo-placeholder" aria-hidden="true">{{ group.name|first }}</div>{% endif %}
-<h3>{{ group.name }}</h3><p>{{ group.description|truncatechars:180 }}</p><p>{{ group.get_joining_mode_display }}</p></a>{% empty %}<p>No groups yet.</p>{% endfor %}</div>
+<article class="event-detail" style="--event-accent:{{ event.categories.first.color|default:'#8d95a6' }}">
+  <div class="event-hero">
+    {% if event.demo_poster %}<div class="event-hero-poster" style="background-image:url('{% static event.demo_poster %}')" role="img" aria-label="Event poster"></div>
+    {% else %}<div class="event-hero-poster event-poster-fallback" aria-hidden="true"><span>BASSLINE</span><i></i><i></i><i></i></div>{% endif %}
+    <div class="event-hero-copy">
+      <p class="event-kicker">EVENT · {{ event.venue.name }}</p>
+      <h1>{{ event.title }}</h1>
+      {% if event.cancelled_at %}<p class="notice">Cancelled. Retained for updates and group coordination.</p>{% endif %}
+      {% if event.moderation_hidden %}<p class="notice">Hidden by moderation.</p>{% endif %}
+      {% if event.venue.review_status != 'approved' %}<p class="notice">Location {{ event.venue.get_review_status_display|lower }}. This event is not on the public map.</p>{% endif %}
+      <div class="event-facts">
+        <div><span class="event-fact-label">WHEN</span>{% timezone venue_zone %}<time datetime="{{ event.starts_at|date:'c' }}">{{ event.starts_at|date:'D j M Y, H:i' }}</time><span>Until {{ event.ends_at|date:'D j M, H:i' }} · {{ event.venue.timezone }}</span>{% endtimezone %}</div>
+        <div><span class="event-fact-label">WHERE</span><strong>{{ event.venue.name }}</strong><span>{{ event.venue.address }}</span></div>
+      </div>
+      <div class="event-actions">
+        {% if user.is_authenticated and public %}
+          {% if following %}<form method="post" action="{% url 'event-unfollow' event.pk %}">{% csrf_token %}<button>Stop tracking</button></form>
+          {% else %}<form method="post" action="{% url 'event-follow' event.pk %}">{% csrf_token %}<button>Track event updates</button></form>{% endif %}
+        {% endif %}
+        {% if event.ticket_url %}<a class="event-action-link" href="{{ event.ticket_url }}" target="_blank" rel="noopener noreferrer">Tickets ↗</a>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="event-detail-grid">
+    <section class="event-section event-music" aria-labelledby="event-music-heading">
+      <p class="event-section-kicker">THE SOUND</p><h2 id="event-music-heading">Music & tempo</h2>
+      <div class="tags">{% for category in event.categories.all %}<a class="genre" style="--genre:{{ category.color }}" href="{% url 'genre-detail' category.pk %}">{{ category.name }}</a>{% endfor %}
+      {% for tag in event_tags %}<span class="tag" style="--genre:{{ tag.category.color }}">{{ tag.name }}</span>{% endfor %}</div>
+      <div class="event-tempo"><span>ESTIMATED RANGE</span><strong>{{ tempo }}</strong></div>
+    </section>
+    <section class="event-section event-about" aria-labelledby="event-about-heading">
+      <p class="event-section-kicker">ABOUT THE NIGHT</p><h2 id="event-about-heading">What to expect</h2>
+      <div class="event-description">{{ event.description|linebreaks }}</div>
+    </section>
+  </div>
+
+  {% if editor %}<div class="event-manage"><a href="{% url 'event-edit' event.pk %}">Edit event</a>
+    {% if not event.cancelled_at %}<form method="post" action="{% url 'event-cancel' event.pk %}">{% csrf_token %}<button>Cancel event</button></form>{% endif %}</div>{% endif %}
+  {% if user.is_authenticated and public %}<p class="event-report"><a href="{% url 'event-report' event.pk %}">Report event</a></p>{% endif %}
+
+  <section class="event-lower-section" aria-labelledby="event-listen-heading">
+    <div class="event-section-heading"><p class="event-section-kicker">EXPLORE THE SOUND</p><h2 id="event-listen-heading">What does this music sound like?</h2></div>
+    <div class="cards">{% for reference in event.listening_references.all %}<div class="card"><a href="{{ reference.url }}" target="_blank" rel="noopener noreferrer">{{ reference.title }} ↗</a><p>{{ reference.artist_credit }} · {{ reference.get_kind_display }}</p>
+    {% if editor %}<a href="{% url 'reference-edit' event.pk reference.pk %}">Edit</a><form class="inline" method="post" action="{% url 'reference-delete' reference.pk %}">{% csrf_token %}<button>Remove reference</button></form>{% endif %}</div>
+    {% empty %}<p class="muted">No listening references yet. Explore the genre links above for examples.</p>{% endfor %}</div>
+    {% if editor %}<p><a href="{% url 'reference-new' event.pk %}">Add a listening reference</a></p>{% endif %}
+  </section>
+
+  <section class="event-lower-section" aria-labelledby="event-groups-heading">
+    <div class="event-section-heading"><p class="event-section-kicker">GO TOGETHER</p><h2 id="event-groups-heading">Attending alone?</h2><p class="muted">Find company if you want it. Joining a group is optional and does not book a ticket.</p></div>
+    {% if joining_open and user.is_authenticated %}<p><a href="{% url 'group-new' event.pk %}">Create a group</a></p>{% elif not joining_open %}<p>New group participation is closed.</p>{% endif %}
+    <div class="cards">{% for group in groups %}<a class="card" href="{% url 'group-detail' group.pk %}">
+    {% if group.photo %}<img class="group-photo" src="{% url 'group-photo' group.pk %}" alt="" loading="lazy">{% else %}<div class="photo-placeholder" aria-hidden="true">{{ group.name|first }}</div>{% endif %}
+    <h3>{{ group.name }}</h3><p>{{ group.description|truncatechars:180 }}</p><p>{{ group.get_joining_mode_display }}</p></a>{% empty %}<p>No groups yet.</p>{% endfor %}</div>
+  </section>
 </article>{% endblock %}
