@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django import forms
 from config.admin import SchemaReadOnlyAdmin
 from . import models, services
 from .forms import EventForm, GenreReferenceForm, ReportForm, TagForm
@@ -23,9 +24,10 @@ class TempoReferenceAdmin(RetainedAdmin):
         for name, label in (("bpm_min", "Typical BPM minimum"), ("bpm_max", "Typical BPM maximum")):
             if name in form.base_fields:
                 form.base_fields[name].label = label
+                form.base_fields[name].required = True
                 form.base_fields[name].help_text = (
                     "Admin-curated reference range used to estimate event tempo automatically. "
-                    "Leave both values blank if unknown; event creators never enter BPM."
+                    "Enter both bounds; event creators never enter BPM."
                 )
         return form
 
@@ -34,6 +36,13 @@ class TempoReferenceAdmin(RetainedAdmin):
 class CategoryAdmin(TempoReferenceAdmin):
     list_display = ("name", "color", "bpm_min", "bpm_max", "display_order")
     search_fields = ("name",)
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        color = form.base_fields["color"]
+        color.widget = forms.TextInput(attrs={"placeholder": "#RRGGBB", "pattern": "#[0-9a-fA-F]{6}"})
+        color.help_text = "Enter a six-digit hex color, such as #367BF5. This colors map pins and genre labels."
+        return form
 
     def save_model(self, request, obj, form, change):
         apply_saved(obj, services.save_category(actor=request.user, category_id=obj.pk, data=form.cleaned_data))

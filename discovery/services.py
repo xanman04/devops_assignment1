@@ -278,6 +278,11 @@ def search_events(*, starts_at=None, ends_at=None, category_ids=(), tag_ids=(), 
 
 
 def tempo_estimate(event):
+    """Envelope the selected musical components, using tag ranges before category defaults.
+
+    A midpoint or average could describe a tempo that no selected genre actually uses.
+    Keep the estimate derived so edits to curated ranges update existing events.
+    """
     tags = list(event.tags.all())
     ranges = []
     for category in event.categories.all():

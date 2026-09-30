@@ -205,6 +205,18 @@ class DiscoveryServicesTests(TestCase):
         s.save_category(actor=self.admin, category_id=self.rock.pk, data={"bpm_min": None, "bpm_max": None})
         self.assertIsNone(s.tempo_estimate(Event.objects.get(pk=event.pk)))
 
+    def test_tempo_combines_selected_tag_ranges_and_updates_without_event_edit(self):
+        second = s.save_tag(actor=self.admin, data={
+            "category": self.house, "name": "Fast house", "description": "Example",
+            "bpm_min": 132, "bpm_max": 142,
+        })
+        event = self.make_event()
+        s.save_event(actor=self.owner, event_id=event.pk, data={},
+                     category_ids=[self.house.pk], tag_ids=[self.afro.pk, second.pk])
+        self.assertEqual(s.tempo_estimate(Event.objects.get(pk=event.pk)), (115, 142))
+        s.save_tag(actor=self.admin, tag_id=second.pk, data={"bpm_min": 118, "bpm_max": 122})
+        self.assertEqual(s.tempo_estimate(Event.objects.get(pk=event.pk)), (115, 125))
+
     def test_pins_count_only_matching_events_without_private_fields(self):
         self.make_event()
         self.make_event(title="Second")
@@ -344,11 +356,25 @@ class DiscoveryServicesTests(TestCase):
 
     def test_admin_saves_categories_tags_and_curated_references(self):
         self.client.force_login(self.admin)
-        response = self.client.post("/admin/discovery/genrecategory/add/", {
+        category_form = self.client.get("/admin/discovery/genrecategory/add/").context["adminform"].form
+        self.assertEqual(category_form.fields["color"].widget.input_type, "text")
+        self.assertEqual(category_form.fields["color"].widget.attrs["placeholder"], "#RRGGBB")
+        self.assertTrue(category_form.fields["bpm_min"].required)
+        self.assertTrue(category_form.fields["bpm_max"].required)
+        missing_range = self.client.post("/admin/discovery/genrecategory/add/", {
             "name": "Jazz", "color": "#44AA99", "description": "Jazz", "display_order": 2,
             "bpm_min": "", "bpm_max": "", "_save": "Save",
         })
+        self.assertEqual(missing_range.status_code, 200)
+        self.assertFalse(missing_range.context["adminform"].form.is_valid())
+        response = self.client.post("/admin/discovery/genrecategory/add/", {
+            "name": "Jazz", "color": "#44AA99", "description": "Jazz", "display_order": 2,
+            "bpm_min": 80, "bpm_max": 220, "_save": "Save",
+        })
         self.assertEqual(response.status_code, 302)
+        tag_form = self.client.get("/admin/discovery/genretag/add/").context["adminform"].form
+        self.assertTrue(tag_form.fields["bpm_min"].required)
+        self.assertTrue(tag_form.fields["bpm_max"].required)
         response = self.client.post("/admin/discovery/genretag/add/", {
             "name": "Deep", "category": self.house.pk, "description": "Deep house",
             "bpm_min": 115, "bpm_max": 125, "_save": "Save",
