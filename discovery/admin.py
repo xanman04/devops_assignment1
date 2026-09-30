@@ -59,6 +59,17 @@ class TagAdmin(TempoReferenceAdmin):
     list_filter = ("category",)
     search_fields = ("name",)
 
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if obj and obj.bpm_min is None and obj.bpm_max is None:
+            for field in ("bpm_min", "bpm_max"):
+                form.base_fields[field].required = False
+            form.base_fields["bpm_max"].help_text = (
+                "Leave both bounds blank to use the parent category's BPM range, "
+                "or enter a tag-specific range up to 200/200+."
+            )
+        return form
+
     def save_model(self, request, obj, form, change):
         apply_saved(obj, services.save_tag(actor=request.user, tag_id=obj.pk, data=form.cleaned_data))
 

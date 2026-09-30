@@ -43,7 +43,7 @@ The Django home page uses the approved dark sidebar and grayscale Leaflet map. D
 
 - Events require one or more broad color categories and can have multiple detailed subgenre tags. Tempo is estimated from curated ranges, not supplied by event creators.
 
-In Django admin, enter each broad category color as `#RRGGBB` text and supply a typical BPM minimum and maximum for categories and subgenre tags. The maximum accepts `200+` for open-ended high tempos; ordinary numeric inputs must be 200 or below. A selected tag's range replaces its parent category's broad range for that component. With multiple tags or categories, the displayed estimate spans the lowest minimum to highest maximum and retains `+` if a selected component is open-ended. Updating a curated range updates existing events automatically; event BPM is never stored or entered by organizers. The database still allows an unknown range for legacy/imported classifications, which display “Varies” when no complete estimate is possible.
+In Django admin, enter each broad category color as `#RRGGBB` text and supply a typical BPM minimum and maximum for categories and subgenre tags. The maximum accepts `200+` for open-ended high tempos; ordinary numeric inputs must be 200 or below. A selected tag's range replaces its parent category's broad range for that component. With multiple tags or categories, the displayed estimate spans the lowest minimum to highest maximum and retains `+` if a selected component is open-ended. Updating a curated range updates existing events automatically; event BPM is never stored or entered by organizers. Tags imported without a fixed BPM range use their parent category range; classifications without either range display “Varies”.
 - Users can follow events independently of attendance or groups and receive in-app venue/time/cancellation updates.
 - Groups are optional company for solo attendees, not an attendance requirement or RSVP system.
 - Authors can edit/delete their own messages; admins can remove messages. Group removal permits rejoining; a separate group ban prevents it.
@@ -173,6 +173,17 @@ Admins with user-delete permission can delete unreferenced accounts through Djan
 
 No self-authored Dockerfile, Compose configuration, CI workflow, IaC, external database/cache/queue, or public deployment belongs in this assignment.
 
+## Curated electronic subgenres
+
+The supplied `discovery/fixtures/electronic_subgenres_v1.csv` contains 251 subgenre tags. Import it into the 22 existing broad categories after setting those categories up in admin:
+
+```powershell
+.venv/Scripts/python.exe manage.py import_subgenres --dry-run
+.venv/Scripts/python.exe manage.py import_subgenres
+```
+
+The importer uses each CSV `pitch` as the tag description and its BPM columns as curated tempo references. It maps the CSV label `EBM / Industrial` to the existing `Industrial / EBM` category, displays six high-end ranges as `200+`, and leaves Drone's unspecified tempo blank so its parent Ambient / Experimental range applies. It does not create categories, change their colors, or copy research-source notes into the database. A repeat run leaves matching tags untouched and stops if an existing tag has been edited; `--update` explicitly replaces those edits with CSV values. The supplied classifications and descriptions have not been independently fact-checked.
+
 ## Optional demo data
 
 ```powershell
@@ -181,7 +192,7 @@ No self-authored Dockerfile, Compose configuration, CI workflow, IaC, external d
 
 Adds five fictional users (`demo_organizer`, `demo_alex`, `demo_sam`, `demo_jo`, `demo_morgan`) and five clearly labeled fictional Paris-area venues: three approved fixture states, one pending, and one rejected. These are synthetic locations, not real venue recommendations or verification. New demo accounts have password `Demo-music-2026!` and no staff/admin permissions. The command is explicit and never runs automatically at startup.
 
-Genres and subgenre tags are never created or changed. Without a category selection, no events/groups are created, so venues alone do not produce map pins. After curating a genre in admin, select its existing ID:
+`seed_demo` never creates or changes genres or subgenre tags. Without a category selection, no events/groups are created, so venues alone do not produce map pins. After curating a genre in admin, select its existing ID:
 
 ```powershell
 .venv/Scripts/python.exe manage.py seed_demo --category 1
@@ -202,7 +213,7 @@ Unchanged reruns create no duplicates, reset no passwords, and preserve demo pro
 .venv/Scripts/python.exe manage.py test groups discovery test_schema test_web
 ```
 
-**114 tests pass**: 19 schema checks, 35 discovery tests, 26 group tests, 27 HTTP tests, and 7 demo-data checks. These cover permissions, rollback, filters, timezone/DST, notifications, membership switching, offers/capacity, bans/ownership, messages, photo processing/cleanup, separate-connection SQLite races, CSRF, forged form fields, private venue/message access, and automatic tempo recalculation. JavaScript syntax, migration consistency, and live public page/static asset responses were also checked. No coverage percentage has been measured; the **70% core-logic coverage** requirement and ADR-4 remain outstanding.
+**116 tests pass**: 19 schema checks, 37 discovery tests (including the subgenre import), 26 group tests, 27 HTTP tests, and 7 demo-data checks. These cover permissions, rollback, filters, timezone/DST, notifications, membership switching, offers/capacity, bans/ownership, messages, photo processing/cleanup, separate-connection SQLite races, CSRF, forged form fields, private venue/message access, and automatic tempo recalculation. JavaScript syntax, migration consistency, and live public page/static asset responses were also checked. No coverage percentage has been measured; the **70% core-logic coverage** requirement and ADR-4 remain outstanding.
 
 Database constraints guard row-level invariants. Both domains' services validate and use transactions; raw ORM writes can bypass these rules and are not a supported interface. SQLite uses IMMEDIATE transactions and a timeout; handlers translate competing lock failures into retry responses. Pages use GET for reads, POST plus CSRF for writes, and redirects after successful saves. Visual polish, a browser interaction review, measured coverage, and the remaining submission records/report are still outstanding.
 

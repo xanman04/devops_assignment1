@@ -1,5 +1,7 @@
 # AI usage log
 
+September 30 curated subgenre import (author review pending): the author provided a CSV and asked Codex to populate the genre tags without entering them individually. Codex added a repeatable import command and a committed copy of the 251-row source, mapped one category-name difference, stored `pitch` as the description, capped six open-ended ranges at `200+`, and used the broad category BPM fallback for Drone at the author's request. Existing category colors and records were preserved. Author own-word explanation: TODO — explain why the importer requires existing categories, how it protects manually edited tags, and why Drone inherits the broad category range.
+
 ## Desktop visual prototype
 
 September 30 open-ended BPM cap (author review pending): the author requested `200+` for high-end tempo ranges and no displayed number above 200. Codex added an open-ended maximum flag to category/tag records, a migration that caps existing higher ranges, admin text parsing for `200+`, database validation, and derived event/genre display of the plus sign. Numeric event BPM remains derived, not user-supplied. Author own-word explanation: TODO — explain why the database stores a numeric cap and separate open-ended flag rather than a string, and how selected tags affect the event display.

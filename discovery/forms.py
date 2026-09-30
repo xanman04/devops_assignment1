@@ -110,6 +110,8 @@ class TempoRangeAdminForm(forms.ModelForm):
 
     def clean_bpm_max(self):
         value = self.cleaned_data["bpm_max"].strip()
+        if not value and not self.fields["bpm_max"].required:
+            return None
         if not re.fullmatch(r"[1-9][0-9]{0,2}\+?", value):
             raise ValidationError("Enter a BPM maximum from 1 to 200, or 200+.")
         number = int(value.rstrip("+"))
