@@ -11,6 +11,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
+from config.images import prepare_image
 from notifications.models import Notification
 from .models import (
     Event, EventChange, EventFollow, EventListeningReference, EventReport,
@@ -187,38 +188,59 @@ def save_venue(*, actor, data, venue_id=None, review_status=None, review_note=""
     return venue
 
 
-@transaction.atomic
-def save_event(*, actor, data, category_ids, tag_ids=(), event_id=None, cancelled=None, hidden=None):
+def save_event(*, actor, data, category_ids, tag_ids=(), event_id=None, cancelled=None, hidden=None,
+               poster=None, remove_poster=False):
     require_user(actor)
-    event = Event.objects.select_related("venue").get(pk=event_id) if event_id else Event(creator=actor)
     if event_id:
-        require_event_editor(actor, event)
-    before = _event_snapshot(event) if event_id else None
-    categories, tags = classification(category_ids, tag_ids)
-    _assign(event, data, EVENT_FIELDS)
-    # Reload relationships rather than trusting caller-supplied approval flags.
-    if not event.venue_id:
-        raise ValidationError("An event needs a venue.")
-    event.venue = Venue.objects.get(pk=event.venue_id)
-    if not event_id or (before and before["venue"]["id"] != event.venue_id):
-        _venue_allowed(actor, event.venue)
-    validate_event_times(event.starts_at, event.ends_at)
-    if cancelled is not None:
-        if not isinstance(cancelled, bool):
-            raise ValidationError("Cancellation must be true or false.")
-        event.cancelled_at = (event.cancelled_at or timezone.now()) if cancelled else None
-    if hidden is not None:
-        require_permission(actor, "discovery.change_event")
-        if not isinstance(hidden, bool):
-            raise ValidationError("Visibility must be true or false.")
-        event.moderation_hidden = hidden
-    event.full_clean()
-    event.save()
-    event.categories.set(categories)
-    event.tags.set(tags)
-    if before:
-        _record_changes(event, actor, before, _event_snapshot(event))
-    return event
+        require_event_editor(actor, Event.objects.get(pk=event_id))
+    if poster is not None and remove_poster:
+        raise ValidationError("Choose either a new poster or poster removal.")
+    prepared = prepare_image(poster, kind="poster") if poster is not None else None
+    new_name = None
+    storage = Event._meta.get_field("poster").storage
+    try:
+        with transaction.atomic():
+            event = Event.objects.select_related("venue").get(pk=event_id) if event_id else Event(creator=actor)
+            if event_id:
+                require_event_editor(actor, event)
+            before = _event_snapshot(event) if event_id else None
+            categories, tags = classification(category_ids, tag_ids)
+            _assign(event, data, EVENT_FIELDS)
+            # Reload relationships rather than trusting caller-supplied approval flags.
+            if not event.venue_id:
+                raise ValidationError("An event needs a venue.")
+            event.venue = Venue.objects.get(pk=event.venue_id)
+            if not event_id or (before and before["venue"]["id"] != event.venue_id):
+                _venue_allowed(actor, event.venue)
+            validate_event_times(event.starts_at, event.ends_at)
+            if cancelled is not None:
+                if not isinstance(cancelled, bool):
+                    raise ValidationError("Cancellation must be true or false.")
+                event.cancelled_at = (event.cancelled_at or timezone.now()) if cancelled else None
+            if hidden is not None:
+                require_permission(actor, "discovery.change_event")
+                if not isinstance(hidden, bool):
+                    raise ValidationError("Visibility must be true or false.")
+                event.moderation_hidden = hidden
+            old_name = event.poster.name
+            if prepared is not None:
+                event.poster.save(prepared.name, prepared, save=False)
+                new_name = event.poster.name
+            elif remove_poster:
+                event.poster = ""
+            event.full_clean()
+            event.save()
+            event.categories.set(categories)
+            event.tags.set(tags)
+            if before:
+                _record_changes(event, actor, before, _event_snapshot(event))
+            if (prepared is not None or remove_poster) and old_name:
+                transaction.on_commit(lambda: storage.delete(old_name), robust=True)
+        return event
+    except Exception:
+        if new_name:
+            storage.delete(new_name)
+        raise
 
 
 def public_events():
@@ -236,6 +258,13 @@ def get_event(*, event_id, actor=None):
         # Deliberately indistinguishable from a nonexistent event to public callers.
         raise Event.DoesNotExist
     return event
+
+
+def open_poster(*, event_id, actor=None):
+    event = get_event(event_id=event_id, actor=actor)
+    if not event.poster:
+        raise FileNotFoundError("This event has no uploaded poster.")
+    return event.poster.open("rb")
 
 
 def search_events(*, starts_at=None, ends_at=None, category_ids=(), tag_ids=(), match="any", bounds=None, now=None):

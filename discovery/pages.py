@@ -1,5 +1,6 @@
 import re
 from zoneinfo import ZoneInfo
+from django.http import FileResponse, Http404
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -28,7 +29,7 @@ def _event_card(event):
     category = next(iter(event.categories.all()), None)
     return {"title": event.title, "subtitle": f"{event.venue.name} · {local_start:%d %b %Y %H:%M}",
             "href": f"/events/{event.pk}/", "color": category.color if category else "#9ca0a9", "symbol": "events",
-            "poster": event.demo_poster}
+            "uploaded_poster_id": event.pk if event.poster else None, "poster": event.demo_poster}
 
 
 def _first_sentence(description):
@@ -157,16 +158,31 @@ def event_form(request, event_id=None):
     event = models.Event.objects.get(pk=event_id) if event_id else models.Event(creator=request.user)
     if event_id:
         services.require_event_editor(request.user, event)
-    form = EventForm(request.POST if request.method == "POST" else None, instance=event, actor=request.user)
+    form = EventForm(request.POST if request.method == "POST" else None,
+                     request.FILES if request.method == "POST" else None, instance=event, actor=request.user)
 
     def save(data):
         saved = services.save_event(actor=request.user, event_id=event_id,
             data={name: data[name] for name in services.EVENT_FIELDS},
             category_ids=data["categories"].values_list("pk", flat=True),
-            tag_ids=data["tags"].values_list("pk", flat=True), cancelled=data["cancelled"])
+            tag_ids=data["tags"].values_list("pk", flat=True), cancelled=data["cancelled"],
+            poster=data.get("poster_upload"), remove_poster=data.get("remove_poster", False))
         return redirect("event-detail", event_id=saved.pk)
     return form_page(request, form, "Edit event" if event_id else "List an event", save,
-        context={"hint": "Choose an existing approved venue or propose a new venue first. Pending locations stay off the public map.", "venue_link": True})
+        context={"hint": "Choose an existing approved venue or propose a new venue first. Pending locations stay off the public map.",
+                 "venue_link": True, "current_poster_id": event.pk if event.poster else None})
+
+
+@endpoint
+@require_GET
+def event_poster(request, event_id):
+    try:
+        response = FileResponse(services.open_poster(event_id=event_id, actor=request.user), content_type="image/jpeg")
+    except FileNotFoundError as error:
+        raise Http404("No poster is available.") from error
+    response["Cache-Control"] = "private, no-store"
+    response["Vary"] = "Cookie"
+    return response
 
 
 @endpoint

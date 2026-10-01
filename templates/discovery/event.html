@@ -3,7 +3,8 @@
 {% block content %}
 <article class="event-detail" style="--event-accent:{{ event.categories.first.color|default:'#8d95a6' }}">
   <div class="event-hero">
-    {% if event.demo_poster %}<div class="event-hero-poster" style="background-image:url('{% static event.demo_poster %}')" role="img" aria-label="Event poster"></div>
+    {% if event.poster %}<div class="event-hero-poster" style="background-image:url('{% url 'event-poster' event.pk %}')" role="img" aria-label="Event poster"></div>
+    {% elif event.demo_poster %}<div class="event-hero-poster" style="background-image:url('{% static event.demo_poster %}')" role="img" aria-label="Event poster"></div>
     {% else %}<div class="event-hero-poster event-poster-fallback" aria-hidden="true"><span>BASSLINE</span><i></i><i></i><i></i></div>{% endif %}
     <div class="event-hero-copy">
       <p class="event-kicker">EVENT · {{ event.venue.name }}</p>

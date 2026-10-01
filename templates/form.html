@@ -4,6 +4,7 @@
 <section class="narrow"><h1>{{ title }}</h1>
 {% if hint %}<p class="muted">{{ hint }}</p>{% endif %}
 {% if venue_link %}<p><a href="{% url 'venue-new' %}">Propose a new venue</a></p>{% endif %}
+{% if current_poster_id %}<p>Current poster:</p><img src="{% url 'event-poster' current_poster_id %}" alt="Current event poster" style="display:block;max-width:220px;max-height:300px;margin-bottom:1rem;border-radius:10px">{% endif %}
 <form method="post" enctype="multipart/form-data">{% csrf_token %}{{ form.as_p }}<button type="submit">Save</button></form>
 </section>
 {% endblock %}

@@ -49,11 +49,13 @@ class VenueLocalDateTimeField(forms.SplitDateTimeField):
 class EventForm(ClassificationForm):
     starts_at = VenueLocalDateTimeField(label="Start (venue local time)")
     ends_at = VenueLocalDateTimeField(label="End (venue local time)")
+    poster_upload = forms.FileField(required=False, label="Event poster", help_text="Optional JPG, PNG, or WebP, up to 5 MiB. Replaces an existing poster.")
+    remove_poster = forms.BooleanField(required=False, label="Remove current poster")
     cancelled = forms.BooleanField(required=False, help_text="Retain the event but remove it from upcoming results.")
 
     class Meta:
         model = models.Event
-        fields = ["venue", "title", "description", "starts_at", "ends_at", "ticket_url", "categories", "tags", "cancelled", "moderation_hidden"]
+        fields = ["venue", "title", "description", "poster_upload", "remove_poster", "starts_at", "ends_at", "ticket_url", "categories", "tags", "cancelled", "moderation_hidden"]
 
     def __init__(self, *args, actor=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -64,6 +66,8 @@ class EventForm(ClassificationForm):
                 choices |= Q(pk=self.instance.venue_id)
             self.fields["venue"].queryset = models.Venue.objects.filter(choices).order_by("name", "id")
         self.fields["cancelled"].initial = self.instance.cancelled_at is not None
+        if not self.instance.poster:
+            self.fields["remove_poster"].disabled = True
         venue = self.instance.venue if self.instance.venue_id else None
         if self.is_bound:
             venue_id = self.data.get(self.add_prefix("venue"))
@@ -85,6 +89,8 @@ class EventForm(ClassificationForm):
 
     def clean(self):
         data = super().clean()
+        if data.get("poster_upload") and data.get("remove_poster"):
+            raise ValidationError("Choose either a new poster or poster removal.")
         if data.get("starts_at") and data.get("ends_at"):
             services.validate_event_times(data["starts_at"], data["ends_at"])
         venue = data.get("venue")

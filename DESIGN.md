@@ -26,6 +26,7 @@ The October 1 Discover refinement replaces the category cards' line drawings wit
 
 - Genres share one admin-managed name/color/description system across pins, tags, and Explore Genres.
 - Curated reference artists, tracks, and sets explain each genre. Event creators can attach event-specific listening links, including for eclectic DJs.
+- Event creators and admins may upload or replace one poster per event. JPG/PNG/WebP files up to 5 MiB are decoded, bounded, resized to a 1,600-pixel maximum edge, and saved as metadata-free JPEGs. The uploaded poster appears on event detail and carousel cards; seeded demo artwork remains a fallback. The checked poster route uses the same public/owner/admin visibility rule as event details.
 - References can carry multiple genre tags. Artist references must not be confused with the actual event lineup.
 - Event tempo is derived from optional admin-curated category/tag BPM ranges, labeled as an estimate. No event-creator BPM entry; unknown ranges display “Varies”.
 - Use external listening links; uploads/streaming of music are out of scope. Events require at least one category and allow multiple tags; reference fields are specified in SCHEMA.md.

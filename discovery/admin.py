@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django import forms
+from django.urls import reverse
+from django.utils.html import format_html
 from config.admin import SchemaReadOnlyAdmin
 from . import models, services
 from .forms import CategoryForm, EventForm, GenreReferenceForm, ReportForm, TagForm
@@ -101,7 +103,14 @@ class EventAdmin(RetainedAdmin):
     list_display = ("title", "venue", "starts_at", "cancelled_at", "moderation_hidden")
     list_filter = ("moderation_hidden", "venue__review_status")
     search_fields = ("title", "venue__name")
-    readonly_fields = ("creator", "typical_tempo", "created_at", "updated_at")
+    readonly_fields = ("creator", "typical_tempo", "current_poster", "created_at", "updated_at")
+
+    @admin.display(description="Current uploaded poster")
+    def current_poster(self, obj):
+        if not obj or not obj.pk or not obj.poster:
+            return "No uploaded poster"
+        return format_html('<img src="{}" alt="Current event poster" style="max-width:180px;max-height:240px;border-radius:8px">',
+                           reverse("event-poster", args=[obj.pk]))
 
     @admin.display(description="Typical tempo estimate (automatic)")
     def typical_tempo(self, obj):
@@ -128,6 +137,7 @@ class EventAdmin(RetainedAdmin):
             category_ids=form.cleaned_data["categories"].values_list("pk", flat=True),
             tag_ids=form.cleaned_data["tags"].values_list("pk", flat=True),
             cancelled=form.cleaned_data["cancelled"], hidden=form.cleaned_data.get("moderation_hidden"),
+            poster=form.cleaned_data.get("poster_upload"), remove_poster=form.cleaned_data.get("remove_poster", False),
         ))
 
     def save_related(self, request, form, formsets, change):

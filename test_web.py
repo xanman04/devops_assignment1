@@ -1,6 +1,7 @@
 """HTTP integration checks for permissions, form/service boundaries and privacy."""
 from datetime import timedelta
 from io import BytesIO
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 from PIL import Image
@@ -41,6 +42,75 @@ class WebTests(TestCase):
                 'starts_at_0':'2026-10-02','starts_at_1':'21:00:00','ends_at_0':'2026-10-03','ends_at_1':'03:00:00',
                 'categories':[self.category.pk],'tags':[self.tag.pk], 'ticket_url':''}
         return {**data, **changes}
+
+    def poster_upload(self, color='purple'):
+        image = BytesIO()
+        Image.new('RGB', (80, 120), color).save(image, 'PNG')
+        return SimpleUploadedFile('night.png', image.getvalue(), content_type='image/png')
+
+    def test_event_poster_upload_replacement_removal_and_visibility(self):
+        self.login()
+        self.assertContains(self.client.get('/events/new/'), 'Event poster')
+        response = self.client.post('/events/new/', self.event_data(poster_upload=self.poster_upload()))
+        self.assertEqual(response.status_code, 302)
+        event = dm.Event.objects.get(title='Another night')
+        self.assertTrue(event.poster.name.startswith('events/'))
+        self.assertTrue(event.poster.name.endswith('.jpg'))
+        self.assertContains(self.client.get(f'/events/{event.pk}/'), f'/events/{event.pk}/poster/')
+        self.assertContains(self.client.get('/discover/'), f'/events/{event.pk}/poster/')
+        poster = self.client.get(f'/events/{event.pk}/poster/')
+        self.assertEqual(poster['Content-Type'], 'image/jpeg')
+        self.assertEqual(poster['Cache-Control'], 'private, no-store')
+        self.assertEqual(Image.open(BytesIO(b''.join(poster.streaming_content))).format, 'JPEG')
+        poster.close()
+        first_path = event.poster.path
+        with self.captureOnCommitCallbacks(execute=True):
+            self.assertEqual(self.client.post(f'/events/{event.pk}/edit/',
+                self.event_data(poster_upload=self.poster_upload('green'))).status_code, 302)
+        event.refresh_from_db()
+        self.assertNotEqual(event.poster.path, first_path)
+        self.assertFalse(Path(first_path).exists())
+        with self.captureOnCommitCallbacks(execute=True):
+            self.assertEqual(self.client.post(f'/events/{event.pk}/edit/',
+                self.event_data(remove_poster='on')).status_code, 302)
+        event.refresh_from_db()
+        self.assertFalse(event.poster)
+        self.assertEqual(self.client.get(f'/events/{event.pk}/poster/').status_code, 404)
+
+        pending_event = ds.save_event(actor=self.other, data={'venue': self.pending,
+            'title': 'Pending night', 'description': 'Private until review',
+            'starts_at': timezone.now() + timedelta(days=2),
+            'ends_at': timezone.now() + timedelta(days=2, hours=2)},
+            category_ids=[self.category.pk], poster=self.poster_upload())
+        self.client.logout()
+        self.assertEqual(self.client.get(f'/events/{pending_event.pk}/poster/').status_code, 404)
+        self.login(self.other)
+        private_poster = self.client.get(f'/events/{pending_event.pk}/poster/')
+        self.assertEqual(private_poster.status_code, 200)
+        private_poster.close()
+
+    def test_invalid_event_poster_does_not_change_listing(self):
+        self.login()
+        response = self.client.post(f'/events/{self.event.pk}/edit/', self.event_data(
+            title='Should not save', poster_upload=SimpleUploadedFile('bad.png', b'not an image')))
+        self.assertEqual(response.status_code, 400)
+        self.event.refresh_from_db()
+        self.assertEqual(self.event.title, 'House night')
+        self.assertFalse(self.event.poster)
+
+    def test_admin_event_form_accepts_poster_upload(self):
+        admin = get_user_model().objects.create_superuser('posteradmin', password='Test-password-492!')
+        self.login(admin)
+        add_page = self.client.get('/admin/discovery/event/add/')
+        self.assertContains(add_page, 'Event poster')
+        self.assertContains(add_page, 'name="poster_upload"')
+        self.assertNotContains(add_page, 'name="poster"')
+        response = self.client.post('/admin/discovery/event/add/',
+            self.event_data(title='Admin poster night', poster_upload=self.poster_upload(), _save='Save'))
+        self.assertEqual(response.status_code, 302)
+        event = dm.Event.objects.get(title='Admin poster night')
+        self.assertTrue(event.poster)
+        self.assertContains(self.client.get(f'/admin/discovery/event/{event.pk}/change/'), 'Remove current poster')
 
     def test_public_pages_render_without_account_or_private_email(self):
         for url in ['/', '/genres/', f'/genres/{self.category.pk}/', f'/events/{self.event.pk}/', f'/groups/{self.group.pk}/']:

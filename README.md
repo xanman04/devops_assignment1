@@ -138,7 +138,7 @@ The live map uses MapLibre GL JS 6.3.0 directly with [OpenFreeMap's Dark vector 
 | `DJANGO_ALLOWED_HOSTS` | `localhost,127.0.0.1,[::1]`; add the real hostname/IP for access from another device |
 | `DJANGO_DEBUG` | `0`; use `1` only for local debugging |
 
-No `.env` file or source edit is required. Runtime data and the virtual environment are ignored by Git. Group photos are served through a visibility-checked route; raw media directories are not public.
+No `.env` file or source edit is required. Runtime data and the virtual environment are ignored by Git. Group photos and uploaded event posters are served through visibility-checked routes; raw media directories are not public.
 
 Optional administration, not required for startup:
 
@@ -225,7 +225,7 @@ This adds **24 fictional events at 14 real Madrid venues**. The command uses the
 
 On rerun, descriptions carrying the old in-app disclaimer are replaced with the clean fixture description. Other event edits are preserved.
 
-Venue names and addresses were checked against the [RA Madrid club directory](https://ra.co/clubs/es/madrid), [Madrid tourism listings](https://www.esmadrid.com/noche/clamores), and [Goya Social Club](https://goyasocialclub.com/contact/) and [Lula Club](https://lula.club/contact) venue pages. Coordinates came from [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org/) venue matches or street-address matches on September 30, 2026. Street-address coordinates can differ from the actual entrance. These records are approved only as classroom fixtures; that status does not imply organizer affiliation, a real event, or a safety assessment. No RA/Fever listing text, lineup, ticket URL, or poster was imported. Four original backgrounds were made with the built-in image-generation tool, then `tools/build_demo_posters.py` added the invented titles and lineups to produce 24 compressed WebP flyers. `Event.demo_poster` stores a bundled static path solely for these fixtures; general event-poster uploads remain future work.
+Venue names and addresses were checked against the [RA Madrid club directory](https://ra.co/clubs/es/madrid), [Madrid tourism listings](https://www.esmadrid.com/noche/clamores), and [Goya Social Club](https://goyasocialclub.com/contact/) and [Lula Club](https://lula.club/contact) venue pages. Coordinates came from [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org/) venue matches or street-address matches on September 30, 2026. Street-address coordinates can differ from the actual entrance. These records are approved only as classroom fixtures; that status does not imply organizer affiliation, a real event, or a safety assessment. No RA/Fever listing text, lineup, ticket URL, or poster was imported. Four original backgrounds were made with the built-in image-generation tool, then `tools/build_demo_posters.py` added the invented titles and lineups to produce 24 compressed WebP flyers. `Event.demo_poster` retains the bundled artwork path for these fixtures. Event creators and admins can now upload a JPG, PNG, or WebP poster (maximum 5 MiB); the app converts it to a metadata-free JPEG, shows it in preference to the demo artwork, and supports replacement/removal.
 
 ## Testing status
 
@@ -235,7 +235,7 @@ Venue names and addresses were checked against the [RA Madrid club directory](ht
 .venv/Scripts/python.exe manage.py test groups discovery test_schema test_web
 ```
 
-**116 tests pass**: 19 schema checks, 37 discovery tests (including the subgenre import), 26 group tests, 27 HTTP tests, and 7 demo-data checks. These cover permissions, rollback, filters, timezone/DST, notifications, membership switching, offers/capacity, bans/ownership, messages, photo processing/cleanup, separate-connection SQLite races, CSRF, forged form fields, private venue/message access, and automatic tempo recalculation. JavaScript syntax, migration consistency, and live public page/static asset responses were also checked. No coverage percentage has been measured; the **70% core-logic coverage** requirement and ADR-4 remain outstanding.
+**124 tests pass** across schema, discovery, groups, HTTP, and demo data. These cover permissions, rollback, filters, timezone/DST, notifications, membership switching, offers/capacity, bans/ownership, messages, image processing and replacement, private event posters, separate-connection SQLite races, CSRF, forged form fields, private venue/message access, and automatic tempo recalculation. Migration consistency and live public page/static asset responses were also checked. No coverage percentage has been measured; the **70% core-logic coverage** requirement and ADR-4 remain outstanding.
 
 Database constraints guard row-level invariants. Both domains' services validate and use transactions; raw ORM writes can bypass these rules and are not a supported interface. SQLite uses IMMEDIATE transactions and a timeout; handlers translate competing lock failures into retry responses. Pages use GET for reads, POST plus CSRF for writes, and redirects after successful saves. Visual polish, a browser interaction review, measured coverage, and the remaining submission records/report are still outstanding.
 

@@ -39,7 +39,7 @@ def my_events(request):
     visible.update(own_query.filter(pk__in=[follow.event_id for follow in follows]).values_list("pk", flat=True))
     def card(event):
         return {"title": event.title, "subtitle": event.venue.name, "href": f"/events/{event.pk}/", "symbol": "events",
-                "poster": event.demo_poster}
+                "uploaded_poster_id": event.pk if event.poster else None, "poster": event.demo_poster}
     tracked = [card(follow.event) if follow.event_id in visible else
                {"title": "Tracked event unavailable", "subtitle": "This listing is no longer public", "symbol": "events"}
                for follow in follows]

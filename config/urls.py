@@ -31,6 +31,7 @@ urlpatterns = [
     path("accounts/settings/", accounts.settings, name="account-settings"),
     path("events/new/", discovery.event_form, name="event-new"),
     path("events/<int:event_id>/", discovery.event_detail, name="event-detail"),
+    path("events/<int:event_id>/poster/", discovery.event_poster, name="event-poster"),
     path("events/<int:event_id>/edit/", discovery.event_form, name="event-edit"),
     path("events/<int:event_id>/cancel/", discovery.event_action, {"action": "cancel"}, name="event-cancel"),
     path("events/<int:event_id>/follow/", discovery.event_action, {"action": "follow"}, name="event-follow"),

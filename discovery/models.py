@@ -1,4 +1,7 @@
 """Discovery records. Use discovery.services for authorized business operations."""
+from pathlib import Path
+from uuid import uuid4
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -9,6 +12,10 @@ from django.db.models.functions import Lower
 from .validators import http_url, validate_changes, validate_timezone
 
 USER = settings.AUTH_USER_MODEL
+
+
+def event_poster_path(instance, filename):
+    return f"events/{uuid4().hex}{Path(filename).suffix.lower()}"
 
 
 class Timestamped(models.Model):
@@ -135,6 +142,7 @@ class Event(Timestamped):
     title = models.CharField(max_length=200)
     description = models.TextField()
     demo_poster = models.CharField(max_length=120, blank=True, default="", help_text="Bundled event poster path.")
+    poster = models.ImageField(upload_to=event_poster_path, blank=True, help_text="Uploaded event poster; overrides bundled demo artwork.")
     starts_at = models.DateTimeField(db_index=True)
     ends_at = models.DateTimeField(db_index=True)
     ticket_url = models.URLField(max_length=2048, blank=True, validators=[http_url])
