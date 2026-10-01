@@ -127,9 +127,10 @@ body { background:#1c1d20; }
 .discover-masthead h1 { margin:0 0 8px; font-size:clamp(40px,3.3vw,58px); line-height:1; letter-spacing:-.055em; }.discover-masthead p { margin:0; color:#b9bfca; font-size:15px; }
 .browse-page--discover .browse-row { margin-bottom:43px; }.browse-page--discover .browse-row-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:17px; }
 .browse-page--discover .browse-row-head h2 { font-size:23px; letter-spacing:-.025em; }
+.browse-row--events { margin-left:-20px; margin-right:-20px; padding:24px 20px 16px; border:1px solid #34373e; border-radius:16px; background:linear-gradient(135deg,#181a1e,#151619 72%); box-shadow:inset 0 1px #ffffff0b,0 18px 42px #0002; }
 .browse-row--playing { margin-left:-20px; margin-right:-20px; padding:24px 20px 20px; border:1px solid #47414d; border-radius:16px; background:linear-gradient(115deg,#292732,#202127 72%); box-shadow:inset 0 1px #ffffff0b; }
 .browse-row--performers { padding-top:27px; border-top:1px solid #ffffff22; }
-.browse-row--events .browse-track { gap:18px; padding-bottom:16px; }
+.browse-row--events .browse-track { gap:18px; padding-bottom:8px; }
 .browse-top { display:flex; justify-content:space-between; gap:20px; align-items:center; }
 .browse-top a { border-radius:8px; background:#e2e3e8; color:#1e2025; padding:11px 14px; text-decoration:none; }
 .browse-row { margin:0 0 32px; }
@@ -137,7 +138,8 @@ body { background:#1c1d20; }
 .browse-row h2 { font-size:21px; margin:0 0 4px; }.browse-row-head p { font-size:12px; color:var(--muted); margin:0; }
 .browse-arrows { display:flex; gap:7px; }.browse-arrows button { width:34px; height:34px; padding:0; border-radius:50%; background:#282a30; color:#e0e1e6; border-color:#42454e; font-size:20px; }
 .browse-arrows button:disabled { opacity:.35; cursor:default; }
-.browse-track { display:flex; gap:16px; overflow-x:auto; scroll-snap-type:x proximity; overscroll-behavior-x:none; scrollbar-width:thin; scrollbar-color:#535660 transparent; padding:5px 2px 12px; }
+.browse-track { display:flex; gap:16px; overflow-x:auto; scroll-snap-type:x proximity; overscroll-behavior-x:none; scrollbar-width:none; padding:5px 2px 12px; }
+.browse-track::-webkit-scrollbar { display:none; }
 .browse-tile { display:block; flex:0 0 205px; min-width:0; scroll-snap-align:start; text-decoration:none; }
 .browse-tile:hover { color:#fff; }.browse-tile:hover .browse-art { border-color:#777c87; }
 .browse-tile.event-tile { box-sizing:border-box; flex-basis:clamp(205px,17vw,260px); padding:0 0 7px; transition:transform .18s ease; }

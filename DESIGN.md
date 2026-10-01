@@ -170,3 +170,5 @@ Genre taxonomy remains for the author to curate after discussion with other musi
 ## October 1: Discover refinement
 
 The author requested less explanatory text and a more open event carousel. Discover now keeps its title and short intro, uses unnumbered single-line row headings, and presents upcoming events as full-height portrait posters with captions below instead of wide bordered banners. Horizontal carousel overscroll is contained at either end so continued two-finger scrolling does not trigger browser history navigation. Other browse pages retain their existing headings and descriptions.
+
+The next visual pass hides carousel scrollbars while retaining trackpad scrolling, keyboard focus, and previous/next controls. A darker framed surface around Upcoming events separates the poster gallery from the page and lifts the artwork without changing the genre colors.
