@@ -97,7 +97,7 @@ def discover(request):
                           "external": True, "symbol": "profile", "round": True})
         return cards[:24]
     profile_cards = [{"title": dj.name, "subtitle": "", "categories": list(dj.categories.all()),
-                 "href": f"/djs/{dj.pk}/", "photo": dj.photo, "round": True} for dj in djs]
+                 "href": f"/djs/{dj.pk}/", "photo": dj.photo, "symbol": "profile", "round": True} for dj in djs]
     profile_names = {card["title"].casefold() for card in profile_cards}
     profile_cards.extend(card for card in credit_cards({"set", "track", "artist_page"})
                          if card["title"].casefold() not in profile_names)
