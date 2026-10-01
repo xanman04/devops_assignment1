@@ -7,6 +7,14 @@ data/
 *.sqlite3-wal
 *.sqlite3-shm
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+media/
+uploads/
 .coverage
 htmlcov/
 .pytest_cache/
