@@ -10,7 +10,7 @@ from django.utils import timezone
 from notifications.models import Notification
 from notifications.services import inbox, mark_read
 from . import services as s
-from .models import Event, EventChange, EventFollow, EventReport, GenreTag, Venue
+from .models import DJProfile, Event, EventChange, EventFollow, EventReport, GenreTag, Venue
 from .forms import EventForm
 
 
@@ -488,3 +488,39 @@ class DiscoveryServicesTests(TestCase):
         sections = {section["id"]: section["cards"] for section in response.context["sections"]}
         self.assertIn("Drum & Bass", [card["title"] for card in sections["genres"]])
         self.assertIn(event.title, [card["title"] for card in sections["events"]])
+        shorthand = self.client.get("/discover/", {"q": "DnB"})
+        self.assertContains(shorthand, "Drum &amp; Bass")
+
+    def test_discover_searches_subgenres_and_hides_empty_rows(self):
+        self.make_event()
+        response = self.client.get("/discover/", {"q": "Afrohouse"})
+        sections = {section["id"]: section["cards"] for section in response.context["sections"]}
+        self.assertIn("Afrohouse", [card["title"] for card in sections["subgenres"]])
+        self.assertIn("House", [card["title"] for card in sections["genres"]])
+        self.assertIn("Music tonight", [card["title"] for card in sections["events"]])
+        self.assertNotIn("performers", sections)
+
+    def test_discover_artist_search_keeps_only_matching_rows(self):
+        performer = DJProfile.objects.create(name="Mira Sol", description="Live DJ")
+        performer.categories.add(self.house)
+        response = self.client.get("/discover/", {"q": "Mira Sol"})
+        self.assertEqual([section["id"] for section in response.context["sections"]],
+                         ["playing", "performers"])
+        self.assertContains(response, "Mira Sol")
+        self.assertNotContains(response, "No public events yet.")
+
+    def test_nearby_performer_search_uses_matching_event_before_deduplication(self):
+        performer = DJProfile.objects.create(name="Mira Sol", description="Live DJ")
+        performer.categories.add(self.house)
+        first = self.make_event(title="First night")
+        second = self.make_event(title="Second night", starts_at=self.start + timedelta(days=1),
+                                 ends_at=self.start + timedelta(days=1, hours=5))
+        deep = s.save_tag(actor=self.admin, data={
+            "name": "Deep House", "category": self.house, "description": "Deep House",
+        })
+        s.save_event(actor=self.owner, event_id=second.pk, data={}, category_ids=[self.house.pk],
+                     tag_ids=[deep.pk])
+        first.performers.add(performer)
+        second.performers.add(performer)
+        results = s.nearby_performers(latitude=48.85, longitude=2.35, search_terms={"Deep House"})
+        self.assertEqual(results, [(performer, second)])

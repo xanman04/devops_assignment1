@@ -7,7 +7,7 @@ Most interactions use Django templates and POST forms, redirecting after success
 | Route | Methods | Responsibility |
 |---|---|---|
 | `/` | GET | Map landing page, date/genre controls, location fallback |
-| `/discover/` | GET | Public event, curated genre/DJ/artist carousel sections and text search |
+| `/discover/` | GET | Public event, genre, subgenre, and performer discovery; text search hides empty rows |
 | `/my-events/` | GET, login required | Tracked events and the user's listings together |
 | `/groups/` | GET, login required | Memberships and join requests together |
 | `/api/map/events/` | GET | Existing filtered venue/event JSON |

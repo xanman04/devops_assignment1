@@ -39,7 +39,11 @@ def _first_sentence(description):
 
 def _search_variants(query):
     # People commonly type "and" for the ampersand used in curated genre names.
-    return {query, re.sub(r"\band\b", "&", query, flags=re.IGNORECASE), query.replace("&", "and")}
+    variants = {term for term in (query, re.sub(r"\band\b", "&", query, flags=re.IGNORECASE),
+                                  query.replace("&", "and"), re.sub(r"[\s-]+", "", query)) if term}
+    if re.sub(r"[^a-z0-9]+", "", query.casefold()) in {"dnb", "drumnbass"}:
+        variants.add("drum & bass")
+    return variants
 
 
 GENRE_ART = {
@@ -61,26 +65,35 @@ GENRE_ART = {
 def discover(request):
     query = request.GET.get("q", "").strip()[:80]
     category_query = models.GenreCategory.objects.all()
+    tag_query = models.GenreTag.objects.select_related("category")
     event_query = services.search_events()
     reference_query = models.GenreListeningReference.objects.all()
     dj_query = models.DJProfile.objects.all()
     if query:
         category_matches = Q()
+        tag_matches = Q()
         event_matches = Q()
         reference_matches = Q()
         dj_matches = Q()
         for term in _search_variants(query):
-            category_matches |= Q(name__icontains=term) | Q(description__icontains=term)
+            category_matches |= (Q(name__icontains=term) | Q(description__icontains=term) |
+                                 Q(tags__name__icontains=term) | Q(tags__description__icontains=term))
+            tag_matches |= Q(name__icontains=term) | Q(description__icontains=term)
             event_matches |= (Q(title__icontains=term) | Q(venue__name__icontains=term) |
-                              Q(categories__name__icontains=term) | Q(tags__name__icontains=term))
-            reference_matches |= Q(title__icontains=term) | Q(artist_credit__icontains=term)
+                              Q(venue__address__icontains=term) | Q(description__icontains=term) |
+                              Q(categories__name__icontains=term) | Q(tags__name__icontains=term) |
+                              Q(performers__name__icontains=term))
+            reference_matches |= (Q(title__icontains=term) | Q(artist_credit__icontains=term) |
+                                  Q(tags__name__icontains=term))
             dj_matches |= (Q(name__icontains=term) | Q(description__icontains=term) |
                            Q(categories__name__icontains=term))
-        category_query = category_query.filter(category_matches)
+        category_query = category_query.filter(category_matches).distinct()
+        tag_query = tag_query.filter(tag_matches).distinct()
         event_query = event_query.filter(event_matches).distinct()
         reference_query = reference_query.filter(reference_matches)
         dj_query = dj_query.filter(dj_matches).distinct()
     categories = list(category_query[:24])
+    tags = list(tag_query.order_by("category__display_order", "name")[:24]) if query else []
     events = list(event_query.select_related("venue").prefetch_related("categories")[:24])
     references = list(reference_query.order_by("display_order", "id")[:200])
     djs = list(dj_query.prefetch_related("categories")[:24])
@@ -109,9 +122,15 @@ def discover(request):
          "cards": [{"title": c.name, "subtitle": _first_sentence(c.description), "href": f"/genres/{c.pk}/",
                     "color": c.color, "genre": True, "motif": GENRE_ART.get(c.name, "wave")} for c in categories],
          "empty": "No curated genres yet."},
+        *([{"id": "subgenres", "title": "Subgenres", "description": "Explore more specific sounds",
+            "cards": [{"title": tag.name, "subtitle": tag.category.name,
+                       "href": f"/genres/{tag.category_id}/#subgenre-{tag.pk}",
+                       "color": tag.category.color, "subgenre": True} for tag in tags]}] if query else []),
         {"id": "performers", "title": "Artists & DJs", "description": "Explore performers and the music they make",
          "cards": profile_cards, "empty": "No artist or DJ profiles yet."},
     ]
+    if query:
+        sections = [section for section in sections if section["cards"] or section["id"] == "playing"]
     return render(request, "browse.html", {"title": "Discover", "intro": "Explore the music. Find what moves you.",
                                            "sections": sections, "query": query})
 
@@ -119,15 +138,17 @@ def discover(request):
 @endpoint
 @require_GET
 def playing_near_me(request):
-    query = request.GET.get("q", "").strip()[:80].casefold()
+    query = request.GET.get("q", "").strip()[:80]
+    terms = _search_variants(query) if query else ()
     results = services.nearby_performers(latitude=request.GET.get("latitude"),
-                                         longitude=request.GET.get("longitude"))
+                                         longitude=request.GET.get("longitude"), search_terms=terms)
     cards = []
     for performer, event in results:
-        if query and not any(query in value.casefold() for value in (
-            performer.name, event.title, event.venue.name,
-            *(category.name for category in performer.categories.all()),
-        )):
+        values = (performer.name, event.title, event.venue.name, event.venue.address,
+                  *(category.name for category in performer.categories.all()),
+                  *(category.name for category in event.categories.all()),
+                  *(tag.name for tag in event.tags.all()))
+        if terms and not any(term.casefold() in value.casefold() for term in terms for value in values):
             continue
         cards.append({"title": performer.name, "href": f"/djs/{performer.pk}/",
             "photo_url": staticfiles_storage.url(performer.photo) if performer.photo else "",

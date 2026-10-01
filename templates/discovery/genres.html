@@ -13,7 +13,7 @@
   </header>
   <section class="event-lower-section" aria-labelledby="subgenres-heading">
     <div class="event-section-heading"><p class="event-section-kicker">FIND YOUR CORNER</p><h2 id="subgenres-heading">Subgenres</h2><p class="muted">A quick guide to the sounds within {{ category.name }}.</p></div>
-    <div class="subgenre-grid">{% for card in tag_cards %}<details class="subgenre-card"><summary><span class="subgenre-card-heading"><strong>{{ card.tag.name }}</strong><span>{{ card.tag.bpm_display }}</span></span><span class="subgenre-preview">{{ card.preview }}</span><span class="subgenre-more">Read more <span aria-hidden="true">⌄</span></span></summary><div class="subgenre-full">{{ card.tag.description|linebreaks }}</div></details>{% empty %}<p class="muted">No subgenres yet.</p>{% endfor %}</div>
+    <div class="subgenre-grid">{% for card in tag_cards %}<details class="subgenre-card" id="subgenre-{{ card.tag.pk }}"><summary><span class="subgenre-card-heading"><strong>{{ card.tag.name }}</strong><span>{{ card.tag.bpm_display }}</span></span><span class="subgenre-preview">{{ card.preview }}</span><span class="subgenre-more">Read more <span aria-hidden="true">⌄</span></span></summary><div class="subgenre-full">{{ card.tag.description|linebreaks }}</div></details>{% empty %}<p class="muted">No subgenres yet.</p>{% endfor %}</div>
   </section>
   <section class="event-lower-section" aria-labelledby="genre-djs-heading">
     <div class="event-section-heading"><p class="event-section-kicker">PEOPLE BEHIND THE SOUND</p><h2 id="genre-djs-heading">Artists & DJs to explore</h2></div>

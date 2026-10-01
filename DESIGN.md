@@ -24,6 +24,8 @@ The professor approved the proposal according to the author. That does not imply
 
 The October 1 Discover refinement replaces the category cards' line drawings with translucent geometric music motifs. Expanded genre pages use a color-led overview, tempo and count facts, a three-column expandable subgenre grid, relevant DJ links, and listening references. Opening one subgenre closes the previous card; clicking outside or pressing Escape closes it. Curated DJ profiles use the event-detail visual language: portrait, colored genre chips, a separate about section, official link, and visible photo credit. The artist and photo sources are recorded in `DJ_SOURCES.md`.
 
+The later Discover search refinement makes subgenre names and descriptions searchable, with direct result cards that open the matching description in its parent genre page. Only result-bearing rows remain during a search; nearby performers are resolved after location lookup, and an empty search uses a single message. The Events row uses wider, poster-led cards to distinguish it from the smaller genre and round performer carousels.
+
 - Genres share one admin-managed name/color/description system across pins, tags, and Explore Genres.
 - Curated reference artists, tracks, and sets explain each genre. Event creators can attach event-specific listening links, including for eclectic DJs.
 - Event creators and admins may upload or replace one poster per event. JPG/PNG/WebP files up to 5 MiB are decoded, bounded, resized to a 1,600-pixel maximum edge, and saved as metadata-free JPEGs. The uploaded poster appears on event detail and carousel cards; seeded demo artwork remains a fallback. The checked poster route uses the same public/owner/admin visibility rule as event details.

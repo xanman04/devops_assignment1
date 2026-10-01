@@ -314,7 +314,7 @@ def search_events(*, starts_at=None, ends_at=None, category_ids=(), tag_ids=(), 
     return events.distinct().order_by("starts_at", "id")
 
 
-def nearby_performers(*, latitude, longitude, radius_km=30, now=None):
+def nearby_performers(*, latitude, longitude, radius_km=30, now=None, search_terms=()):
     """One profile per performer, tied to their next public event within 14 days."""
     try:
         lat, lon = float(latitude), float(longitude)
@@ -331,6 +331,13 @@ def nearby_performers(*, latitude, longitude, radius_km=30, now=None):
         venue__latitude__gte=max(-90, lat - lat_delta),
         venue__latitude__lte=min(90, lat + lat_delta), performers__isnull=False,
     )
+    if search_terms:
+        matches = Q()
+        for term in search_terms:
+            matches |= (Q(title__icontains=term) | Q(venue__name__icontains=term) |
+                        Q(venue__address__icontains=term) | Q(categories__name__icontains=term) |
+                        Q(tags__name__icontains=term) | Q(performers__name__icontains=term))
+        events = events.filter(matches)
     if lon_delta < 180:
         west, east = lon - lon_delta, lon + lon_delta
         if west < -180:
@@ -340,7 +347,7 @@ def nearby_performers(*, latitude, longitude, radius_km=30, now=None):
         else:
             events = events.filter(venue__longitude__gte=west, venue__longitude__lte=east)
     results, seen = [], set()
-    for event in events.prefetch_related("performers__categories").distinct():
+    for event in events.prefetch_related("performers__categories", "tags", "categories").distinct():
         event_lat, event_lon = radians(float(event.venue.latitude)), radians(float(event.venue.longitude))
         delta_lat = event_lat - radians(lat)
         delta_lon = event_lon - radians(lon)

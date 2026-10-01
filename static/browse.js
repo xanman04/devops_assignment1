@@ -23,7 +23,11 @@ window.initializeBrowse = () => {
   const playing=document.querySelector('[data-playing-endpoint]');
   if (playing) {
     const track=playing.querySelector('.browse-track');
-    const showMessage=message=>{track.replaceChildren();const empty=document.createElement('p');empty.className='browse-empty';empty.textContent=message;track.append(empty);track.dispatchEvent(new Event('scroll'));};
+    const searchQuery=playing.dataset.searchQuery;
+    const showMessage=message=>{
+      if(searchQuery){playing.remove();const empty=document.querySelector('.discover-no-results');if(empty&&!document.querySelector('.browse-row')){empty.hidden=false;document.querySelector('.search-heading')?.remove();}return;}
+      track.replaceChildren();const placeholder=document.createElement('p');placeholder.className='browse-empty';placeholder.textContent=message;track.append(placeholder);track.dispatchEvent(new Event('scroll'));
+    };
     const showCards=cards=>{
       track.replaceChildren();
       if (!cards.length){showMessage('No linked artists or DJs are playing within 30 km in the next two weeks.');return;}
@@ -58,6 +62,9 @@ window.initializeBrowse = () => {
   }
 };
 window.initializeBrowse();
+
+const linkedSubgenre=location.hash.startsWith('#subgenre-')?document.getElementById(location.hash.slice(1)):null;
+if(linkedSubgenre?.matches('.subgenre-card'))linkedSubgenre.open=true;
 
 // Keep one subgenre expanded at a time and dismiss it when attention moves away.
 document.addEventListener('click', event => {
