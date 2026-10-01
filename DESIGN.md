@@ -166,3 +166,7 @@ Top category tabs are replaced by simultaneously available carousel sections: Di
 ## September 29: demo fixtures without genre decisions
 
 Genre taxonomy remains for the author to curate after discussion with other music listeners. The explicit seed_demo command creates five regular demo users and five synthetic Paris-area venues labeled as fictional. Three approved, one pending, and one rejected venue illustrate fixture review states; no actual location verification is claimed. No genres/tags are created or edited. Without a selected existing category, events/groups are skipped. Later, --category ID enables event/group/request/message/follow scenarios through domain services. Unchanged reruns preserve profiles, passwords, venue edits, and membership/request activity. --refresh-dates explicitly moves fixture events forward with normal tracked-event notices. Runtime fixture data stays local and ignored by Git. The full suite now passes 108 tests.
+
+## October 1: Discover refinement
+
+The author requested less explanatory text and a more open event carousel. Discover now keeps its title and short intro, uses unnumbered single-line row headings, and presents upcoming events as full-height portrait posters with captions below instead of wide bordered banners. Horizontal carousel overscroll is contained at either end so continued two-finger scrolling does not trigger browser history navigation. Other browse pages retain their existing headings and descriptions.

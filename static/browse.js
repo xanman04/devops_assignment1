@@ -15,6 +15,12 @@ window.initializeBrowse = () => {
       row.scrollBy({left:Number(button.dataset.direction)*row.clientWidth*.8,
                     behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
     });
+    row.addEventListener('wheel',event=>{
+      if(Math.abs(event.deltaX)<=Math.abs(event.deltaY))return;
+      const atStart=row.scrollLeft<=1;
+      const atEnd=row.scrollLeft+row.clientWidth>=row.scrollWidth-1;
+      if((event.deltaX<0&&atStart)||(event.deltaX>0&&atEnd))event.preventDefault();
+    },{passive:false});
     row.addEventListener('scroll',update);
     const observer=new ResizeObserver(update);observer.observe(row);observers.push(observer);
     update();

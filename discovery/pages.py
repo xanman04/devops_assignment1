@@ -115,18 +115,18 @@ def discover(request):
     profile_cards.extend(card for card in credit_cards({"set", "track", "artist_page"})
                          if card["title"].casefold() not in profile_names)
     sections = [
-        {"id": "events", "title": "Events", "description": "Upcoming public events", "cards": [_event_card(e) for e in events], "empty": "No public events yet."},
-        {"id": "playing", "title": "Playing near me", "description": "Artists and DJs at upcoming events within 30 km",
+        {"id": "events", "title": "Upcoming events", "cards": [_event_card(e) for e in events], "empty": "No public events yet."},
+        {"id": "playing", "title": "Playing near me",
          "cards": [], "empty": "Checking your location for upcoming performers."},
-        {"id": "genres", "title": "Genres", "description": "Colors match the map pins",
+        {"id": "genres", "title": "Genres",
          "cards": [{"title": c.name, "subtitle": _first_sentence(c.description), "href": f"/genres/{c.pk}/",
                     "color": c.color, "genre": True, "motif": GENRE_ART.get(c.name, "wave")} for c in categories],
          "empty": "No curated genres yet."},
-        *([{"id": "subgenres", "title": "Subgenres", "description": "Explore more specific sounds",
+        *([{"id": "subgenres", "title": "Subgenres",
             "cards": [{"title": tag.name, "subtitle": tag.category.name,
                        "href": f"/genres/{tag.category_id}/#subgenre-{tag.pk}",
                        "color": tag.category.color, "subgenre": True} for tag in tags]}] if query else []),
-        {"id": "performers", "title": "Artists & DJs", "description": "Explore performers and the music they make",
+        {"id": "performers", "title": "Artists & DJs",
          "cards": profile_cards, "empty": "No artist or DJ profiles yet."},
     ]
     if query:

@@ -122,12 +122,10 @@ body { background:#1c1d20; }
 .browse-page { padding:43px clamp(32px,4vw,65px) 65px; }
 .browse-page h1 { margin:0 0 9px; }.browse-page > .muted { margin:0 0 32px; }
 .browse-page--discover { padding-top:30px; background:radial-gradient(ellipse 65% 460px at 72% -40px,#34304255,transparent 80%); }
-.discover-masthead { position:relative; display:block; margin-bottom:29px; padding:15px 0 25px; border-bottom:1px solid #ffffff23; }
+.discover-masthead { position:relative; display:block; margin-bottom:29px; padding:5px 0 25px; border-bottom:1px solid #ffffff23; }
 .discover-masthead::after { content:""; position:absolute; left:0; bottom:-1px; width:125px; height:2px; background:linear-gradient(90deg,#8b97b2,#b27c9c,transparent); }
-.discover-kicker { display:block; margin-bottom:12px; color:#aeb6c5; font-size:11px; font-weight:700; letter-spacing:.17em; }.discover-kicker span { margin:0 7px; color:#8f7598; }
 .discover-masthead h1 { margin:0 0 8px; font-size:clamp(40px,3.3vw,58px); line-height:1; letter-spacing:-.055em; }.discover-masthead p { margin:0; color:#b9bfca; font-size:15px; }
-.browse-page--discover .browse-row { margin-bottom:43px; }.browse-page--discover .browse-row-head { display:grid; grid-template-columns:24px minmax(0,1fr) auto; align-items:center; column-gap:12px; margin-bottom:17px; }
-.browse-section-index { align-self:flex-start; min-width:24px; margin-top:2px; color:#858b99; font-size:11px; font-weight:700; letter-spacing:.06em; }
+.browse-page--discover .browse-row { margin-bottom:43px; }.browse-page--discover .browse-row-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:17px; }
 .browse-page--discover .browse-row-head h2 { font-size:23px; letter-spacing:-.025em; }
 .browse-row--playing { margin-left:-20px; margin-right:-20px; padding:24px 20px 20px; border:1px solid #47414d; border-radius:16px; background:linear-gradient(115deg,#292732,#202127 72%); box-shadow:inset 0 1px #ffffff0b; }
 .browse-row--performers { padding-top:27px; border-top:1px solid #ffffff22; }
@@ -139,18 +137,16 @@ body { background:#1c1d20; }
 .browse-row h2 { font-size:21px; margin:0 0 4px; }.browse-row-head p { font-size:12px; color:var(--muted); margin:0; }
 .browse-arrows { display:flex; gap:7px; }.browse-arrows button { width:34px; height:34px; padding:0; border-radius:50%; background:#282a30; color:#e0e1e6; border-color:#42454e; font-size:20px; }
 .browse-arrows button:disabled { opacity:.35; cursor:default; }
-.browse-track { display:flex; gap:16px; overflow-x:auto; scroll-snap-type:x proximity; scrollbar-width:thin; scrollbar-color:#535660 transparent; padding:5px 2px 12px; }
+.browse-track { display:flex; gap:16px; overflow-x:auto; scroll-snap-type:x proximity; overscroll-behavior-x:none; scrollbar-width:thin; scrollbar-color:#535660 transparent; padding:5px 2px 12px; }
 .browse-tile { display:block; flex:0 0 205px; min-width:0; scroll-snap-align:start; text-decoration:none; }
 .browse-tile:hover { color:#fff; }.browse-tile:hover .browse-art { border-color:#777c87; }
-.browse-tile.event-tile { position:relative; isolation:isolate; box-sizing:border-box; flex-basis:clamp(310px,38vw,490px); height:320px; overflow:hidden; border:1px solid color-mix(in srgb,var(--tile-color) 38%,#51545b); border-radius:15px; background:color-mix(in srgb,var(--tile-color) 22%,#202329); box-shadow:0 10px 24px #0004; transition:transform .2s ease, border-color .2s ease; }
-.browse-tile.event-tile:hover { transform:translateY(-3px); border-color:color-mix(in srgb,var(--tile-color) 70%,#aeb3bc); }
-.event-tile-art { position:absolute; inset:0; z-index:-2; background-position:center 10%; background-size:cover; transition:transform .35s ease; }
-.event-tile:hover .event-tile-art { transform:scale(1.035); }
+.browse-tile.event-tile { box-sizing:border-box; flex-basis:clamp(205px,17vw,260px); padding:0 0 7px; transition:transform .18s ease; }
+.browse-tile.event-tile:hover { transform:translateY(-4px); }
+.event-tile-art { display:block; width:100%; aspect-ratio:2 / 3; border-radius:4px; background-color:color-mix(in srgb,var(--tile-color) 17%,#25282f); background-position:center; background-size:contain; background-repeat:no-repeat; box-shadow:0 12px 23px #0005; }
 .event-tile-art-fallback { display:grid; place-items:center; background:radial-gradient(circle at 65% 30%,color-mix(in srgb,var(--tile-color) 55%,#363942),#202329 70%); }
-.event-tile-art-fallback .live-icon { width:110px; height:110px; opacity:.25; stroke-width:.7; }
-.event-tile::after { content:""; position:absolute; inset:0; z-index:-1; background:linear-gradient(180deg,#10121666 0%,transparent 32%,#10121688 60%,#101216f5 100%); }
-.event-tile-label { display:inline-block; margin:18px; padding:6px 9px; border:1px solid #ffffff75; border-radius:5px; background:#16181dbb; color:#f0f2f5; font-size:10px; font-weight:700; letter-spacing:.12em; }
-.event-tile-copy { position:absolute; left:20px; right:20px; bottom:21px; }.browse-tile.event-tile strong { margin:0 0 7px; font-size:clamp(21px,2vw,28px); line-height:1.08; text-shadow:0 2px 8px #000d; }.browse-tile.event-tile small { color:#e4e6eb; font-size:13px; text-shadow:0 1px 5px #000; }
+.event-tile-art-fallback .live-icon { width:100px; height:100px; opacity:.28; stroke-width:.8; }
+.event-tile-copy { display:block; padding:10px 2px 0; }.event-tile-copy::before { content:""; display:block; width:30px; height:3px; margin-bottom:9px; border-radius:2px; background:var(--tile-color); }
+.browse-tile.event-tile strong { margin:0 0 5px; font-size:16px; line-height:1.2; }.browse-tile.event-tile small { color:#aeb4bf; font-size:11px; line-height:1.35; }
 .browse-tile.subgenre-tile { box-sizing:border-box; flex-basis:220px; min-height:120px; padding:17px; border:1px solid color-mix(in srgb,var(--tile-color) 70%,#70747d); border-radius:11px; background:linear-gradient(145deg,color-mix(in srgb,var(--tile-color) 28%,#292d35),#202228); }
 .subgenre-tile-art { display:block; width:44px; height:4px; border-radius:4px; background:var(--tile-color); box-shadow:0 0 20px var(--tile-color); }.browse-tile.subgenre-tile strong { margin:22px 0 4px; }
 .discover-no-results { max-width:520px; margin:28px 0; padding:28px; border:1px solid #434750; border-radius:13px; background:#22252b; }.discover-no-results h2 { margin:0 0 8px; }.discover-no-results p { margin:0; color:var(--muted); }
