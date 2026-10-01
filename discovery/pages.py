@@ -103,12 +103,12 @@ def discover(request):
                          if card["title"].casefold() not in profile_names)
     sections = [
         {"id": "events", "title": "Events", "description": "Upcoming public events", "cards": [_event_card(e) for e in events], "empty": "No public events yet."},
+        {"id": "playing", "title": "Playing near me", "description": "Artists and DJs at upcoming events within 30 km",
+         "cards": [], "empty": "Checking your location for upcoming performers."},
         {"id": "genres", "title": "Genres", "description": "Colors match the map pins",
          "cards": [{"title": c.name, "subtitle": _first_sentence(c.description), "href": f"/genres/{c.pk}/",
                     "color": c.color, "genre": True, "motif": GENRE_ART.get(c.name, "wave")} for c in categories],
          "empty": "No curated genres yet."},
-        {"id": "playing", "title": "Playing near me", "description": "Artists and DJs at upcoming events within 30 km",
-         "cards": [], "empty": "Checking your location for upcoming performers."},
         {"id": "performers", "title": "Artists & DJs", "description": "Explore performers and the music they make",
          "cards": profile_cards, "empty": "No artist or DJ profiles yet."},
     ]
