@@ -1,0 +1,17 @@
+{% extends 'base.html' %}{% load static %}
+{% block title %}{{ dj.name }} · Bassline{% endblock %}
+{% block content %}
+<article class="dj-detail event-detail" style="--event-accent:{{ dj.categories.first.color|default:'#9da5b4' }}">
+  <div class="event-hero">
+    <div><img class="dj-detail-photo" src="{% static dj.photo %}" alt="{{ dj.name }}"><p class="dj-photo-credit">Photo: <a href="{{ dj.photo_source_url }}" target="_blank" rel="noopener noreferrer">{{ dj.photo_credit }}</a> · {{ dj.photo_license }} · resized WebP</p></div>
+    <div class="event-hero-copy"><p class="event-kicker">DJ PROFILE</p><h1>{{ dj.name }}</h1>
+      <div class="event-detail-grid dj-info-grid">
+        <section class="event-section event-music"><p class="event-section-kicker">THE SOUND</p><h2>Genres</h2><div class="tags">{% for category in dj.categories.all %}<a class="genre" style="--genre:{{ category.color }}" href="{% url 'genre-detail' category.pk %}">{{ category.name }}</a>{% endfor %}</div></section>
+        <section class="event-section event-about"><p class="event-section-kicker">ABOUT THE ARTIST</p><h2>Behind the decks</h2><div class="event-description">{{ dj.description|linebreaks }}</div></section>
+      </div>
+      <div class="event-actions"><a class="event-action-link" href="{{ dj.official_url }}" target="_blank" rel="noopener noreferrer">Official site ↗</a></div>
+    </div>
+  </div>
+  <p class="dj-back"><a href="{% url 'discover' %}">← Back to Discover</a></p>
+</article>
+{% endblock %}

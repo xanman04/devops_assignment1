@@ -27,6 +27,8 @@ Keep standard Django permission relationships. No profile photos, public email, 
 
 ## Discovery
 
+`DJProfile` is an admin-curated artist directory record with name, description, official URL, static photo path, photo credit/source/license, ordering, and many-to-many broad genre categories. It is separate from fictional event lineups and from listening references. The repeatable `seed_djs` command adds seven sourced examples only when their existing categories are present; it does not create or change genre taxonomy.
+
 ### GenreCategory and GenreTag
 
 | Object | Fields |

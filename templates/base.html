@@ -5,7 +5,7 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Bassline{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'app.css' %}?v=20260930c">
-  <link rel="stylesheet" href="{% static 'live.css' %}?v=20261001a">
+  <link rel="stylesheet" href="{% static 'live.css' %}?v=20261001b">
   {% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
@@ -26,7 +26,7 @@
     <form class="live-search" action="{% url 'discover' %}" method="get" role="search"><label for="site-search">Search Discover</label><input id="site-search" name="q" type="search" placeholder="Events, venues, music…" value="{{ query|default:'' }}"><button aria-label="Search Discover"><svg class="live-icon" aria-hidden="true"><use href="#icon-search"/></svg></button></form>
     <nav class="live-nav" aria-label="Main navigation">
       <a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}aria-current="page"{% endif %}><svg class="live-icon" aria-hidden="true"><use href="#icon-near"/></svg>Near me</a>
-      <a href="{% url 'discover' %}" {% if request.resolver_match.url_name == 'discover' or request.resolver_match.url_name == 'genres' or request.resolver_match.url_name == 'genre-detail' %}aria-current="page"{% endif %}><svg class="live-icon" aria-hidden="true"><use href="#icon-discover"/></svg>Discover</a>
+      <a href="{% url 'discover' %}" {% if request.resolver_match.url_name == 'discover' or request.resolver_match.url_name == 'genres' or request.resolver_match.url_name == 'genre-detail' or request.resolver_match.url_name == 'dj-detail' %}aria-current="page"{% endif %}><svg class="live-icon" aria-hidden="true"><use href="#icon-discover"/></svg>Discover</a>
       <a href="{% url 'my-events' %}" {% if request.resolver_match.url_name == 'my-events' or request.resolver_match.url_name == 'activity' %}aria-current="page"{% endif %}><svg class="live-icon" aria-hidden="true"><use href="#icon-events"/></svg>My events</a>
       <a href="{% url 'my-groups' %}" {% if request.resolver_match.url_name == 'my-groups' %}aria-current="page"{% endif %}><svg class="live-icon" aria-hidden="true"><use href="#icon-groups"/></svg>Groups</a>
       <a href="{% url 'inbox' %}" {% if request.resolver_match.url_name == 'inbox' %}aria-current="page"{% endif %}><svg class="live-icon" aria-hidden="true"><use href="#icon-notifications"/></svg>Notifications</a>
@@ -41,7 +41,7 @@
   </aside>
   <main id="main-content" class="live-main">{% block content %}{% endblock %}</main>
 </div>
-<script src="{% static 'browse.js' %}" defer></script>
+<script src="{% static 'browse.js' %}?v=20261001b" defer></script>
 <script src="{% static 'navigation.js' %}?v=20260930b" defer></script>
 {% block scripts %}{% endblock %}
 </body></html>

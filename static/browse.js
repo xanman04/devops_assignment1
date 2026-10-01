@@ -21,3 +21,16 @@ window.initializeBrowse = () => {
   window.cleanupBrowse=()=>observers.forEach(observer=>observer.disconnect());
 };
 window.initializeBrowse();
+
+// Keep one subgenre expanded at a time and dismiss it when attention moves away.
+document.addEventListener('click', event => {
+  const card = event.target instanceof Element ? event.target.closest('.subgenre-card') : null;
+  for (const openCard of document.querySelectorAll('.subgenre-card[open]')) {
+    if (openCard !== card) openCard.open = false;
+  }
+}, true);
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') {
+    for (const card of document.querySelectorAll('.subgenre-card[open]')) card.open = false;
+  }
+});

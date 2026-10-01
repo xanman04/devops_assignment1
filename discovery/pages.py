@@ -61,21 +61,27 @@ def discover(request):
     category_query = models.GenreCategory.objects.all()
     event_query = services.search_events()
     reference_query = models.GenreListeningReference.objects.all()
+    dj_query = models.DJProfile.objects.all()
     if query:
         category_matches = Q()
         event_matches = Q()
         reference_matches = Q()
+        dj_matches = Q()
         for term in _search_variants(query):
             category_matches |= Q(name__icontains=term) | Q(description__icontains=term)
             event_matches |= (Q(title__icontains=term) | Q(venue__name__icontains=term) |
                               Q(categories__name__icontains=term) | Q(tags__name__icontains=term))
             reference_matches |= Q(title__icontains=term) | Q(artist_credit__icontains=term)
+            dj_matches |= (Q(name__icontains=term) | Q(description__icontains=term) |
+                           Q(categories__name__icontains=term))
         category_query = category_query.filter(category_matches)
         event_query = event_query.filter(event_matches).distinct()
         reference_query = reference_query.filter(reference_matches)
+        dj_query = dj_query.filter(dj_matches).distinct()
     categories = list(category_query[:24])
     events = list(event_query.select_related("venue").prefetch_related("categories")[:24])
     references = list(reference_query.order_by("display_order", "id")[:200])
+    djs = list(dj_query.prefetch_related("categories")[:24])
     def credit_cards(kind):
         seen, cards = set(), []
         for reference in references:
@@ -88,13 +94,18 @@ def discover(request):
             cards.append({"title": credit, "subtitle": reference.title, "href": reference.url,
                           "external": True, "symbol": "profile", "round": True})
         return cards[:24]
+    dj_cards = [{"title": dj.name, "subtitle": "", "categories": list(dj.categories.all()),
+                 "href": f"/djs/{dj.pk}/", "photo": dj.photo, "round": True} for dj in djs]
+    profile_names = {card["title"].casefold() for card in dj_cards}
+    dj_cards.extend(card for card in credit_cards({"set"}) if card["title"].casefold() not in profile_names)
     sections = [
         {"id": "events", "title": "Events", "description": "Upcoming public events", "cards": [_event_card(e) for e in events], "empty": "No public events yet."},
         {"id": "genres", "title": "Genres", "description": "Colors match the map pins",
          "cards": [{"title": c.name, "subtitle": _first_sentence(c.description), "href": f"/genres/{c.pk}/",
                     "color": c.color, "genre": True, "motif": GENRE_ART.get(c.name, "wave")} for c in categories],
          "empty": "No curated genres yet."},
-        {"id": "djs", "title": "DJs", "description": "Curated sets and listening references", "cards": credit_cards({"set"}), "empty": "No curated DJ sets yet."},
+        {"id": "djs", "title": "DJs", "description": "Artists across the spectrum", "cards": dj_cards,
+         "empty": "No curated DJs yet."},
         {"id": "artists", "title": "Artists", "description": "Curated tracks and artist pages", "cards": credit_cards({"track", "artist_page"}), "empty": "No curated artist references yet."},
     ]
     return render(request, "browse.html", {"title": "Discover", "intro": "Explore the music. Find what moves you.",
@@ -105,11 +116,22 @@ def discover(request):
 @require_GET
 def genres(request, genre_id=None):
     category = get_object_or_404(models.GenreCategory, pk=genre_id) if genre_id else None
+    tags = list(category.tags.order_by("name")) if category else []
+    tag_cards = [{"tag": tag, "preview": _first_sentence(tag.description)} for tag in tags]
     return render(request, "discovery/genres.html", {
         "category": category, "categories": models.GenreCategory.objects.all(),
-        "tags": category.tags.all() if category else [],
+        "tag_cards": tag_cards,
+        "motif": GENRE_ART.get(category.name, "wave") if category else "wave",
         "references": category.listening_references.prefetch_related("categories", "tags") if category else [],
+        "djs": category.djs.prefetch_related("categories") if category else [],
     })
+
+
+@endpoint
+@require_GET
+def dj_detail(request, dj_id):
+    dj = get_object_or_404(models.DJProfile.objects.prefetch_related("categories"), pk=dj_id)
+    return render(request, "discovery/dj.html", {"dj": dj})
 
 
 @endpoint

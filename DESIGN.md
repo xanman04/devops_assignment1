@@ -22,6 +22,8 @@ The professor approved the proposal according to the author. That does not imply
 
 ## Agreed: genres and music
 
+The October 1 Discover refinement replaces the category cards' line drawings with translucent geometric music motifs. Expanded genre pages use a color-led overview, tempo and count facts, a three-column expandable subgenre grid, relevant DJ links, and listening references. Opening one subgenre closes the previous card; clicking outside or pressing Escape closes it. Curated DJ profiles use the event-detail visual language: portrait, colored genre chips, a separate about section, official link, and visible photo credit. The artist and photo sources are recorded in `DJ_SOURCES.md`.
+
 - Genres share one admin-managed name/color/description system across pins, tags, and Explore Genres.
 - Curated reference artists, tracks, and sets explain each genre. Event creators can attach event-specific listening links, including for eclectic DJs.
 - References can carry multiple genre tags. Artist references must not be confused with the actual event lineup.

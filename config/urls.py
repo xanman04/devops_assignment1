@@ -24,6 +24,7 @@ urlpatterns = [
     path("api/map/events/", map_events, name="map-events"),
     path("genres/", discovery.genres, name="genres"),
     path("genres/<int:genre_id>/", discovery.genres, name="genre-detail"),
+    path("djs/<int:dj_id>/", discovery.dj_detail, name="dj-detail"),
     path("accounts/register/", accounts.register, name="register"),
     path("accounts/login/", LoginView.as_view(template_name="registration/login.html"), name="login"),
     path("accounts/logout/", LogoutView.as_view(), name="logout"),

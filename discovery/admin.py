@@ -71,6 +71,13 @@ class TagAdmin(TempoReferenceAdmin):
         apply_saved(obj, services.save_tag(actor=request.user, tag_id=obj.pk, data=form.cleaned_data))
 
 
+@admin.register(models.DJProfile)
+class DJProfileAdmin(admin.ModelAdmin):
+    list_display = ("name", "display_order")
+    search_fields = ("name", "description")
+    filter_horizontal = ("categories",)
+
+
 @admin.register(models.Venue)
 class VenueAdmin(RetainedAdmin):
     list_display = ("name", "review_status", "timezone", "submitted_by")

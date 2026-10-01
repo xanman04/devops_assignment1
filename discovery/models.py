@@ -81,6 +81,26 @@ class GenreTag(TempoRange):
         return self.name
 
 
+class DJProfile(models.Model):
+    """Admin-curated artist profile; never inferred from an event listing."""
+
+    name = models.CharField(max_length=120, unique=True)
+    description = models.TextField()
+    official_url = models.URLField(max_length=2048, validators=[http_url])
+    photo = models.CharField(max_length=160, help_text="Bundled static image path.")
+    photo_credit = models.CharField(max_length=200)
+    photo_source_url = models.URLField(max_length=2048, validators=[http_url])
+    photo_license = models.CharField(max_length=80)
+    display_order = models.PositiveIntegerField(default=0)
+    categories = models.ManyToManyField(GenreCategory, related_name="djs")
+
+    class Meta:
+        ordering = ["display_order", "name"]
+
+    def __str__(self):
+        return self.name
+
+
 class Venue(Timestamped):
     class ReviewStatus(models.TextChoices):
         PENDING = "pending", "Pending"
