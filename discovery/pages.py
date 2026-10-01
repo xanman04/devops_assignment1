@@ -1,6 +1,7 @@
 import re
 from zoneinfo import ZoneInfo
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, JsonResponse
+from django.contrib.staticfiles.storage import staticfiles_storage
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -95,22 +96,47 @@ def discover(request):
             cards.append({"title": credit, "subtitle": reference.title, "href": reference.url,
                           "external": True, "symbol": "profile", "round": True})
         return cards[:24]
-    dj_cards = [{"title": dj.name, "subtitle": "", "categories": list(dj.categories.all()),
+    profile_cards = [{"title": dj.name, "subtitle": "", "categories": list(dj.categories.all()),
                  "href": f"/djs/{dj.pk}/", "photo": dj.photo, "round": True} for dj in djs]
-    profile_names = {card["title"].casefold() for card in dj_cards}
-    dj_cards.extend(card for card in credit_cards({"set"}) if card["title"].casefold() not in profile_names)
+    profile_names = {card["title"].casefold() for card in profile_cards}
+    profile_cards.extend(card for card in credit_cards({"set", "track", "artist_page"})
+                         if card["title"].casefold() not in profile_names)
     sections = [
         {"id": "events", "title": "Events", "description": "Upcoming public events", "cards": [_event_card(e) for e in events], "empty": "No public events yet."},
         {"id": "genres", "title": "Genres", "description": "Colors match the map pins",
          "cards": [{"title": c.name, "subtitle": _first_sentence(c.description), "href": f"/genres/{c.pk}/",
                     "color": c.color, "genre": True, "motif": GENRE_ART.get(c.name, "wave")} for c in categories],
          "empty": "No curated genres yet."},
-        {"id": "djs", "title": "DJs", "description": "Artists across the spectrum", "cards": dj_cards,
-         "empty": "No curated DJs yet."},
-        {"id": "artists", "title": "Artists", "description": "Curated tracks and artist pages", "cards": credit_cards({"track", "artist_page"}), "empty": "No curated artist references yet."},
+        {"id": "playing", "title": "Playing near me", "description": "Artists and DJs at upcoming events within 30 km",
+         "cards": [], "empty": "Checking your location for upcoming performers."},
+        {"id": "performers", "title": "Artists & DJs", "description": "Explore performers and the music they make",
+         "cards": profile_cards, "empty": "No artist or DJ profiles yet."},
     ]
     return render(request, "browse.html", {"title": "Discover", "intro": "Explore the music. Find what moves you.",
                                            "sections": sections, "query": query})
+
+
+@endpoint
+@require_GET
+def playing_near_me(request):
+    query = request.GET.get("q", "").strip()[:80].casefold()
+    results = services.nearby_performers(latitude=request.GET.get("latitude"),
+                                         longitude=request.GET.get("longitude"))
+    cards = []
+    for performer, event in results:
+        if query and not any(query in value.casefold() for value in (
+            performer.name, event.title, event.venue.name,
+            *(category.name for category in performer.categories.all()),
+        )):
+            continue
+        cards.append({"title": performer.name, "href": f"/djs/{performer.pk}/",
+            "photo_url": staticfiles_storage.url(performer.photo) if performer.photo else "",
+            "subtitle": f"{event.title} · {event.venue.name}",
+            "categories": [{"name": category.name, "color": category.color}
+                           for category in performer.categories.all()]})
+    response = JsonResponse({"cards": cards})
+    response["Cache-Control"] = "private, no-store"
+    return response
 
 
 @endpoint
@@ -132,7 +158,9 @@ def genres(request, genre_id=None):
 @require_GET
 def dj_detail(request, dj_id):
     dj = get_object_or_404(models.DJProfile.objects.prefetch_related("categories"), pk=dj_id)
-    return render(request, "discovery/dj.html", {"dj": dj})
+    upcoming = services.public_events().filter(performers=dj, cancelled_at__isnull=True,
+        ends_at__gt=timezone.now()).select_related("venue").order_by("starts_at")[:12]
+    return render(request, "discovery/dj.html", {"dj": dj, "upcoming": upcoming})
 
 
 @endpoint
@@ -165,7 +193,8 @@ def event_form(request, event_id=None):
         saved = services.save_event(actor=request.user, event_id=event_id,
             data={name: data[name] for name in services.EVENT_FIELDS},
             category_ids=data["categories"].values_list("pk", flat=True),
-            tag_ids=data["tags"].values_list("pk", flat=True), cancelled=data["cancelled"],
+            tag_ids=data["tags"].values_list("pk", flat=True),
+            performer_ids=data["performers"].values_list("pk", flat=True), cancelled=data["cancelled"],
             poster=data.get("poster_upload"), remove_poster=data.get("remove_poster", False))
         return redirect("event-detail", event_id=saved.pk)
     return form_page(request, form, "Edit event" if event_id else "List an event", save,

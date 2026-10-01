@@ -89,20 +89,22 @@ class GenreTag(TempoRange):
 
 
 class DJProfile(models.Model):
-    """Admin-curated artist profile; never inferred from an event listing."""
+    """One curated profile for an artist, DJ, producer, or overlapping roles."""
 
     name = models.CharField(max_length=120, unique=True)
     description = models.TextField()
-    official_url = models.URLField(max_length=2048, validators=[http_url])
-    photo = models.CharField(max_length=160, help_text="Bundled static image path.")
-    photo_credit = models.CharField(max_length=200)
-    photo_source_url = models.URLField(max_length=2048, validators=[http_url])
-    photo_license = models.CharField(max_length=80)
+    official_url = models.URLField(max_length=2048, blank=True, validators=[http_url])
+    photo = models.CharField(max_length=160, blank=True, help_text="Optional bundled static image path.")
+    photo_credit = models.CharField(max_length=200, blank=True)
+    photo_source_url = models.URLField(max_length=2048, blank=True, validators=[http_url])
+    photo_license = models.CharField(max_length=80, blank=True)
     display_order = models.PositiveIntegerField(default=0)
     categories = models.ManyToManyField(GenreCategory, related_name="djs")
 
     class Meta:
         ordering = ["display_order", "name"]
+        verbose_name = "artist / DJ profile"
+        verbose_name_plural = "artist / DJ profiles"
 
     def __str__(self):
         return self.name
@@ -150,6 +152,7 @@ class Event(Timestamped):
     moderation_hidden = models.BooleanField(default=False)
     categories = models.ManyToManyField(GenreCategory, through="EventCategory", related_name="events")
     tags = models.ManyToManyField(GenreTag, through="EventTag", related_name="events", blank=True)
+    performers = models.ManyToManyField(DJProfile, related_name="events", blank=True)
 
     class Meta:
         constraints = [models.CheckConstraint(condition=Q(ends_at__gt=F("starts_at")), name="event_end_after_start")]

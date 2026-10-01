@@ -47,6 +47,9 @@ class VenueLocalDateTimeField(forms.SplitDateTimeField):
 
 
 class EventForm(ClassificationForm):
+    performers = forms.ModelMultipleChoiceField(queryset=models.DJProfile.objects.all(), required=False,
+        widget=forms.SelectMultiple(attrs={"size": 8}), label="Artists / DJs",
+        help_text="Hold Ctrl to select more than one performer. Add a missing profile in admin first.")
     starts_at = VenueLocalDateTimeField(label="Start (venue local time)")
     ends_at = VenueLocalDateTimeField(label="End (venue local time)")
     poster_upload = forms.FileField(required=False, label="Event poster", help_text="Optional JPG, PNG, or WebP, up to 5 MiB. Replaces an existing poster.")
@@ -55,7 +58,7 @@ class EventForm(ClassificationForm):
 
     class Meta:
         model = models.Event
-        fields = ["venue", "title", "description", "poster_upload", "remove_poster", "starts_at", "ends_at", "ticket_url", "categories", "tags", "cancelled", "moderation_hidden"]
+        fields = ["venue", "title", "description", "poster_upload", "remove_poster", "starts_at", "ends_at", "ticket_url", "categories", "tags", "performers", "cancelled", "moderation_hidden"]
 
     def __init__(self, *args, actor=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -66,6 +69,8 @@ class EventForm(ClassificationForm):
                 choices |= Q(pk=self.instance.venue_id)
             self.fields["venue"].queryset = models.Venue.objects.filter(choices).order_by("name", "id")
         self.fields["cancelled"].initial = self.instance.cancelled_at is not None
+        if self.instance.pk:
+            self.fields["performers"].initial = self.instance.performers.all()
         if not self.instance.poster:
             self.fields["remove_poster"].disabled = True
         venue = self.instance.venue if self.instance.venue_id else None

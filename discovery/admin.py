@@ -136,6 +136,7 @@ class EventAdmin(RetainedAdmin):
             data={key: form.cleaned_data[key] for key in services.EVENT_FIELDS},
             category_ids=form.cleaned_data["categories"].values_list("pk", flat=True),
             tag_ids=form.cleaned_data["tags"].values_list("pk", flat=True),
+            performer_ids=form.cleaned_data["performers"].values_list("pk", flat=True),
             cancelled=form.cleaned_data["cancelled"], hidden=form.cleaned_data.get("moderation_hidden"),
             poster=form.cleaned_data.get("poster_upload"), remove_poster=form.cleaned_data.get("remove_poster", False),
         ))

@@ -2,6 +2,7 @@
 {% block title %}{{ event.title }} · Bassline{% endblock %}
 {% block content %}
 <article class="event-detail" style="--event-accent:{{ event.categories.first.color|default:'#8d95a6' }}">
+  <a class="detail-back" href="{% url 'discover' %}" aria-label="Go back" title="Go back" data-back-link><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg></a>
   <div class="event-hero">
     {% if event.poster %}<div class="event-hero-poster" style="background-image:url('{% url 'event-poster' event.pk %}')" role="img" aria-label="Event poster"></div>
     {% elif event.demo_poster %}<div class="event-hero-poster" style="background-image:url('{% static event.demo_poster %}')" role="img" aria-label="Event poster"></div>
@@ -25,6 +26,11 @@
       </div>
     </div>
   </div>
+
+  {% if event.performers.exists %}<section class="event-lower-section" aria-labelledby="event-lineup-heading">
+    <div class="event-section-heading"><p class="event-section-kicker">ON THE LINEUP</p><h2 id="event-lineup-heading">Artists & DJs</h2></div>
+    <div class="genre-dj-grid">{% for performer in event.performers.all %}<a class="genre-dj-card" href="{% url 'dj-detail' performer.pk %}">{% if performer.photo %}<img src="{% static performer.photo %}" alt="" loading="lazy">{% else %}<span class="performer-photo-fallback" aria-hidden="true"><svg class="live-icon"><use href="#icon-profile"/></svg></span>{% endif %}<span><strong>{{ performer.name }}</strong><span class="browse-dj-chips">{% for genre in performer.categories.all %}<span class="genre" style="--genre:{{ genre.color }}">{{ genre.name }}</span>{% endfor %}</span></span></a>{% endfor %}</div>
+  </section>{% endif %}
 
   <div class="event-detail-grid">
     <section class="event-section event-music" aria-labelledby="event-music-heading">

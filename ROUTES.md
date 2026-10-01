@@ -37,6 +37,7 @@ Most interactions use Django templates and POST forms, redirecting after success
 | `/bans/<id>/lift/` | POST | Owner lifts ban |
 | `/groups/<id>/photo/` | GET | Serve processed photo after group visibility checks |
 | `/events/<id>/poster/` | GET | Serve an uploaded poster after event visibility checks |
+| `/api/discover/playing-near-me/` | GET | Return linked artist/DJ profiles from public nearby events within the next two weeks; requires browser-provided coordinates |
 | `/groups/<id>/messages/new/` | POST | Member text message |
 | `/messages/<id>/edit/` | GET, POST | Current-member author edits own content |
 | `/messages/<id>/delete/` | POST | Author removes own content; admin moderation remains in admin |

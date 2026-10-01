@@ -3,6 +3,7 @@
 {% block content %}
 {% if category %}
 <article class="genre-detail event-detail" style="--event-accent:{{ category.color }}">
+  <a class="detail-back" href="{% url 'discover' %}" aria-label="Go back" title="Go back" data-back-link><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg></a>
   <header class="genre-detail-hero">
     <div class="genre-detail-art" aria-hidden="true"><span class="genre-art genre-art-{{ motif }}"><i></i><i></i><i></i><i></i><i></i></span></div>
     <div class="genre-detail-intro">
@@ -15,8 +16,8 @@
     <div class="subgenre-grid">{% for card in tag_cards %}<details class="subgenre-card"><summary><span class="subgenre-card-heading"><strong>{{ card.tag.name }}</strong><span>{{ card.tag.bpm_display }}</span></span><span class="subgenre-preview">{{ card.preview }}</span><span class="subgenre-more">Read more <span aria-hidden="true">⌄</span></span></summary><div class="subgenre-full">{{ card.tag.description|linebreaks }}</div></details>{% empty %}<p class="muted">No subgenres yet.</p>{% endfor %}</div>
   </section>
   <section class="event-lower-section" aria-labelledby="genre-djs-heading">
-    <div class="event-section-heading"><p class="event-section-kicker">PEOPLE BEHIND THE SOUND</p><h2 id="genre-djs-heading">DJs to explore</h2></div>
-    <div class="genre-dj-grid">{% for dj in djs %}<a class="genre-dj-card" href="{% url 'dj-detail' dj.pk %}"><img src="{% static dj.photo %}" alt="" loading="lazy"><span><strong>{{ dj.name }}</strong><span class="browse-dj-chips">{% for genre in dj.categories.all %}<span class="genre" style="--genre:{{ genre.color }}">{{ genre.name }}</span>{% endfor %}</span></span></a>{% empty %}<p class="muted">No curated DJs for this genre yet.</p>{% endfor %}</div>
+    <div class="event-section-heading"><p class="event-section-kicker">PEOPLE BEHIND THE SOUND</p><h2 id="genre-djs-heading">Artists & DJs to explore</h2></div>
+    <div class="genre-dj-grid">{% for dj in djs %}<a class="genre-dj-card" href="{% url 'dj-detail' dj.pk %}">{% if dj.photo %}<img src="{% static dj.photo %}" alt="" loading="lazy">{% else %}<span class="performer-photo-fallback" aria-hidden="true"><svg class="live-icon"><use href="#icon-profile"/></svg></span>{% endif %}<span><strong>{{ dj.name }}</strong><span class="browse-dj-chips">{% for genre in dj.categories.all %}<span class="genre" style="--genre:{{ genre.color }}">{{ genre.name }}</span>{% endfor %}</span></span></a>{% empty %}<p class="muted">No curated artists or DJs for this genre yet.</p>{% endfor %}</div>
   </section>
   <section class="event-lower-section" aria-labelledby="genre-listen-heading">
     <div class="event-section-heading"><p class="event-section-kicker">LISTEN IN</p><h2 id="genre-listen-heading">What does this music sound like?</h2></div>

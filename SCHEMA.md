@@ -27,7 +27,7 @@ Keep standard Django permission relationships. No profile photos, public email, 
 
 ## Discovery
 
-`DJProfile` is an admin-curated artist directory record with name, description, official URL, static photo path, photo credit/source/license, ordering, and many-to-many broad genre categories. It is separate from fictional event lineups and from listening references. The repeatable `seed_djs` command adds seven sourced examples only when their existing categories are present; it does not create or change genre taxonomy.
+`DJProfile` now represents a single admin-curated artist or DJ, including people who do both. It has name, description, optional official URL and static photo/credit/source/license, ordering, and many-to-many broad genre categories. `Event.performers` links an event to these profiles; a listening reference's text credit remains distinct from a confirmed event lineup. The repeatable `seed_djs` command adds seven sourced examples only when their existing categories are present; it does not create or change genre taxonomy. The Madrid fixture seed creates fictional lineup profiles and links them to its events.
 
 ### GenreCategory and GenreTag
 
@@ -77,6 +77,7 @@ Users select an approved venue or propose a new one by name and map position. On
 | created_at, updated_at | Datetimes |
 | categories | Many-to-many GenreCategory through EventCategory |
 | tags | Many-to-many GenreTag through EventTag |
+| performers | Optional many-to-many artist / DJ profiles; one profile may play multiple events |
 
 `EventCategory(event, category)` and `EventTag(event, tag)` each have a unique FK pair. Require at least one category when publishing; every selected tag's category must also be selected. This minimum/category consistency is a business rule enforced when saving the complete edit, not a simple row CHECK.
 

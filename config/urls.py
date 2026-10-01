@@ -22,6 +22,7 @@ urlpatterns = [
     path("groups/", my_groups, name="my-groups"),
     path("admin/", admin.site.urls),
     path("api/map/events/", map_events, name="map-events"),
+    path("api/discover/playing-near-me/", discovery.playing_near_me, name="playing-near-me"),
     path("genres/", discovery.genres, name="genres"),
     path("genres/<int:genre_id>/", discovery.genres, name="genre-detail"),
     path("djs/<int:dj_id>/", discovery.dj_detail, name="dj-detail"),

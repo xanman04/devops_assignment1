@@ -133,6 +133,50 @@ class WebTests(TestCase):
         self.assertNotContains(self.client.get('/discover/'), 'House night')
         self.assertNotContains(self.client.get('/discover/?q=House'), 'House night')
 
+    def test_combined_performer_row_and_nearby_lineup(self):
+        performer = dm.DJProfile.objects.create(name='Alex Mix', description='House and live sets.')
+        performer.categories.add(self.category)
+        dm.GenreListeningReference.objects.create(title='A house mix', artist_credit='Alex Mix',
+            url='https://example.org/mix', kind='set')
+        ds.save_event(actor=self.owner, event_id=self.event.pk, data={},
+            category_ids=[self.category.pk], tag_ids=[self.tag.pk], performer_ids=[performer.pk])
+        discover = self.client.get('/discover/')
+        self.assertContains(discover, 'Playing near me')
+        self.assertContains(discover, 'Artists &amp; DJs')
+        self.assertContains(discover, 'Alex Mix', count=1)
+        self.assertNotContains(discover, 'heading-djs')
+        self.assertContains(self.client.get(f'/events/{self.event.pk}/'), f'/djs/{performer.pk}/')
+        self.assertContains(self.client.get(f'/djs/{performer.pk}/'), 'House night')
+        for page in (f'/events/{self.event.pk}/', f'/genres/{self.category.pk}/'):
+            self.assertContains(self.client.get(page), 'aria-label="Go back"')
+
+        url = '/api/discover/playing-near-me/?latitude=48.85&longitude=2.35'
+        response = self.client.get(url)
+        self.assertEqual([card['title'] for card in response.json()['cards']], ['Alex Mix'])
+        self.assertIn('House night', response.json()['cards'][0]['subtitle'])
+        ds.save_event(actor=self.owner, data={'venue': self.venue, 'title': 'Another set',
+            'description': 'A second appearance', 'starts_at': timezone.now() + timedelta(days=5),
+            'ends_at': timezone.now() + timedelta(days=5, hours=3)},
+            category_ids=[self.category.pk], performer_ids=[performer.pk])
+        self.assertEqual(len(self.client.get(url).json()['cards']), 1)
+        self.assertEqual(self.client.get(url + '&q=missing').json()['cards'], [])
+        self.assertEqual(self.client.get('/api/discover/playing-near-me/?latitude=40&longitude=-3').json()['cards'], [])
+        self.assertEqual(self.client.get('/api/discover/playing-near-me/?latitude=bad&longitude=2').status_code, 400)
+        self.event.cancelled_at = timezone.now(); self.event.save(update_fields=['cancelled_at'])
+        self.assertIn('Another set', self.client.get(url).json()['cards'][0]['subtitle'])
+
+    def test_event_form_saves_selected_performer_and_rejects_unknown_profile(self):
+        performer = dm.DJProfile.objects.create(name='Guest artist', description='Guest artist profile.')
+        self.login()
+        response = self.client.post('/events/new/', self.event_data(performers=[performer.pk]))
+        self.assertEqual(response.status_code, 302)
+        event = dm.Event.objects.get(title='Another night')
+        self.assertEqual(list(event.performers.all()), [performer])
+        self.assertEqual(self.client.post(f'/events/{event.pk}/edit/',
+            self.event_data(title='Should not save', performers=[999999])).status_code, 400)
+        event.refresh_from_db()
+        self.assertEqual(event.title, 'Another night')
+
     def test_my_carousels_require_login_and_hide_unavailable_tracked_events(self):
         self.assertEqual(self.client.get('/my-events/').status_code, 302)
         self.assertEqual(self.client.get('/groups/').status_code, 302)

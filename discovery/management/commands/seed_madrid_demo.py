@@ -103,16 +103,28 @@ class Command(BaseCommand):
                 selected_tags = [tags[(category, name)].pk for category in category_names for name in tag_names if (category, name) in tags]
                 if len(selected_tags) != len(tag_names):
                     raise CommandError(f"Ambiguous or missing tag for {title}; seed aborted.")
-                description = f"{pitch}\n\nLineup: {artists}."
+                description = pitch
+                lineup_profiles = []
+                for artist_name in artists.split(" · "):
+                    profile, profile_created = models.DJProfile.objects.get_or_create(name=artist_name, defaults={
+                        "description": f"{', '.join(category_names)} sounds across Madrid club nights.",
+                        "display_order": 1000,
+                    })
+                    if profile_created:
+                        profile.categories.set(categories[name] for name in category_names)
+                    lineup_profiles.append(profile)
                 if event is None:
                     event = services.save_event(actor=creator, data={"venue": venues[venue_key], "title": title,
                         "description": description, "starts_at": starts, "ends_at": ends},
-                        category_ids=selected_categories, tag_ids=selected_tags)
+                        category_ids=selected_categories, tag_ids=selected_tags,
+                        performer_ids=[profile.pk for profile in lineup_profiles])
                     event.demo_poster = poster_path
                     event.save(update_fields=["demo_poster"])
                     created_events += 1
                 else:
-                    if "Fictional classroom demo listing." in event.description:
+                    if not event.performers.exists():
+                        event.performers.set(lineup_profiles)
+                    if event.description == f"{pitch}\n\nLineup: {artists}." or "Fictional classroom demo listing." in event.description:
                         event.description = description
                         event.save(update_fields=["description"])
                     if options["refresh_dates"] and (event.starts_at != starts or event.ends_at != ends):

@@ -5,6 +5,7 @@ no network work occurs while holding a transaction. Raw ORM writes are not an AP
 """
 from datetime import datetime, timedelta, timezone as dt_timezone
 from decimal import Decimal, InvalidOperation
+from math import asin, cos, isfinite, radians, sin, sqrt
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
@@ -14,7 +15,7 @@ from django.utils import timezone
 from config.images import prepare_image
 from notifications.models import Notification
 from .models import (
-    Event, EventChange, EventFollow, EventListeningReference, EventReport,
+    DJProfile, Event, EventChange, EventFollow, EventListeningReference, EventReport,
     GenreCategory, GenreTag, GenreListeningReference, Venue,
 )
 
@@ -189,7 +190,7 @@ def save_venue(*, actor, data, venue_id=None, review_status=None, review_note=""
 
 
 def save_event(*, actor, data, category_ids, tag_ids=(), event_id=None, cancelled=None, hidden=None,
-               poster=None, remove_poster=False):
+               poster=None, remove_poster=False, performer_ids=None):
     require_user(actor)
     if event_id:
         require_event_editor(actor, Event.objects.get(pk=event_id))
@@ -205,6 +206,11 @@ def save_event(*, actor, data, category_ids, tag_ids=(), event_id=None, cancelle
                 require_event_editor(actor, event)
             before = _event_snapshot(event) if event_id else None
             categories, tags = classification(category_ids, tag_ids)
+            if performer_ids is not None:
+                selected_ids = _ids(performer_ids)
+                performers = list(DJProfile.objects.filter(pk__in=selected_ids))
+                if len(performers) != len(selected_ids):
+                    raise ValidationError("A selected artist / DJ profile does not exist.")
             _assign(event, data, EVENT_FIELDS)
             # Reload relationships rather than trusting caller-supplied approval flags.
             if not event.venue_id:
@@ -232,6 +238,8 @@ def save_event(*, actor, data, category_ids, tag_ids=(), event_id=None, cancelle
             event.save()
             event.categories.set(categories)
             event.tags.set(tags)
+            if performer_ids is not None:
+                event.performers.set(performers)
             if before:
                 _record_changes(event, actor, before, _event_snapshot(event))
             if (prepared is not None or remove_poster) and old_name:
@@ -304,6 +312,46 @@ def search_events(*, starts_at=None, ends_at=None, category_ids=(), tag_ids=(), 
         else:  # A viewport crossing the international date line.
             events = events.filter(Q(venue__longitude__gte=west) | Q(venue__longitude__lte=east))
     return events.distinct().order_by("starts_at", "id")
+
+
+def nearby_performers(*, latitude, longitude, radius_km=30, now=None):
+    """One profile per performer, tied to their next public event within 14 days."""
+    try:
+        lat, lon = float(latitude), float(longitude)
+        if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+            raise ValueError
+    except (TypeError, ValueError, OverflowError):
+        raise ValidationError("Location must be valid latitude and longitude.")
+    if not all(isfinite(value) for value in (lat, lon)):
+        raise ValidationError("Location must be finite latitude and longitude.")
+    now = now or timezone.now()
+    lat_delta = radius_km / 111.0
+    lon_delta = min(180, radius_km / max(111.0 * abs(cos(radians(lat))), 0.001))
+    events = search_events(starts_at=now, ends_at=now + timedelta(days=14), now=now).filter(
+        venue__latitude__gte=max(-90, lat - lat_delta),
+        venue__latitude__lte=min(90, lat + lat_delta), performers__isnull=False,
+    )
+    if lon_delta < 180:
+        west, east = lon - lon_delta, lon + lon_delta
+        if west < -180:
+            events = events.filter(Q(venue__longitude__gte=west + 360) | Q(venue__longitude__lte=east))
+        elif east > 180:
+            events = events.filter(Q(venue__longitude__gte=west) | Q(venue__longitude__lte=east - 360))
+        else:
+            events = events.filter(venue__longitude__gte=west, venue__longitude__lte=east)
+    results, seen = [], set()
+    for event in events.prefetch_related("performers__categories").distinct():
+        event_lat, event_lon = radians(float(event.venue.latitude)), radians(float(event.venue.longitude))
+        delta_lat = event_lat - radians(lat)
+        delta_lon = event_lon - radians(lon)
+        a = sin(delta_lat / 2) ** 2 + cos(radians(lat)) * cos(event_lat) * sin(delta_lon / 2) ** 2
+        if 6371.0 * 2 * asin(min(1.0, sqrt(a))) > radius_km:
+            continue
+        for performer in event.performers.all():
+            if performer.pk not in seen:
+                seen.add(performer.pk)
+                results.append((performer, event))
+    return results
 
 
 def _tempo_parts(event):

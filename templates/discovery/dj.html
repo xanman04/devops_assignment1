@@ -2,16 +2,17 @@
 {% block title %}{{ dj.name }} · Bassline{% endblock %}
 {% block content %}
 <article class="dj-detail event-detail" style="--event-accent:{{ dj.categories.first.color|default:'#9da5b4' }}">
+  <a class="detail-back" href="{% url 'discover' %}" aria-label="Go back" title="Go back" data-back-link><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg></a>
   <div class="event-hero">
-    <div><img class="dj-detail-photo" src="{% static dj.photo %}" alt="{{ dj.name }}"><p class="dj-photo-credit">Photo: <a href="{{ dj.photo_source_url }}" target="_blank" rel="noopener noreferrer">{{ dj.photo_credit }}</a> · {{ dj.photo_license }} · resized WebP</p></div>
-    <div class="event-hero-copy"><p class="event-kicker">DJ PROFILE</p><h1>{{ dj.name }}</h1>
+    <div>{% if dj.photo %}<img class="dj-detail-photo" src="{% static dj.photo %}" alt="{{ dj.name }}">{% else %}<div class="dj-detail-photo performer-hero-fallback" aria-hidden="true"><svg class="live-icon"><use href="#icon-profile"/></svg></div>{% endif %}{% if dj.photo_credit %}<p class="dj-photo-credit">Photo: <a href="{{ dj.photo_source_url }}" target="_blank" rel="noopener noreferrer">{{ dj.photo_credit }}</a> · {{ dj.photo_license }} · resized WebP</p>{% endif %}</div>
+    <div class="event-hero-copy"><p class="event-kicker">ARTIST / DJ PROFILE</p><h1>{{ dj.name }}</h1>
       <div class="event-detail-grid dj-info-grid">
         <section class="event-section event-music"><p class="event-section-kicker">THE SOUND</p><h2>Genres</h2><div class="tags">{% for category in dj.categories.all %}<a class="genre" style="--genre:{{ category.color }}" href="{% url 'genre-detail' category.pk %}">{{ category.name }}</a>{% endfor %}</div></section>
         <section class="event-section event-about"><p class="event-section-kicker">ABOUT THE ARTIST</p><h2>Behind the decks</h2><div class="event-description">{{ dj.description|linebreaks }}</div></section>
       </div>
-      <div class="event-actions"><a class="event-action-link" href="{{ dj.official_url }}" target="_blank" rel="noopener noreferrer">Official site ↗</a></div>
+      {% if dj.official_url %}<div class="event-actions"><a class="event-action-link" href="{{ dj.official_url }}" target="_blank" rel="noopener noreferrer">Official site ↗</a></div>{% endif %}
     </div>
   </div>
-  <p class="dj-back"><a href="{% url 'discover' %}">← Back to Discover</a></p>
+  {% if upcoming %}<section class="event-lower-section"><div class="event-section-heading"><p class="event-section-kicker">COMING UP</p><h2>Upcoming events</h2></div><div class="cards">{% for event in upcoming %}<a class="card" href="{% url 'event-detail' event.pk %}"><strong>{{ event.title }}</strong><p>{{ event.venue.name }} · {{ event.starts_at|date:'j M Y' }}</p></a>{% endfor %}</div></section>{% endif %}
 </article>
 {% endblock %}
