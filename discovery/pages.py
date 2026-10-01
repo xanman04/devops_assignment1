@@ -132,7 +132,7 @@ def discover(request):
     if query:
         sections = [section for section in sections if section["cards"] or section["id"] == "playing"]
     return render(request, "browse.html", {"title": "Discover", "intro": "Explore the music. Find what moves you.",
-                                           "sections": sections, "query": query})
+                                           "sections": sections, "query": query, "discover_page": True})
 
 
 @endpoint

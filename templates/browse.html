@@ -2,19 +2,19 @@
 {% block title %}{{ title }} · Bassline{% endblock %}
 {% block body_class %}browse-layout{% endblock %}
 {% block content %}
-<div class="browse-page">
-  <div class="browse-top"><h1>{{ title }}</h1>{% if create_event %}<a href="{% url 'event-new' %}">List an event +</a>{% endif %}</div>
-  <p class="muted">{{ intro }}</p>
+<div class="browse-page{% if discover_page %} browse-page--discover{% endif %}">
+  {% if discover_page %}<header class="discover-masthead"><span class="discover-kicker">SOUND FIRST <span aria-hidden="true">/</span> FIND YOUR NEXT NIGHT</span><h1>{{ title }}</h1><p>{{ intro }}</p></header>
+  {% else %}<div class="browse-top"><h1>{{ title }}</h1>{% if create_event %}<a href="{% url 'event-new' %}">List an event +</a>{% endif %}</div><p class="muted">{{ intro }}</p>{% endif %}
   {% if query %}<p class="search-heading">Results for “{{ query }}”</p>{% endif %}
   {% if query %}<div class="discover-no-results" hidden><h2>No results for “{{ query }}”</h2><p>Try an event, venue, artist, genre, or subgenre name.</p></div>{% endif %}
   {% for section in sections %}
-  <section class="browse-row" aria-labelledby="heading-{{ section.id }}" {% if section.id == 'playing' %}data-playing-endpoint="{% url 'playing-near-me' %}" data-search-query="{{ query|default:'' }}"{% endif %}>
-    <div class="browse-row-head"><div><h2 id="heading-{{ section.id }}">{{ section.title }}</h2><p>{{ section.description }}</p></div>
+  <section class="browse-row browse-row--{{ section.id }}" aria-labelledby="heading-{{ section.id }}" {% if section.id == 'playing' %}data-playing-endpoint="{% url 'playing-near-me' %}" data-search-query="{{ query|default:'' }}"{% endif %}>
+    <div class="browse-row-head">{% if discover_page %}<span class="browse-section-index" aria-hidden="true">0{{ forloop.counter }}</span>{% endif %}<div><h2 id="heading-{{ section.id }}">{{ section.title }}</h2><p>{{ section.description }}</p></div>
       {% if section.cards or section.id == 'playing' %}<div class="browse-arrows"><button type="button" data-row="{{ section.id }}" data-direction="-1" aria-label="Previous {{ section.title|lower }}" disabled>‹</button><button type="button" data-row="{{ section.id }}" data-direction="1" aria-label="Next {{ section.title|lower }}" disabled>›</button></div>{% endif %}
     </div>
     <div class="browse-track" id="row-{{ section.id }}" tabindex="0" aria-label="{{ section.title }}">
       {% for card in section.cards %}
-      {% if card.href %}<a class="browse-tile {% if section.id == 'events' %}event-tile{% endif %} {% if card.genre %}genre-tile{% endif %} {% if card.subgenre %}subgenre-tile{% endif %} {% if card.round %}artist-tile{% endif %} {% if card.group %}group-tile{% endif %}" href="{{ card.href }}" {% if card.external %}target="_blank" rel="noopener noreferrer"{% endif %} {% if card.color %}style="--tile-color:{{ card.color }}"{% elif card.round and card.categories %}style="--tile-color:{{ card.categories.0.color }}"{% endif %}>
+      {% if card.href %}<a class="browse-tile {% if section.id == 'events' %}event-tile{% endif %} {% if section.id == 'performers' %}performer-tile{% endif %} {% if card.genre %}genre-tile{% endif %} {% if card.subgenre %}subgenre-tile{% endif %} {% if card.round %}artist-tile{% endif %} {% if card.group %}group-tile{% endif %}" href="{{ card.href }}" {% if card.external %}target="_blank" rel="noopener noreferrer"{% endif %} {% if card.color %}style="--tile-color:{{ card.color }}"{% elif card.round and card.categories %}style="--tile-color:{{ card.categories.0.color }}"{% endif %}>
       {% else %}<div class="browse-tile">{% endif %}
         {% if section.id == 'events' %}
           {% if card.uploaded_poster_id %}<span class="event-tile-art" style="background-image:url('{% url 'event-poster' card.uploaded_poster_id %}')" aria-hidden="true"></span>{% elif card.poster %}<span class="event-tile-art" style="background-image:url('{% static card.poster %}')" aria-hidden="true"></span>{% else %}<span class="event-tile-art event-tile-art-fallback" aria-hidden="true"><svg class="live-icon"><use href="#icon-events"/></svg></span>{% endif %}

@@ -32,7 +32,7 @@ window.initializeBrowse = () => {
       track.replaceChildren();
       if (!cards.length){showMessage('No linked artists or DJs are playing within 30 km in the next two weeks.');return;}
       for (const card of cards) {
-        const link=document.createElement('a');link.className='browse-tile artist-tile';link.href=card.href;
+        const link=document.createElement('a');link.className='browse-tile nearby-tile';link.href=card.href;
         if(card.categories.length)link.style.setProperty('--tile-color',card.categories[0].color);
         const art=document.createElement('span');art.className='browse-art'+(card.photo_url?' dj-browse-photo':'');
         if(card.photo_url){const photo=document.createElement('img');photo.src=card.photo_url;photo.alt='';photo.loading='lazy';art.append(photo);}
