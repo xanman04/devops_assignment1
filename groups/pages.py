@@ -3,6 +3,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.http import FileResponse, Http404, JsonResponse
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.shortcuts import redirect, render
 from zoneinfo import ZoneInfo
 from django.utils import timezone
@@ -104,13 +105,15 @@ def group_form(request, event_id=None, group_id=None):
         require_manager(request.user, group)
     event = discovery.get_event(event_id=event_id, actor=request.user) if event_id else group.event
     form = GroupForm(request.POST if request.method == "POST" else None, request.FILES if request.method == "POST" else None, instance=group)
+    if group_id and group.photo:                       # the saved photo stays until a new one is uploaded, and can be adjusted
+        form.fields["photo"].widget.attrs["data-current-src"] = reverse("group-photo", args=[group.pk])
 
     def save(data):
         values = {name: data[name] for name in ("name", "description", "capacity", "joining_mode")}
         if not group_id:
             values["event"] = event
         saved = services.save_group(actor=request.user, group_id=group_id, data=values,
-            photo=data.get("photo"), remove_photo=data["remove_photo"])
+            photo=data.get("photo"))
         return redirect("group-detail", group_id=saved.pk)
     return form_page(request, form, "Edit group" if group_id else "Create a group", save,
         context={"hint": "Groups are optional company for this event. The creator counts toward capacity. Approval does not reserve a place."})

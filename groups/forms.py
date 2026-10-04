@@ -6,7 +6,6 @@ class GroupForm(forms.ModelForm):
     # Decode/re-encode in the service rather than ModelForm.save().
     photo = forms.FileField(required=False, widget=forms.FileInput(attrs={
         "accept": "image/jpeg,image/png,image/webp", "data-crop-aspect": "1.333"}), help_text="JPG, PNG or WebP; up to 5 MiB and 20 megapixels. No animation.")
-    remove_photo = forms.BooleanField(required=False)
     description = forms.CharField(max_length=2000, widget=forms.Textarea(attrs={"rows": 5}))
 
     class Meta:

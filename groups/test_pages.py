@@ -182,3 +182,30 @@ class RequestsSplitTests(TestCase):
         self.assertContains(page, "Received")                      # the tab is always there
         self.assertContains(page, "No requests to review.")
         self.assertNotContains(page, "Review →")
+
+
+@override_settings(MEDIA_ROOT=__import__("tempfile").mkdtemp())
+class GroupPhotoKeepTests(TestCase):
+    def test_group_form_has_no_remove_photo_option_and_keeps_the_photo_on_save(self):
+        from io import BytesIO
+        from PIL import Image
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        owner = get_user_model().objects.create_user("phot", password="x")
+        category = dm.GenreCategory.objects.create(name="House", color="#0066ff", description="x", bpm_min=1, bpm_max=2)
+        venue = dm.Venue.objects.create(name="C", latitude=1, longitude=1, timezone="Europe/Madrid", submitted_by=owner, review_status="approved")
+        start = timezone.now() + timedelta(days=2)
+        event = ds.save_event(actor=owner, data={"venue": venue, "title": "N", "description": "x", "starts_at": start, "ends_at": start + timedelta(hours=4)}, category_ids=[category.pk])
+        self.client.force_login(owner)
+        buffer = BytesIO()
+        Image.new("RGB", (80, 60), "teal").save(buffer, "PNG")
+        data = {"name": "G", "description": "x", "capacity": 4, "joining_mode": "public",
+                "photo": SimpleUploadedFile("p.png", buffer.getvalue(), content_type="image/png")}
+        self.assertEqual(self.client.post(f"/events/{event.pk}/groups/new/", data).status_code, 302)
+        group = __import__("groups.models", fromlist=["x"]).AttendanceGroup.objects.get(name="G")
+        self.assertTrue(group.photo)
+        page = self.client.get(f"/groups/{group.pk}/edit/")
+        self.assertNotContains(page, "remove_photo")
+        self.assertContains(page, f'data-current-src="/groups/{group.pk}/photo/"')
+        self.assertEqual(self.client.post(f"/groups/{group.pk}/edit/", {"name": "G2", "description": "x", "capacity": 4, "joining_mode": "public"}).status_code, 302)
+        group.refresh_from_db()
+        self.assertTrue(group.photo)                      # saving without a file keeps it
