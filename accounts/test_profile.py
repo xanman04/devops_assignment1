@@ -251,3 +251,25 @@ class SeedAttendanceTests(TestCase):
         page = self.client.get("/accounts/profile/")
         self.assertContains(page, "tier-diamond")
         self.assertContains(page, "<dt>Events attended</dt><dd>22</dd>")
+
+    def test_other_accounts_are_filled_too_without_overwriting_what_they_wrote(self):
+        from datetime import timedelta
+        from django.core.management import call_command
+        from django.utils import timezone
+        from discovery import models as dm
+        writer = User.objects.create_user("rick_sanchez", password="x", bio="My own bio")
+        blank = User.objects.create_user("morty_smith", password="x")
+        admin = User.objects.create_superuser("admin", password="x")
+        category = dm.GenreCategory.objects.create(name="House", color="#0066ff", description="x", bpm_min=1, bpm_max=2)
+        venue = dm.Venue.objects.create(name="C", latitude=1, longitude=1, timezone="Europe/Madrid", submitted_by=writer, review_status="approved")
+        for index in range(10):
+            start = timezone.now() + timedelta(days=index + 1)
+            event = dm.Event.objects.create(creator=writer, venue=venue, title=f"E{index}", description="x", starts_at=start, ends_at=start + timedelta(hours=3))
+            event.categories.add(category)
+        call_command("seed_attendance", stdout=__import__("io").StringIO())
+        for account in (writer, blank):
+            account.refresh_from_db()
+            self.assertGreater(dm.EventCard.objects.filter(user=account).count(), 0)
+            self.assertTrue(account.bio and account.instagram_url)
+        self.assertEqual(writer.bio, "My own bio")
+        self.assertEqual(dm.EventCard.objects.filter(user=admin).count(), 0)
