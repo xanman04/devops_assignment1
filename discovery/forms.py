@@ -48,8 +48,8 @@ class VenueLocalDateTimeField(forms.SplitDateTimeField):
 
 class EventForm(ClassificationForm):
     performers = forms.ModelMultipleChoiceField(queryset=models.DJProfile.objects.all(), required=False,
-        widget=forms.SelectMultiple(attrs={"size": 8}), label="Artists / DJs",
-        help_text="Hold Ctrl to select more than one performer. Add a missing profile in admin first.")
+        widget=forms.SelectMultiple(attrs={"size": 8, "data-multi-picker": "artists and DJs"}), label="Artists / DJs",
+        help_text="Search, then click as many as you like. Add a missing profile in admin first.")
     starts_at = VenueLocalDateTimeField(label="Start (venue local time)")
     ends_at = VenueLocalDateTimeField(label="End (venue local time)")
     poster_upload = forms.FileField(required=False, label="Event poster", help_text="Optional JPG, PNG, or WebP, up to 5 MiB. Replaces an existing poster.")

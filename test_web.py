@@ -454,6 +454,18 @@ class WebTests(TestCase):
         self.assertContains(response,'Please retry',status_code=503)
 
 
+    def test_dj_field_is_a_search_picker_and_several_djs_can_be_saved(self):
+        self.login()
+        page = self.client.get('/events/new/')
+        self.assertContains(page, 'data-multi-picker="artists and DJs"')
+        self.assertContains(page, 'multi-picker.js')
+        self.assertNotContains(page, 'Hold Ctrl')
+        first = dm.DJProfile.objects.create(name='Search One', description='x')
+        second = dm.DJProfile.objects.create(name='Search Two', description='x')
+        response = self.client.post('/events/new/', self.event_data(title='Many DJs', performers=[first.pk, second.pk]))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(set(dm.Event.objects.get(title='Many DJs').performers.values_list('name', flat=True)), {'Search One', 'Search Two'})
+
     def test_cancel_event_button_cancels_and_is_hidden_once_cancelled(self):
         self.login()
         edit = f'/events/{self.event.pk}/edit/'

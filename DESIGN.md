@@ -240,3 +240,5 @@ October 4 seed scope: `seed_attendance` now covers every non-superuser account (
 October 4 event form: editing your own event shows Save and a red Cancel event button (a formaction to the cancel route, with a confirm); the Cancelled checkbox and Remove current poster option exist only on the admin form. Event cards in the inspector fade the foil over their lower part and brighten the artwork so printed lineups stay readable.
 
 October 4 tier look: each achievement tier has its own symbol (`icon-tier-*`) and a metal border built from a padding-box fill over a border-box gradient plus a fine brushed-lines layer; the tile and the opened card share the same metals.
+
+October 4 DJ picker: the Artists / DJs field on the event form is a search box over the DJ list; clicking a name adds it, and each choice shows as a chip with a remove button. The original multiple select stays hidden in the form and is updated on every click, so the server receives the same field as before, and without JavaScript the plain list still works.
