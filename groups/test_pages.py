@@ -183,6 +183,16 @@ class RequestsSplitTests(TestCase):
         self.assertContains(page, "No requests to review.")
         self.assertNotContains(page, "Review →")
 
+    def test_sent_requests_show_the_group_photo_when_there_is_one(self):
+        from groups.models import JoinRequest
+        group = self.make_group()
+        group.photo = "groups/example.jpg"
+        group.save(update_fields=["photo"])
+        JoinRequest.objects.create(group=group, applicant=self.guest)
+        self.client.force_login(self.guest)
+        page = self.client.get("/groups/")
+        self.assertContains(page, f'<img src="/groups/{group.pk}/photo/"')
+
 
 @override_settings(MEDIA_ROOT=__import__("tempfile").mkdtemp())
 class GroupPhotoKeepTests(TestCase):
@@ -209,3 +219,4 @@ class GroupPhotoKeepTests(TestCase):
         self.assertEqual(self.client.post(f"/groups/{group.pk}/edit/", {"name": "G2", "description": "x", "capacity": 4, "joining_mode": "public"}).status_code, 302)
         group.refresh_from_db()
         self.assertTrue(group.photo)                      # saving without a file keeps it
+

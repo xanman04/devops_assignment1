@@ -34,7 +34,7 @@
     <div class="rq-panel rq-panel--sent">
       {% if requests %}<div class="grp-req-list">{% for row in requests %}
         <a class="grp-req grp-req--genre" href="{% url 'group-detail' row.group.pk %}" style="--event-accent:{{ row.accent }}">
-          <span class="grp-avatar" style="--hue:{{ row.group.pk|avatar_hue }}" aria-hidden="true">{{ row.group.name|initial }}</span>
+          <span class="grp-avatar" style="--hue:{{ row.group.pk|avatar_hue }}" aria-hidden="true">{% if row.group.photo %}<img src="{% url 'group-photo' row.group.pk %}" alt="" loading="lazy">{% else %}{{ row.group.name|initial }}{% endif %}</span>
           <span class="grp-req-main"><strong>{{ row.group.name }}</strong><small>{{ row.event.title }} · {% timezone row.zone %}{{ row.event.starts_at|date:'D j M, H:i' }}{% endtimezone %}</small></span>
           {% if row.status == 'approved' %}<span class="grp-req-cta">Open to accept →</span>{% endif %}
           <span class="grp-status grp-status--{{ row.status }}">{{ row.item.get_status_display }}</span>
@@ -44,7 +44,7 @@
     <div class="rq-panel rq-panel--received">
       {% if received %}<div class="grp-req-list">{% for row in received %}
         <a class="grp-req grp-req--genre" href="{% url 'group-requests' row.group.pk %}" style="--event-accent:{{ row.accent }}">
-          <span class="grp-avatar" style="--hue:{{ row.item.applicant_id|avatar_hue }}" aria-hidden="true">{{ row.item.applicant.public_name|initial }}</span>
+          <span class="grp-avatar" style="--hue:{{ row.item.applicant_id|avatar_hue }}" aria-hidden="true">{% if row.item.applicant.avatar %}<img src="{% url 'avatar' row.item.applicant_id %}" alt="" loading="lazy">{% else %}{{ row.item.applicant.public_name|initial }}{% endif %}</span>
           <span class="grp-req-main"><strong>{{ row.item.applicant.public_name }}</strong><small>{{ row.group.name }} · {{ row.event.title }}</small></span>
           <span class="grp-req-cta">Review →</span>
         </a>{% endfor %}</div>
