@@ -87,7 +87,7 @@ def build():
     centred(1050, "LINEUP", font(22), LIME, 6)
     centred(1090, "Pickle Rick  ·  Squanchy  ·  Birdperson", font(38), (240, 255, 230))
     centred(1146, "Evil Morty  ·  Gazorp", font(38), (200, 235, 190))
-    centred(1230, "SAT 24 OCT  ·  22:00  ·  LA RIVIERA", font(30), GREEN, 2)
+    centred(1230, "SAT 14 NOV  ·  22:00  ·  LA RIVIERA", font(30), GREEN, 2)
     centred(1290, "A fictional demo event. No portals were harmed.", font(20), (150, 190, 140))
     OUT.parent.mkdir(parents=True, exist_ok=True)
     image.save(OUT, "PNG", optimize=True)
