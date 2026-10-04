@@ -11,6 +11,8 @@
   font-family:"Funnel Display",system-ui,-apple-system,sans-serif;
   background:#141416;
   color:#efeff2;
+  /* One scale knob: sizes are rem, so the whole UI grows with the screen (16px up to ~1550px wide, about 17.5px at 1920, 20px at 2560). */
+  font-size:clamp(1rem,min(0.39vw + 10px,1.6vh),1.75rem);
   line-height:1.5
 }
 
@@ -53,7 +55,7 @@ nav,.actions {
 }
 
 main {
-  max-width:1150px;
+  max-width:71.875rem;
   margin:auto;
   padding:1.5rem
 }
@@ -78,14 +80,14 @@ h2 {
 }
 
 .narrow {
-  max-width:680px;
+  max-width:42.5rem;
   margin:0 auto
 }
 
 .card {
   display:block;
   border:1px solid #414148;
-  border-radius:8px;
+  border-radius:0.5rem;
   background:#202024;
   padding:1rem;
   margin:.7rem 0;
@@ -94,7 +96,7 @@ h2 {
 
 .cards {
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  grid-template-columns:repeat(auto-fit,minmax(13.75rem,1fr));
   gap:1rem
 }
 
@@ -113,14 +115,14 @@ h2 {
   gap:.35rem;
   align-items:center;
   border:1px solid #57575f;
-  border-radius:20px;
+  border-radius:1.25rem;
   padding:.3rem .65rem;
   max-width:100%
 }
 
 .genre {
   border-color:var(--genre);
-  border-left:6px solid var(--genre);
+  border-left:0.375rem solid var(--genre);
   text-decoration:none
 }
 
@@ -130,14 +132,14 @@ h2 {
 
 .group-photo {
   width:100%;
-  max-height:150px;
+  max-height:9.375rem;
   object-fit:cover;
-  border-radius:6px
+  border-radius:0.375rem
 }
 
 .group-photo.large {
-  width:260px;
-  max-height:220px
+  width:16.25rem;
+  max-height:13.75rem
 }
 
 .member-row {
@@ -163,7 +165,7 @@ button {
   background:#eee;
   color:#171719;
   border:1px solid #ccc;
-  border-radius:5px;
+  border-radius:0.3125rem;
   font:inherit;
   cursor:pointer
 }
@@ -177,7 +179,7 @@ input,select,textarea {
   padding:.4rem;
   background:#25252b;
   border:1px solid #666;
-  border-radius:4px;
+  border-radius:0.25rem;
   color:#eee
 }
 
@@ -228,9 +230,9 @@ textarea {
 }
 
 #map {
-  height:520px;
+  height:32.5rem;
   background:#252528;
-  border-radius:8px;
+  border-radius:0.5rem;
   z-index:0
 }
 
@@ -251,11 +253,11 @@ textarea {
   display:flex;
   align-items:center;
   justify-content:center;
-  width:32px;
-  height:32px;
+  width:2rem;
+  height:2rem;
   border-radius:50%;
   border:2px solid #fff;
-  box-shadow:0 2px 7px #000;
+  box-shadow:0 2px 0.4375rem #000;
   color:#111;
   font-weight:800;
   text-shadow:0 0 3px #fff
@@ -271,9 +273,9 @@ textarea {
   align-items:center;
   justify-content:center;
   background:#323238;
-  border-radius:6px;
-  width:120px;
-  height:100px;
+  border-radius:0.375rem;
+  width:7.5rem;
+  height:6.25rem;
   font-size:2rem;
   color:#bbb
 }
@@ -286,7 +288,7 @@ textarea {
     padding:1rem
   }
   #map {
-    height:420px
+    height:26.25rem
   }
   nav {
     gap:.6rem;
@@ -296,4 +298,4 @@ textarea {
     grid-template-columns:1fr
   }
 }
-.event-demo-hero { width:min(100%,360px); aspect-ratio:2/3; border-radius:16px; border:1px solid #454954; background-size:cover; background-position:center; margin:0 0 22px; }
+.event-demo-hero { width:min(100%,22.5rem); aspect-ratio:2/3; border-radius:1rem; border:1px solid #454954; background-size:cover; background-position:center; margin:0 0 1.375rem; }

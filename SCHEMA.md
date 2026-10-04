@@ -20,16 +20,23 @@ Use a project user model based on Django's standard user, declared before initia
 | password | Django-managed password hash; never plaintext |
 | display_name | Optional string, 80 characters; display falls back to username |
 | email | Optional email, 254 characters; private; not a login identifier or verified address |
+| avatar | Optional profile picture; decoded and re-encoded to JPEG (no metadata), stored under a random name in `avatars/`, served only to signed-in users |
+| bio | Optional string, 280 characters |
+| instagram_url, spotify_url, apple_music_url, soundcloud_url | Optional http(s) links; the host must belong to that service. Stored and shown only; nothing is connected to or read from the services |
 | is_active, is_staff, is_superuser | Django account/admin flags |
 | date_joined, last_login | Django timestamps; last_login optional |
 
-Keep standard Django permission relationships. No profile photos, public email, email verification, recovery workflow, or attendance/RSVP record is introduced. Accounts are normally deactivated. As clarified September 28, admins may delete unreferenced accounts with confirmation; protected event/group/message references block deletion. Account email appears only to its owner and authorized administration.
+Keep standard Django permission relationships. Profile photos are an optional self-uploaded picture. No public email, email verification, recovery workflow, or attendance/RSVP record is introduced. Accounts are normally deactivated. As clarified September 28, admins may delete unreferenced accounts with confirmation; protected event/group/message references block deletion. Account email appears only to its owner and authorized administration.
 
 ## Discovery
 
 `DJProfile` now represents a single admin-curated artist or DJ, including people who do both. It has name, description, optional official URL and static photo/credit/source/license, ordering, and many-to-many broad genre categories. `Event.performers` links an event to these profiles; a listening reference's text credit remains distinct from a confirmed event lineup. The repeatable `seed_djs` command adds seven sourced examples only when their existing categories are present; it does not create or change genre taxonomy. The Madrid fixture seed creates fictional lineup profiles and links them to its events.
 
-`DJMediaLink` attaches curated listening links directly to a profile: `dj` FK, `title` string(200), validated `url` URL(2048), `kind` (`track` or `set`), `platform` (`soundcloud` or `youtube`), and nonnegative `display_order`. The pair (`dj`, `url`) is unique. Admins edit links inline on the profile; recordings stay on their publishers' sites. Profiles without links show their curated genre descriptions as a sound guide.
+`DJProfile` also has optional header facts: `origin` string(120), `active_since` year (1900–2100) and `labels` string(200). `DJSocialLink` holds one official profile per platform: `dj` FK, `platform` (`instagram`, `youtube`, `soundcloud` or `spotify`) and validated `url` URL(2048), unique per (`dj`, `platform`). Admins edit both on the profile; the page shows the facts as a compact strip and the links as icon buttons beside the official website link, and hides either block when empty.
+
+Genre pages place a category's `GenreListeningReference` rows by their tags: songs with no tag of that category are its general examples (shown in the page header), and songs tagged with one of its subgenres appear inside that subgenre's card. A song shared by two categories shows only the tags that belong to the page's own category. An event's "Explore the sound" is derived at read time (`event_sound_samples`, `lineup_media` in `discovery/services.py`) and stores nothing: up to four songs from the event's categories (the first song of each of its subgenres, then general songs, interleaved when there are several categories), plus up to three links per lineup artist (two songs and a set when both exist). Both listening-reference models expose `platform` and `platform_label`, derived from the URL host.
+
+`DJMediaLink` attaches curated listening links directly to a profile: `dj` FK, `title` string(200), validated `url` URL(2048), `kind` (`track` or `set`), `platform` (`soundcloud` or `youtube`), and nonnegative `display_order`. The pair (`dj`, `url`) is unique. Admins edit links inline on the profile; recordings stay on their publishers' sites. Profiles without links show their curated genre descriptions as a sound guide. A profile page shows its tracks and sets as two numbered lists in `display_order` (tracks are the most-listened songs); a profile with only sets shows just the sets list. `seed_djs` reads its links from `_dj_media.py` and keeps their `display_order`.
 
 ### GenreCategory and GenreTag
 
@@ -140,6 +147,12 @@ Keep attempts as history; at most one unresolved (`pending` or `approved`) reque
 
 `group` FK, `user` FK, `issued_by` User FK, optional `reason` text, `issued_at`, optional `lifted_at` and `lifted_by` User FK. At most one active ban per group/user. Keep lifted bans as history. Owners/admins issue/lift bans; banning removes existing membership and cancels unresolved requests. General user-to-user blocking is out of scope.
 
+### GroupNotice
+
+`group` FK (cascade), `kind` (`left` or `promoted`), `subject` User FK, `created_at`. A grey line in the chat, such as "Sam has left the group" or "Jo was promoted to owner", kept in time order with the messages and removed with the group. It is written when someone leaves or switches away from a group (and, when the owner leaves, once more for the member who becomes owner). Removals and bans are not announced. Notices are visible to current members only.
+
+The live chat stores nothing extra: `chat_signature` fingerprints the message count, newest message id, latest edit and removal times, the member count and newest membership, the newest notice, the owner and the capacity, so a change in any of them is noticed.
+
 ### Message
 
 `group` FK, `author` User FK, `body` text, `created_at`, optional `edited_at`, `deleted_at`, and `deleted_by` User FK. Non-deleted messages require nonempty text. On deletion, clear body and retain a tombstone with deletion metadata; do not retain edit history/deleted text.
@@ -231,3 +244,24 @@ September 28: group services implement creation/editing, membership transitions,
 September 28 step 2: public Django request handlers, forms/templates, registration/login/settings, recipient inbox, group photo access, and Leaflet map UI are implemented. POST writes use CSRF and service calls with the authenticated actor; form fields cannot assign creators, owners, review state, or moderation hiding. GET views restrict access to private event/message/request data. Existing members retain boards after event changes without receiving unapproved location coordinates. My Activity and long message/request/inbox histories are paginated. No additional schema migration was needed.
 
 Raw ORM writes bypass service rules. 101 schema/discovery/group/HTTP tests pass against migrated SQLite, including competing joins, capacity, permissions, and privacy. No coverage percentage is claimed; browser visual/interaction review remains pending because automation could not start. The final report diagram must show actual table columns and relationships. ADR-4 remains pending until broader testing priorities and coverage approach are decided. Implemented routes are in ROUTES.md.
+
+### EventCard (added October 4)
+
+| Field | Rule |
+|---|---|
+| user, event | Foreign keys, unique together; a person's verified attendance at an event |
+| collected_at | Set when created |
+
+Nothing creates cards yet. The profile collection, achievements and genre chart are computed from them.
+
+### GroupHistory (added October 4)
+
+| Field | Rule |
+|---|---|
+| user | The person whose record this is |
+| kind | created, joined, left or removed |
+| group | Optional; set to null if the group is deleted |
+| group_name, event_title | Copied when recorded so the entry still reads correctly later |
+| created_at | Set when created |
+
+GroupNotice also gains the kind `joined`.

@@ -39,7 +39,7 @@ class WebTests(TestCase):
 
     def event_data(self, **changes):
         data = {'venue':self.venue.pk,'title':'Another night','description':'Test event',
-                'starts_at_0':'2026-10-02','starts_at_1':'21:00:00','ends_at_0':'2026-10-03','ends_at_1':'03:00:00',
+                'starts_at_0':(timezone.now()+timedelta(days=3)).date().isoformat(),'starts_at_1':'21:00:00','ends_at_0':(timezone.now()+timedelta(days=4)).date().isoformat(),'ends_at_1':'03:00:00',
                 'categories':[self.category.pk],'tags':[self.tag.pk], 'ticket_url':''}
         return {**data, **changes}
 
@@ -177,7 +177,7 @@ class WebTests(TestCase):
         event.refresh_from_db()
         self.assertEqual(event.title, 'Another night')
 
-    def test_my_carousels_require_login_and_hide_unavailable_tracked_events(self):
+    def test_my_carousels_require_login_and_hide_unavailable_followed_events(self):
         self.assertEqual(self.client.get('/my-events/').status_code, 302)
         self.assertEqual(self.client.get('/groups/').status_code, 302)
         ds.follow_event(actor=self.guest, event_id=self.event.pk)
@@ -189,18 +189,18 @@ class WebTests(TestCase):
         self.event.moderation_hidden = True
         self.event.save(update_fields=['moderation_hidden'])
         response = self.client.get('/my-events/')
-        self.assertContains(response, 'Tracked event unavailable')
+        self.assertContains(response, 'Followed event unavailable')
         self.assertNotContains(response, 'House night')
         self.login(self.owner)
         self.assertContains(self.client.get('/my-events/'), 'House night')
 
     def test_registration_ignores_privilege_fields_and_settings_are_private(self):
         response = self.client.post('/accounts/register/', {'username':'newuser','display_name':'New music fan','email':'new-private@example.org','password1':'Valid-passphrase-894!','password2':'Valid-passphrase-894!','is_staff':'on','is_superuser':'on'})
-        self.assertRedirects(response, '/my-activity/')
+        self.assertRedirects(response, '/accounts/profile/')
         user = get_user_model().objects.get(username='newuser')
         self.assertFalse(user.is_staff or user.is_superuser)
         self.assertContains(self.client.get('/accounts/settings/'), user.email)
-        self.assertRedirects(self.client.post('/accounts/settings/', {'display_name':'Changed','email':'updated@example.org','username':'owner'}), '/accounts/settings/')
+        self.assertRedirects(self.client.post('/accounts/settings/', {'display_name':'Changed','email':'updated@example.org','username':'owner'}), '/accounts/profile/')
         user.refresh_from_db()
         self.assertEqual(user.username, 'newuser')
         self.assertEqual(user.email, 'updated@example.org')
@@ -267,7 +267,7 @@ class WebTests(TestCase):
 
     def test_invalid_times_tags_and_venue_coordinates_leave_no_partial_rows(self):
         self.login()
-        self.assertEqual(self.client.post('/events/new/',self.event_data(ends_at_0='2026-10-01')).status_code,400)
+        self.assertEqual(self.client.post('/events/new/',self.event_data(ends_at_0=(timezone.now()-timedelta(days=30)).date().isoformat())).status_code,400)
         other = dm.GenreCategory.objects.create(name='Rock',description='Rock',color='#ff0000')
         self.assertEqual(self.client.post('/events/new/',self.event_data(categories=[other.pk])).status_code,400)
         self.assertEqual(self.client.post('/venues/new/',{'name':'Bad','latitude':91,'longitude':0,'timezone':'Wrong/Zone'}).status_code,400)
@@ -292,7 +292,7 @@ class WebTests(TestCase):
         self.assertEqual(self.client.post(f'/events/{self.event.pk}/cancel/').status_code,302)
         notice = Notification.objects.get(recipient=self.guest)
         self.assertEqual(self.client.post(f'/notifications/{notice.pk}/read/').status_code,404)
-        self.assertNotContains(self.client.get('/notifications/'),'A tracked event changed')
+        self.assertNotContains(self.client.get('/notifications/'),'An event you follow changed')
         self.login(self.guest)
         self.assertContains(self.client.get('/notifications/'),'cancellation status')
         self.assertEqual(self.client.post(f'/notifications/{notice.pk}/read/').status_code,302)
@@ -424,7 +424,7 @@ class WebTests(TestCase):
             response=self.client.get(url)
             self.assertNotContains(response,'Private proposed address')
             self.assertNotContains(response,'47.123456')
-        self.assertContains(self.client.get('/my-activity/'),'Tracked event unavailable')
+        self.assertContains(self.client.get('/my-activity/'),'Followed event unavailable')
 
     def test_start_cutoff_blocks_new_members_but_keeps_existing_board(self):
         self.event.starts_at=timezone.now()-timedelta(hours=1); self.event.ends_at=timezone.now()+timedelta(hours=2); self.event.save()

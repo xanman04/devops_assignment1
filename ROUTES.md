@@ -8,14 +8,14 @@ Most interactions use Django templates and POST forms, redirecting after success
 |---|---|---|
 | `/` | GET | Map landing page, date/genre controls, location fallback |
 | `/discover/` | GET | Public event, genre, subgenre, and performer discovery; text search hides empty rows |
-| `/my-events/` | GET, login required | Tracked events and the user's listings together |
+| `/my-events/` | GET, login required | Followed events and the user's listings together |
 | `/groups/` | GET, login required | Memberships and join requests together |
 | `/api/map/events/` | GET | Existing filtered venue/event JSON |
 | `/genres/`, `/genres/<id>/` | GET | Curated categories, subgenre tags, music references |
 | `/accounts/register/` | GET, POST | Username/password, optional display name/private email |
 | `/accounts/login/` | GET, POST | Django login |
 | `/accounts/logout/` | POST | Django logout |
-| `/accounts/settings/` | GET, POST | Owner-only name/email settings |
+| `/accounts/settings/` | GET, POST | Owner-only Edit profile form: name, bio, email, picture, music links |
 | `/events/new/`, `/events/<id>/edit/` | GET, POST | Creator-authorized listing forms with venue-local times |
 | `/events/<id>/` | GET | Music/event details and optional “Attending alone?” groups |
 | `/events/<id>/cancel/` | POST | Retain event, remove from map, notify followers |
@@ -38,12 +38,17 @@ Most interactions use Django templates and POST forms, redirecting after success
 | `/groups/<id>/photo/` | GET | Serve processed photo after group visibility checks |
 | `/events/<id>/poster/` | GET | Serve an uploaded poster after event visibility checks |
 | `/api/discover/playing-near-me/` | GET | Return linked artist/DJ profiles from public nearby events within the next two weeks; requires browser-provided coordinates |
+| `/groups/<id>/chat/` | GET, members only | Live chat: takes the page's current `sig`; answers `{changed:false}` or fresh chat and member HTML, count and a new `sig`. Private, never cached |
 | `/groups/<id>/messages/new/` | POST | Member text message |
 | `/messages/<id>/edit/` | GET, POST | Current-member author edits own content |
 | `/messages/<id>/delete/` | POST | Author removes own content; admin moderation remains in admin |
+| `/t<8 hex>/…` | any | A tab's own login: the same routes under a per-tab prefix with its own session and CSRF cookies; created by JavaScript when a tab signs in or registers |
+| `/accounts/profile/` | GET, signed in | Own profile page: picture, bio, music links, counts, next followed events, groups, badge board placeholder |
+| `/accounts/avatar/<user_id>/` | GET, signed in | A profile picture as JPEG; 404 if none; never cached |
+| `/accounts/whoami/` | GET | JSON `{id, name}` of the signed-in account (`null`/empty when anonymous), never cached; used by the tab account guard |
 | `/notifications/` | GET | Recipient-only inbox, no raw private snapshots |
 | `/notifications/<id>/read/` | POST | Mark own notification read |
-| `/my-activity/` | GET | Own listings, follows, memberships, requests/offers |
+| `/my-activity/` | GET | One newest-first timeline of own listings, follows, memberships, requests/offers and venue proposals; `?page=` |
 | `/admin/` | Django admin | Existing discovery review, group deletion, message moderation |
 
 ## Handler and display rules

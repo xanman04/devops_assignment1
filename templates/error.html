@@ -1,3 +1,5 @@
-{% extends 'base.html' %}
-{% block content %}<h1>Unable to complete this action</h1>{% for error in errors %}<p role="alert">{{ error }}</p>{% endfor %}
-<p><a href="{% url 'activity' %}">My activity</a> · <a href="{% url 'home' %}">Discover events</a></p>{% endblock %}
+{% extends 'base.html' %}{% block title %}Unable to complete this action · Bassline{% endblock %}{% block content %}
+<div class="status-page"><span class="status-code">!</span><h1>Unable to complete this action</h1>
+<ul class="status-errors">{% for error in errors %}<li role="alert">{{ error }}</li>{% endfor %}</ul>
+<div class="status-actions"><a class="btn btn-primary" href="{% url 'activity' %}">Account activity</a><a class="btn btn-ghost" href="{% url 'home' %}">Discover events</a></div></div>
+{% endblock %}
