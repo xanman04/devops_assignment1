@@ -2,7 +2,7 @@
 
 A music-first event discovery application: find nearby events by genre and date, hear what their music sounds like through listening references, and find people to attend with.
 
-The idea comes from difficulty discovering smaller and niche events. It covers music broadly, including electronic music, rock, and jazz. Attendees and independent event organizers are the intended users.
+The idea comes from difficulty discovering smaller and niche events. It is built around electronic music (22 broad genres and 251 subgenres), and the genre system could be extended to other kinds of music. Attendees and independent event organizers are the intended users.
 
 **Status:** discovery/group services and Django workflows are implemented. The map and browsing layout are now connected to Django at `/`, `/discover/`, `/my-events/`, and `/groups/`. The professor approved the proposal, as reported by the author on September 24. Bassline is the current working title.
 
@@ -16,13 +16,13 @@ Click the sidebar to visit Near me, Discover, My events, Groups, and Profile. Ne
 
 Pins now use larger teardrops anchored at their tips. Selecting another pin replaces the floating preview, including when expanded details are open. The map supports trackpad pinch, two-finger touch pinch, mouse-wheel zoom, and dragging. Zoom follows the gesture position. The 310px sidebar uses labeled navigation and a single Profile destination. Date/genre controls sit toward the bottom with more space above than below; their button/icon sizes are preserved. Short desktop windows can scroll the sidebar when needed.
 
-Discover displays an Upcoming events poster gallery, a compact Playing near me lineup, colored Genres, and an Artists & DJs directory. Its main title and short intro lead into single-line section headings without numbers or extra subtitles. Event posters appear at their full portrait proportions with captions below on a dark framed backdrop. Search also shows matching subgenres with links to their expanded descriptions. Rows without matches disappear, and a single no-results message appears when nothing matches. The nearby row uses browser location permission to find linked performers at public events within 30 km in the next two weeks; it shows a location-access message when permission is unavailable. Each performer appears once, linked to their profile. My events displays Followed events and Your listings together; Groups displays My groups and Requests together. Scroll each carousel or use its previous/next buttons; horizontal scrolling stops at the row's ends and the scrollbars stay hidden.
+Discover displays an Upcoming events poster gallery, a compact Playing near me lineup, colored Genres, and an Artists & DJs directory. Its main title and short intro lead into single-line section headings without numbers or extra subtitles. Event posters appear at their full portrait proportions with captions below on a dark framed backdrop. Search also shows matching subgenres with links to their expanded descriptions. Rows without matches disappear, and a single no-results message appears when nothing matches. The nearby row uses browser location permission to find linked performers at public events within 30 km, soonest first; it shows a location-access message when permission is unavailable. Each performer appears once, linked to their profile. My events displays Followed events and Your listings together; Groups displays My groups and Requests together. Scroll each carousel or use its previous/next buttons; horizontal scrolling stops at the row's ends and the scrollbars stay hidden.
 
-The live Discover page also has seven curated real DJ profiles with locally bundled, credited photos and linked songs and past sets (about ten of each for the six artists; Carl Cox, a DJ only, has sets only). After adding the existing genre categories, run `.\.venv\Scripts\python.exe manage.py seed_djs` to populate them on a fresh local database. The command can be rerun safely without overwriting admin edits. Admins can edit listening links within each artist/DJ profile. [DJ_SOURCES.md](DJ_SOURCES.md) records the artist, image, and recording sources.
+The live Discover page also has seven curated real DJ profiles with locally bundled, credited photos and linked songs and past sets (about ten of each for the six artists; Carl Cox, a DJ only, has sets only). They are loaded automatically on the first start of an empty database; `.\.venv\Scripts\python.exe manage.py seed_djs` can also be run by hand. The command can be rerun safely without overwriting admin edits. Admins can edit listening links within each artist/DJ profile. [DJ_SOURCES.md](DJ_SOURCES.md) records the artist, image, and recording sources.
 
-Every genre page carries representative songs where they belong: three for the broad genre sit under its description ("Hear the genre"), and each subgenre card lists its own one or two ("Hear it") when expanded, with a ♪ count on the closed card. After importing the subgenres, run `.\.venv\Scripts\python.exe manage.py seed_genre_songs` to add them (439 YouTube links covering all 22 genres and 251 subgenres). It is safe to rerun and keeps admin edits. An event's "Explore the sound" section is built from the same songs automatically: about four for the event's genres (its own subgenres first), plus songs and sets from any lineup artist with curated links, so existing and future events need no extra data entry.
+Every genre page carries representative songs where they belong: three for the broad genre sit under its description ("Hear the genre"), and each subgenre card lists its own one or two ("Hear it") when expanded, with a ♪ count on the closed card. They are loaded automatically on the first start (439 YouTube links covering all 22 genres and 251 subgenres); `.\.venv\Scripts\python.exe manage.py seed_genre_songs` can also be run by hand. It is safe to rerun and keeps admin edits. An event's "Explore the sound" section is built from the same songs automatically: about four for the event's genres (its own subgenres first), plus songs and sets from any lineup artist with curated links, so existing and future events need no extra data entry.
 
-The Django home page uses the approved dark sidebar and MapLibre vector map. Date controls and searchable category/subgenre chips feed the existing public map API. Multiple genres match either or both; selecting subgenres narrows their selected parent genre, while other selected genres remain included. Subgenres show only those under selected categories, or all when no category is selected. Clicking a venue pin opens a floating panel with real matching events. The sidebar search routes to Discover on every page and searches public events, venues, performers, broad genres, subgenre names and descriptions, and curated listening references. Discover reads those records; My events reads the signed-in user's follows/listings; Groups reads their memberships/requests. The full activity page remains available for older records. Your 65px filter bottom padding is preserved. Restart `app.py` after static-file edits because WhiteNoise caches file metadata; when using `manage.py runserver`, run `manage.py collectstatic --noinput` before restarting.
+The Django home page uses the approved dark sidebar and MapLibre vector map. Date controls and searchable category/subgenre chips feed the existing public map API. Multiple genres match either or both; selecting subgenres narrows their selected parent genre, while other selected genres remain included. Subgenres show only those under selected categories, or all when no category is selected. Clicking a venue pin opens a floating panel with real matching events. The sidebar search routes to Discover on every page and searches public events, venues, performers, broad genres, subgenre names and descriptions, and curated listening references. Discover reads those records; My events reads the signed-in user's follows/listings; Groups reads their memberships/requests. The full activity page remains available for older records. Restart `app.py` after static-file edits because WhiteNoise caches file metadata; when using `manage.py runserver`, run `manage.py collectstatic --noinput` before restarting.
 
 The live map keeps additional tile zoom levels in memory and retains pending lower-detail tiles during zooming so revisiting an area can render more smoothly. New areas still depend on tile-provider and network response times.
 
@@ -99,6 +99,7 @@ README.md
 ADR.md
 AI_USAGE.md
 DESIGN.md
+DJ_SOURCES.md          # Sources and photo credits for the curated DJ profiles
 SCHEMA.md
 ROUTES.md              # Implemented URL and request-handler contract
 AGENTS.md              # Automatic commit/push workflow during active sessions
@@ -106,14 +107,15 @@ requirements.txt
 manage.py
 app.py                 # Automatic migration/static setup and single-process server
 config/                # Django settings, URL configuration, startup integration
-accounts/              # Django-based user model
+accounts/              # User model, profile, collection of event cards, genre chart
 notifications/         # Shared in-app notifications
 discovery/             # Models, services, admin forms, map JSON view, tests, migrations
 groups/                # Models, membership/message services, photos, tests, admin, migrations
 test_schema.py         # Focused persistence/integrity checks
 test_web.py            # HTTP form/workflow, permission, privacy, and CSRF checks
 templates/             # Shared layout and discovery/group/account/inbox pages
-static/                # Plain CSS and MapLibre map integration JavaScript
+static/                # Plain CSS and JavaScript, bundled demo flyers, DJ photos and font
+tools/                 # Manually run scripts that build the flyers and fetch DJ photos
 ```
 
 ## Running the application
@@ -151,7 +153,7 @@ Optional administration, not required for startup:
 
 Then visit http://localhost:8000/admin/. You can create/edit categories, tags, venues, events, and listening references, and resolve reports. Discovery saves use services. Groups are inspectable; authorized admins can delete a populated group with confirmation and remove selected message content through moderation. Direct group/membership/request/ban/message editing remains disabled to prevent bypassing services. Apart from the demo content loaded on a first start (see above), no users or listings are introduced; the individual seed commands below can also be run by hand.
 
-To try discovery: create a genre category, add a venue and set its review status to approved, then add a future event with at least one category. Optional tags must belong to selected categories. Event forms interpret and display date/time in the selected venue's IANA timezone, storing UTC. Changing venue reinterprets the entered wall-clock times in its timezone; confirm those times when moving an event. Ambiguous/nonexistent daylight-saving times are rejected. Admins may inspect pending locations; they are never returned publicly.
+To add your own listing (the demo content already provides examples): create a genre category, add a venue and set its review status to approved, then add a future event with at least one category. Optional tags must belong to selected categories. Event forms interpret and display date/time in the selected venue's IANA timezone, storing UTC. Changing venue reinterprets the entered wall-clock times in its timezone; confirm those times when moving an event. Ambiguous/nonexistent daylight-saving times are rejected. Admins may inspect pending locations; they are never returned publicly.
 
 ### Discovery services and map endpoint
 
@@ -184,7 +186,7 @@ No self-authored Dockerfile, Compose configuration, CI workflow, IaC, external d
 
 ## Curated electronic subgenres
 
-The supplied `discovery/fixtures/electronic_subgenres_v1.csv` contains 251 subgenre tags. Import it into the 22 existing broad categories after setting those categories up in admin:
+The supplied `discovery/fixtures/electronic_subgenres_v1.csv` contains 251 subgenre tags. The first start imports it into the 22 broad categories automatically; to run it by hand (the categories must already exist):
 
 ```powershell
 .venv/Scripts/python.exe manage.py import_subgenres --dry-run
