@@ -1,17 +1,47 @@
-{% extends 'base.html' %}{% block content %}
-<h1>My activity</h1><p>{{ user.public_name }}</p>
-<h2>My listings</h2><p><a href="{% url 'event-new' %}">List an event</a> · <a href="{% url 'venue-new' %}">Propose a venue</a></p>
-{% for event in events %}<p><a href="{% url 'event-detail' event.pk %}">{{ event.title }}</a>{% if event.cancelled_at %} · cancelled{% endif %}{% if event.moderation_hidden %} · hidden{% endif %}{% if event.venue.review_status != 'approved' %} · location {{ event.venue.get_review_status_display|lower }}{% endif %}</p>{% empty %}<p>No listings yet.</p>{% endfor %}
-{% include 'pagination.html' with page=events parameter='events_page' %}
-<h2>Tracked events</h2>{% for event in follows %}<div class="member-row">{% if event.available %}<a href="{% url 'event-detail' event.id %}">{{ event.title }}</a>{% else %}<span>{{ event.title }}</span>{% endif %}
-<form method="post" action="{% url 'event-unfollow' event.id %}">{% csrf_token %}<button>Stop tracking</button></form></div>{% empty %}<p>No tracked events.</p>{% endfor %}
-{% include 'pagination.html' with page=follows parameter='follows_page' %}
-<h2>My groups</h2>{% for membership in memberships %}<p><a href="{% url 'group-detail' membership.group_id %}">{{ membership.group.name }}</a></p>{% empty %}<p>No group memberships.</p>{% endfor %}
-{% include 'pagination.html' with page=memberships parameter='memberships_page' %}
-<h2>Requests and offers</h2>{% for request in requests %}<div class="card"><p><a href="{% url 'group-detail' request.group_id %}">{{ request.group.name }}</a> · {{ request.get_status_display }}</p>
-{% if request.status == 'approved' %}<p>Approval does not reserve a place. Open the group to accept and confirm any membership switch.</p>{% endif %}
-{% if request.status == 'approved' or request.status == 'pending' %}<form method="post" action="{% url 'request-cancel' request.pk %}">{% csrf_token %}<button>Cancel request/offer</button></form>{% endif %}</div>{% empty %}<p>No requests.</p>{% endfor %}
-{% include 'pagination.html' with page=requests parameter='requests_page' %}
-<h2>My proposed venues</h2>{% for venue in venues %}<p>{{ venue.name }} · {{ venue.get_review_status_display }}</p>{% empty %}<p>No venue proposals.</p>{% endfor %}
-{% include 'pagination.html' with page=venues parameter='venues_page' %}
+{% extends 'base.html' %}{% load groups_extras %}
+{% block title %}Account activity · Bassline{% endblock %}
+{% block body_class %}browse-layout{% endblock %}
+{% block content %}
+<div class="browse-page browse-page--discover grp-mine">
+  <header class="discover-masthead"><h1>Account activity</h1></header>
+
+  <div class="act-account">
+    <span class="grp-avatar" style="--hue:{{ user.pk|avatar_hue }}" aria-hidden="true">{{ user.public_name|initial }}</span>
+    <div><strong>{{ user.public_name }}</strong><small>@{{ user.username }}</small></div>
+    <div class="act-account-actions"><a class="btn btn-ghost btn-sm" href="{% url 'account-settings' %}">Account settings</a><a class="btn btn-ghost btn-sm" href="{% url 'event-new' %}">List an event</a><a class="btn btn-ghost btn-sm" href="{% url 'venue-new' %}">Propose a venue</a></div>
+  </div>
+
+  {% if timeline %}<ol class="tl" aria-label="Account activity">{% for item in timeline %}
+    {% ifchanged item.at|date:"Y-m" %}<li class="tl-month" aria-hidden="true">{{ item.at|date:"F Y" }}</li>{% endifchanged %}
+    <li class="tl-item tl-item--{{ item.kind }}{% if item.kind == 'followed' and not item.available %} is-muted{% endif %}">
+      <span class="tl-dot"><svg class="live-icon" aria-hidden="true"><use href="#icon-{% if item.kind == 'listed' %}events{% elif item.kind == 'followed' %}notifications{% elif item.kind == 'venue' %}near{% else %}groups{% endif %}"/></svg></span>
+      <div class="tl-card">
+        <div class="tl-head"><span class="tl-type">{% if item.kind == 'listed' %}Listed an event{% elif item.kind == 'followed' %}Followed an event{% elif item.kind == 'joined' %}Joined a group{% elif item.kind == 'created' %}Created a group{% elif item.kind == 'left' %}Left a group{% elif item.kind == 'removed' %}Removed from a group{% elif item.kind == 'requested' %}{% if item.request.status == 'approved' %}Offered a place in a group{% else %}Requested to join a group{% endif %}{% else %}Proposed a venue{% endif %}</span><time class="tl-time" datetime="{{ item.at|date:'c' }}">{{ item.at|date:'j M, H:i' }}</time></div>
+        <div class="tl-body">
+          {% if item.kind == 'listed' %}
+            <span class="tl-main"><a href="{% url 'event-detail' item.event.pk %}"><strong>{{ item.event.title }}</strong></a><small>{{ item.event.venue.name }} · {{ item.event.starts_at|date:'j M Y' }}</small></span>
+            {% if item.event.cancelled_at %}<span class="grp-status grp-status--cancelled">Cancelled</span>{% elif item.event.moderation_hidden %}<span class="grp-status grp-status--rejected">Hidden</span>{% elif item.event.venue.review_status != 'approved' %}<span class="grp-status grp-status--pending">Location {{ item.event.venue.get_review_status_display|lower }}</span>{% else %}<span class="grp-status grp-status--approved">Live</span>{% endif %}
+            <span class="tl-actions"><a class="btn btn-ghost btn-sm" href="{% url 'event-edit' item.event.pk %}">Edit</a></span>
+          {% elif item.kind == 'followed' %}
+            <span class="tl-main">{% if item.available %}<a href="{% url 'event-detail' item.event_id %}"><strong>{{ item.title }}</strong></a>{% else %}<strong>{{ item.title }}</strong>{% endif %}</span>
+            <span class="tl-actions"><form method="post" action="{% url 'event-unfollow' item.event_id %}">{% csrf_token %}<button class="btn btn-ghost btn-sm">Unfollow</button></form></span>
+          {% elif item.kind == 'joined' or item.kind == 'created' or item.kind == 'left' or item.kind == 'removed' %}
+            <span class="grp-avatar" style="--hue:{{ item.group_name|length|add:item.at.day|avatar_hue }}" aria-hidden="true">{{ item.group_name|initial }}</span>
+            <span class="tl-main">{% if item.group_id and item.kind != 'left' and item.kind != 'removed' %}<a href="{% url 'group-detail' item.group_id %}"><strong>{{ item.group_name }}</strong></a>{% else %}<strong>{{ item.group_name }}</strong>{% endif %}<small>{{ item.event_title }}</small></span>
+            {% if item.group_id and item.kind != 'left' and item.kind != 'removed' %}<span class="tl-actions"><a class="btn btn-ghost btn-sm" href="{% url 'group-detail' item.group_id %}">Open →</a></span>{% endif %}
+          {% elif item.kind == 'requested' %}
+            <span class="grp-avatar" style="--hue:{{ item.group.pk|avatar_hue }}" aria-hidden="true">{{ item.group.name|initial }}</span>
+            <span class="tl-main"><a href="{% url 'group-detail' item.group.pk %}"><strong>{{ item.group.name }}</strong></a>{% if item.request.status == 'approved' %}<small>Open the group to accept and confirm any membership switch.</small>{% endif %}</span>
+            <span class="grp-status grp-status--{{ item.request.status }}">{{ item.request.get_status_display }}</span>
+            {% if item.request.status == 'approved' or item.request.status == 'pending' %}<span class="tl-actions"><form method="post" action="{% url 'request-cancel' item.request.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-sm">Cancel request/offer</button></form></span>{% endif %}
+          {% else %}
+            <span class="tl-main"><strong>{{ item.venue.name }}</strong>{% if item.venue.address %}<small>{{ item.venue.address }}</small>{% endif %}</span>
+            <span class="grp-status grp-status--{{ item.venue.review_status }}">{{ item.venue.get_review_status_display }}</span>
+          {% endif %}
+        </div>
+      </div>
+    </li>{% endfor %}</ol>
+  {% else %}<div class="grp-empty-panel"><strong>Nothing here yet.</strong><p>Follow an event, join a group or list your own and it will show up on this timeline.</p><a class="btn btn-primary" href="{% url 'discover' %}">Find an event</a></div>{% endif %}
+  {% include 'pagination.html' with page=timeline %}
+</div>
 {% endblock %}

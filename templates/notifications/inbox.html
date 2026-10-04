@@ -1,8 +1,26 @@
-{% extends 'base.html' %}{% block content %}
-<h1>Notifications</h1><p><a href="{% url 'inbox' %}">All</a> · <a href="{% url 'inbox' %}?unread=1">Unread</a> · <a href="{% url 'activity' %}">My requests and tracked events</a></p>
-{% for notice in notices %}<article class="card"><p>{{ notice.summary }}</p><p class="muted">{{ notice.created_at|date:'j M Y H:i' }} UTC</p>
-{% if notice.join_request_id %}<p><a href="{% url 'group-detail' notice.join_request.group_id %}">View group</a></p>
-{% elif notice.group_id %}<p><a href="{% url 'group-detail' notice.group_id %}">View group</a></p>
-{% elif notice.event_change_id %}<p><a href="{% url 'event-detail' notice.event_change.event_id %}">View event</a></p>{% endif %}
-{% if not notice.read_at %}<form method="post" action="{% url 'notification-read' notice.pk %}">{% csrf_token %}<button>Mark read</button></form>{% endif %}</article>{% empty %}<p>No notifications.</p>{% endfor %}
-{% include 'pagination.html' with page=notices %}{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Notifications · Bassline{% endblock %}
+{% block body_class %}browse-layout{% endblock %}
+{% block content %}
+<div class="browse-page browse-page--discover grp-mine">
+  <header class="discover-masthead"><h1>Notifications</h1></header>
+
+  <div class="note-tabs" role="tablist" aria-label="Filter notifications">
+    <a class="note-tab{% if not unread %} is-active{% endif %}" href="{% url 'inbox' %}" role="tab" aria-selected="{% if not unread %}true{% else %}false{% endif %}">All</a>
+    <a class="note-tab{% if unread %} is-active{% endif %}" href="{% url 'inbox' %}?unread=1" role="tab" aria-selected="{% if unread %}true{% else %}false{% endif %}">Unread{% if unread_count %}<span class="note-count">{{ unread_count }}</span>{% endif %}</a>
+    <a class="note-tab note-tab--link" href="{% url 'activity' %}">My requests and followed events →</a>
+  </div>
+
+  {% if notices %}<ul class="note-list">{% for notice in notices %}
+    <li class="note{% if not notice.read_at %} is-unread{% endif %}">
+      <span class="row-icon"><svg class="live-icon" aria-hidden="true"><use href="#icon-{% if notice.kind == 'event_change' %}events{% else %}groups{% endif %}"/></svg></span>
+      <div class="note-main">
+        <p>{{ notice.summary }}</p>
+        <small>{{ notice.created_at|date:'j M Y, H:i' }} UTC{% if notice.join_request_id %} · <a href="{% url 'group-detail' notice.join_request.group_id %}">View group</a>{% elif notice.group_id %} · <a href="{% url 'group-detail' notice.group_id %}">View group</a>{% elif notice.event_change_id %} · <a href="{% url 'event-detail' notice.event_change.event_id %}">View event</a>{% endif %}</small>
+      </div>
+      {% if not notice.read_at %}<form method="post" action="{% url 'notification-read' notice.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-sm">Mark read</button></form>{% else %}<span class="note-read">Read</span>{% endif %}
+    </li>{% endfor %}</ul>
+  {% else %}<div class="grp-empty-panel"><strong>{% if unread %}You're all caught up.{% else %}No notifications.{% endif %}</strong><p>{% if unread %}Nothing unread right now.{% else %}Updates about events you follow and your groups will appear here.{% endif %}</p></div>{% endif %}
+  {% include 'pagination.html' with page=notices %}
+</div>
+{% endblock %}

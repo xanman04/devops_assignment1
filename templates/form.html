@@ -1,10 +1,12 @@
 {% extends 'base.html' %}
 {% block title %}{{ title }} · Bassline{% endblock %}
 {% block content %}
-<section class="narrow"><h1>{{ title }}</h1>
+<section class="narrow form-page{% if form.fields|length > 4 %} form-page--grid{% endif %}"><h1>{{ title }}</h1>
 {% if hint %}<p class="muted">{{ hint }}</p>{% endif %}
 {% if venue_link %}<p><a href="{% url 'venue-new' %}">Propose a new venue</a></p>{% endif %}
-{% if current_poster_id %}<p>Current poster:</p><img src="{% url 'event-poster' current_poster_id %}" alt="Current event poster" style="display:block;max-width:220px;max-height:300px;margin-bottom:1rem;border-radius:10px">{% endif %}
-<form method="post" enctype="multipart/form-data">{% csrf_token %}{{ form.as_p }}<button type="submit">Save</button></form>
+{% if current_poster_id %}<p>Current poster:</p><img src="{% url 'event-poster' current_poster_id %}" alt="Current event poster" style="display:block;max-width:13.75rem;max-height:18.75rem;margin-bottom:1rem;border-radius:10px">{% endif %}
+{% if profile_form %}<p><a href="{% url 'profile' %}">← Back to your profile</a></p>{% endif %}
+<form method="post"{% if new_session %} data-new-session{% endif %} enctype="multipart/form-data">{% csrf_token %}{% if mark_fields %}{{ form.non_field_errors }}{% for field in form %}<p>
+<label for="{{ field.id_for_label }}">{{ field.label }}{% if field.widget_type != 'checkbox' %}<span class="field-tag field-tag--{% if field.field.required %}req{% else %}opt{% endif %}">{% if field.field.required %}Required{% else %}Optional{% endif %}</span>{% endif %}</label>{{ field }}{% if field.help_text %}<span class="helptext">{{ field.help_text }}</span>{% endif %}{{ field.errors }}</p>{% endfor %}{% else %}{{ form.as_p }}{% endif %}<button type="submit">{% if new_session %}Create account{% else %}Save{% endif %}</button></form>
 </section>
 {% endblock %}

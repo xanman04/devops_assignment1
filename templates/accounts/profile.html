@@ -1,0 +1,79 @@
+{% extends 'base.html' %}{% load static groups_extras %}
+{% block title %}Profile · Bassline{% endblock %}
+{% block body_class %}browse-layout{% endblock %}
+{% block content %}
+<div class="browse-page browse-page--discover profile-page">
+  <header class="discover-masthead"><h1>Profile</h1></header>
+
+  <div class="profile-split">
+    <div class="profile-left">
+  <section class="profile-card" aria-label="About you">
+    <span class="profile-avatar" style="--hue:{{ user.pk|avatar_hue }}">{% if user.avatar %}<img src="{% url 'avatar' user.pk %}" alt="Your profile picture">{% else %}<span aria-hidden="true">{{ user.public_name|initial }}</span>{% endif %}</span>
+    <div class="profile-main">
+      <h2>{{ user.public_name }}</h2>
+      <p class="profile-handle">@{{ user.username }} · Member since {{ user.date_joined|date:"F Y" }}</p>
+      {% if user.bio %}<p class="profile-bio">{{ user.bio }}</p>{% else %}<p class="profile-bio is-empty">Add a short bio so people in your groups know what you listen to.</p>{% endif %}
+      <div class="profile-links">
+        <ul class="dj-social" aria-label="Your music profiles">{% for link in socials %}<li><a href="{{ link.url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ link.label }}" title="{{ link.label }}"><svg class="live-icon" aria-hidden="true"><use href="#icon-{{ link.icon }}"/></svg></a></li>{% endfor %}</ul>
+        {% if not socials %}<span class="profile-hint">Connect Instagram, Spotify, Apple Music or SoundCloud.</span>{% endif %}
+      </div>
+    </div>
+    <div class="profile-actions"><a class="btn btn-primary btn-sm" href="{% url 'account-settings' %}">Edit profile</a><a class="btn btn-ghost btn-sm" href="{% url 'activity' %}">Account activity</a></div>
+  </section>
+
+
+  <dl class="profile-stats" aria-label="Your totals">
+    <div><dt>Followed events</dt><dd>{{ stats.followed }}</dd></div>
+    <div><dt>Events attended</dt><dd>{{ stats.attended }}</dd></div>
+    <div><dt>Groups joined</dt><dd>{{ stats.groups }}</dd></div>
+    </dl>
+
+  <div class="profile-columns">
+    <section class="grp-section" aria-labelledby="mygroups-heading">
+      <div class="grp-section-head"><h2 id="mygroups-heading">Groups</h2><a class="profile-more" href="{% url 'my-groups' %}">All my groups</a></div>
+      {% if memberships %}<ul class="profile-tiles profile-tiles--groups">{% for membership in memberships %}
+        <li><a class="profile-tile profile-tile--group" href="{% url 'group-detail' membership.group_id %}" style="--event-accent:{{ membership.accent }}">
+          <span class="profile-tile-art"{% if not membership.group.photo %}{% if membership.group.event.poster %} style="background-image:url('{% url 'event-poster' membership.group.event_id %}')"{% elif membership.group.event.demo_poster %} style="background-image:url('{% static membership.group.event.demo_poster %}')"{% endif %}{% endif %}>{% if membership.group.photo %}<img src="{% url 'group-photo' membership.group_id %}" alt="" loading="lazy">{% elif not membership.group.event.poster and not membership.group.event.demo_poster %}<span class="profile-tile-letter" aria-hidden="true">{{ membership.group.name|initial }}</span>{% endif %}</span>
+          <span class="profile-tile-body"><strong>{{ membership.group.name }}</strong><small>{{ membership.group.event.title }}</small></span></a></li>{% endfor %}</ul>
+      {% else %}<div class="grp-empty-panel grp-empty-panel--slim"><strong>No groups yet.</strong><p>Join one from an event page.</p></div>{% endif %}
+          </section>
+    <section class="grp-section" aria-labelledby="nextup-heading">
+      <div class="grp-section-head"><h2 id="nextup-heading">Next up</h2><a class="profile-more" href="{% url 'my-events' %}">All my events</a></div>
+      {% if next_up %}<ol class="np" tabindex="0" aria-label="Next up">{% for item in next_up %}
+        <li class="np-item" style="--event-accent:{{ item.accent }}"><span class="np-dot" aria-hidden="true"></span>
+          <a class="np-card" href="{% url 'event-detail' item.event.pk %}"><span class="np-date"><b>{{ item.event.starts_at|date:'j' }}</b><small>{{ item.event.starts_at|date:'M' }}</small></span>
+            <span class="np-main"><strong>{{ item.event.title }}</strong><small>{{ item.event.venue.name }} · {{ item.event.starts_at|date:'D' }}</small></span></a></li>{% endfor %}</ol>
+      {% else %}<div class="grp-empty-panel grp-empty-panel--slim"><strong>Nothing coming up.</strong><p>Follow events to see them here.</p></div>{% endif %}
+    </section>
+  </div>
+    </div>
+    <aside class="profile-board">
+  <section class="grp-section" aria-labelledby="board-heading">
+    <div class="grp-section-head"><h2 id="board-heading">{{ collection_name }}</h2></div>
+    {% if genre_chart %}<figure class="gchart" aria-labelledby="gchart-caption">
+      <svg class="gchart-svg" viewBox="22 22 276 276" role="img" aria-label="Chart of how much you go out to each of the {{ genre_chart.vertices|length }} genres">
+        {% for ring in genre_chart.rings %}<polygon class="gchart-ring" points="{{ ring }}"/>{% endfor %}
+        {% for spoke in genre_chart.spokes %}<line class="gchart-spoke" x1="{{ genre_chart.centre }}" y1="{{ genre_chart.centre }}" x2="{{ spoke.x }}" y2="{{ spoke.y }}" stroke="{{ spoke.color }}"/>{% endfor %}
+        {% for sector in genre_chart.sectors %}<polygon class="gchart-sector" points="{{ sector.points }}" fill="{{ sector.color }}"/>{% endfor %}
+        <polygon class="gchart-outline" points="{{ genre_chart.outline }}"/>
+        {% for vertex in genre_chart.vertices %}<circle class="gchart-end" cx="{{ vertex.ox }}" cy="{{ vertex.oy }}" r="3.4" fill="{{ vertex.color }}"><title>{{ vertex.name }}: {{ vertex.percent }}%</title></circle>
+        <circle class="gchart-dot" cx="{{ vertex.x }}" cy="{{ vertex.y }}" r="2.6" fill="{{ vertex.color }}"/>{% endfor %}
+      </svg>
+      <figcaption id="gchart-caption"><span class="gchart-title">Genre chart</span>
+        {% if genre_chart.top %}<span class="gchart-top" role="group" aria-label="Show badges for one genre"><button type="button" class="gchart-chip gchart-chip--all" data-genre="" aria-pressed="true">All</button>{% for genre in genre_chart.top %}<button type="button" class="gchart-chip" style="--genre:{{ genre.color }}" data-genre="{{ genre.name }}" aria-pressed="false">{{ genre.name }}</button>{% endfor %}</span>{% endif %}</figcaption>
+    </figure>{% endif %}
+    <ul class="badge-board" aria-label="{{ collection_name }}: event cards and achievements">
+      {% for badge in badges %}<li class="badge-card badge-card--{{ badge.kind }}{% if badge.tier %} tier-{{ badge.tier|lower }}{% endif %}" data-tier="{{ badge.tier }}" style="--badge:{{ badge.color }};--f1:{{ badge.palette.0 }};--f2:{{ badge.palette.1 }};--f3:{{ badge.palette.2 }}" data-genre="{{ badge.genre }}" tabindex="0" role="button" aria-haspopup="dialog">
+        <span class="badge-art"{% if badge.poster_id %} style="background-image:url('{% url 'event-poster' badge.poster_id %}')"{% elif badge.poster %} style="background-image:url('{% static badge.poster %}')"{% endif %}>{% if badge.kind == 'achievement' %}<svg class="live-icon badge-glyph" aria-hidden="true"><use href="#icon-gem"/></svg>{% endif %}</span>
+        <span class="badge-foil" aria-hidden="true"></span>
+        <span class="badge-text"><strong>{{ badge.title }}</strong><small>{{ badge.detail }}</small></span>{% if badge.proof %}<div class="badge-proof"><b>Earned from {{ badge.proof|length }} events</b><ul>{% for p in badge.proof %}<li>{{ p.title }} <small>{{ p.detail }}</small></li>{% endfor %}</ul></div>{% endif %}
+        {% if badge.tier %}<span class="badge-tier">{{ badge.tier }}</span>{% endif %}
+      </li>{% endfor %}
+      {% for _ in locked_slots %}<li class="badge-slot"><svg class="live-icon" aria-hidden="true"><use href="#icon-lock"/></svg><span>Locked</span></li>{% endfor %}
+      <li class="badge-empty" hidden>No cards for this genre yet.</li>
+    </ul>
+  </section>
+    </aside>
+  </div>
+</div>
+{% endblock %}

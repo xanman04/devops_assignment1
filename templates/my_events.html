@@ -1,0 +1,32 @@
+{% extends 'base.html' %}{% load static tz %}
+{% block title %}My events · Bassline{% endblock %}
+{% block body_class %}browse-layout{% endblock %}
+{% block content %}
+<div class="browse-page browse-page--discover grp-mine">
+  <header class="discover-masthead"><h1>My events</h1></header>
+
+  <div class="side-layout">
+  <div class="side-main">
+  <section class="grp-section side-first" aria-labelledby="followed-heading">
+    <div class="grp-section-head"><h2 id="followed-heading">Followed events</h2></div>
+    {% if followed %}<div class="grp-card-grid">{% for card in followed %}{% if card.available %}{% include 'event_card.html' with card=card %}{% else %}
+      <div class="grp-card is-muted"><span class="grp-card-art"><span class="grp-card-letter" aria-hidden="true">?</span></span><span class="grp-card-body"><strong>{{ card.title }}</strong><span class="grp-card-when">{{ card.subtitle }}</span></span></div>{% endif %}{% endfor %}</div>
+    {% else %}<div class="grp-empty-panel"><strong>No followed events yet.</strong><p>Follow an event to get a heads-up if its venue, time or status changes.</p><a class="btn btn-primary" href="{% url 'home' %}">Explore nearby</a></div>{% endif %}
+  </section>
+  </div>
+  <aside class="side-aside">
+  <section class="side-panel" aria-labelledby="listings-heading">
+    <div class="grp-section-head"><h2 id="listings-heading">Your listings</h2><a class="btn btn-primary btn-sm grp-section-action" href="{% url 'event-new' %}">List an event +</a></div>
+    {% if listings %}<ul class="grp-req-list">{% for card in listings %}
+      <li><a class="grp-req grp-req--genre{% if card.past or card.status == 'Cancelled' %} is-muted{% endif %}" href="{% url 'event-detail' card.event.pk %}" style="--event-accent:{{ card.accent }}">
+        <span class="grp-req-main"><strong>{{ card.event.title }}</strong><small>{{ card.event.venue.name }} · {% timezone card.zone %}{{ card.event.starts_at|date:'D j M' }}{% endtimezone %}</small></span>
+        {% if card.status %}<span class="grp-status grp-status--{% if card.status == 'Cancelled' %}cancelled{% else %}pending{% endif %}">{{ card.status }}</span>{% elif card.past %}<span class="grp-status grp-status--cancelled">Past</span>{% endif %}
+      </a></li>{% endfor %}</ul>
+    {% else %}<div class="grp-empty-panel grp-empty-panel--slim"><strong>No listings yet.</strong><p>Share a night you're putting on and it will show up on the map and in Discover.</p></div>{% endif %}
+  </section>
+  </aside>
+  </div>
+
+  <p class="grp-more"><a href="{% url 'activity' %}">View all activity and account history →</a></p>
+</div>
+{% endblock %}
