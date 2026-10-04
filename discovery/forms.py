@@ -64,14 +64,18 @@ class EventForm(ClassificationForm):
         super().__init__(*args, **kwargs)
         if actor is not None:
             self.fields.pop("moderation_hidden", None)
+            # People editing their own event get a Cancel event button instead, and keep their poster until they upload another.
+            self.fields.pop("cancelled", None)
+            self.fields.pop("remove_poster", None)
             choices = Q(review_status="approved") | Q(review_status="pending", submitted_by=actor)
             if self.instance.pk:
                 choices |= Q(pk=self.instance.venue_id)
             self.fields["venue"].queryset = models.Venue.objects.filter(choices).order_by("name", "id")
-        self.fields["cancelled"].initial = self.instance.cancelled_at is not None
+        if "cancelled" in self.fields:
+            self.fields["cancelled"].initial = self.instance.cancelled_at is not None
         if self.instance.pk:
             self.fields["performers"].initial = self.instance.performers.all()
-        if not self.instance.poster:
+        if not self.instance.poster and "remove_poster" in self.fields:
             self.fields["remove_poster"].disabled = True
         venue = self.instance.venue if self.instance.venue_id else None
         if self.is_bound:

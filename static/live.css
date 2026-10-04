@@ -1229,3 +1229,19 @@ body.account-locked { overflow:hidden; }
 .cropper-cancel { border:1px solid #5a606d; background:#2b2e35; color:#eef0f4; }
 .cropper-use { border:0; background:linear-gradient(#eef0f6,#d3d8e6); color:#191b21; }
 .tl-item--created { --tl:#7fd0a6; } .tl-item--left { --tl:#e08a8a; } .tl-item--removed { --tl:#e08a8a; }
+
+/* ---------- Save and Cancel event side by side ---------- */
+.form-page form > .form-actions { grid-column:1 / -1; display:flex; flex-wrap:wrap; align-items:center; gap:0.75rem; margin-top:0.5rem; }
+.form-page .form-actions > button { margin:0; padding:0.8125rem 2rem; border:0; border-radius:0.75rem; font-size:0.9375rem; font-weight:700; cursor:pointer; transition:transform .15s ease,box-shadow .15s ease; }
+.form-page .form-actions > button[type=submit]:not(.btn-danger) { background:linear-gradient(#eef0f6,#d3d8e6); color:#191b21; box-shadow:0 0.375rem 1rem #0005,inset 0 1px #fff; }
+.form-page .form-actions > .btn-danger { background:linear-gradient(#e0525c,#b5303a); color:#fff; box-shadow:0 0.375rem 1rem #0005,inset 0 1px #ffffff40; }
+.form-page .form-actions > .btn-danger:hover { background:linear-gradient(#ee6670,#c53a45); }
+.form-page .form-actions > button:hover { transform:translateY(-1px); }
+
+/* Poster text (title and lineup) must stay readable through the foil: the shine fades out over the lower part of event
+   cards where the lineup is printed, and the artwork gets a little more contrast. */
+.badge-big--event .badge-big-foil { -webkit-mask-image:linear-gradient(180deg,#000 0,#000 48%,#0000 78%); mask-image:linear-gradient(180deg,#000 0,#000 48%,#0000 78%); }
+.badge-big--event .badge-art { filter:contrast(1.18) saturate(1.1); }
+.badge-big--event .badge-art::after { background:linear-gradient(180deg,#0000 55%,#07080bcc 100%); }
+.badge-big--event .badge-art { filter:contrast(1.32) brightness(1.14) saturate(1.1); }
+.badge-big--event .badge-art::after { background:linear-gradient(180deg,#0000 62%,#07080b99 100%); }

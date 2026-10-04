@@ -70,12 +70,17 @@ class WebTests(TestCase):
         event.refresh_from_db()
         self.assertNotEqual(event.poster.path, first_path)
         self.assertFalse(Path(first_path).exists())
-        with self.captureOnCommitCallbacks(execute=True):
-            self.assertEqual(self.client.post(f'/events/{event.pk}/edit/',
-                self.event_data(remove_poster='on')).status_code, 302)
+        page = self.client.get(f'/events/{event.pk}/edit/')
+        self.assertNotContains(page, 'remove_poster')
+        self.assertNotContains(page, 'Remove current poster')
+        self.assertContains(page, 'class="btn-danger"')
+        self.assertContains(page, f'formaction="/events/{event.pk}/cancel/"')
+        self.client.post(f'/events/{event.pk}/edit/', self.event_data())            # saving without a file keeps the poster
         event.refresh_from_db()
-        self.assertFalse(event.poster)
-        self.assertEqual(self.client.get(f'/events/{event.pk}/poster/').status_code, 404)
+        self.assertTrue(event.poster)
+        kept = self.client.get(f'/events/{event.pk}/poster/')
+        self.assertEqual(kept.status_code, 200)
+        kept.close()
 
         pending_event = ds.save_event(actor=self.other, data={'venue': self.pending,
             'title': 'Pending night', 'description': 'Private until review',
@@ -447,3 +452,18 @@ class WebTests(TestCase):
             response=self.client.post('/venues/new/',{'name':'Locked','latitude':'48','longitude':'2','timezone':'Europe/Paris'})
         self.assertEqual(response.status_code,503)
         self.assertContains(response,'Please retry',status_code=503)
+
+
+    def test_cancel_event_button_cancels_and_is_hidden_once_cancelled(self):
+        self.login()
+        edit = f'/events/{self.event.pk}/edit/'
+        page = self.client.get(edit)
+        self.assertNotContains(page, 'name="cancelled"')
+        self.assertContains(page, 'Cancel event</button>')
+        self.assertEqual(self.client.post(f'/events/{self.event.pk}/cancel/').status_code, 302)
+        self.event.refresh_from_db()
+        self.assertIsNotNone(self.event.cancelled_at)
+        self.assertNotContains(self.client.get(edit), 'Cancel event</button>')
+        self.assertEqual(self.client.post(edit, self.event_data()).status_code, 302)       # saving does not reinstate it
+        self.event.refresh_from_db()
+        self.assertIsNotNone(self.event.cancelled_at)

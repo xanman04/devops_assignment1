@@ -236,3 +236,5 @@ October 4 cards and history: the profile's card section is named by `COLLECTION_
 October 4 seeding and profile picture: `seed_attendance` writes `EventCard` rows, the table check-in will feed, so demo collections need no special case later; demo_organizer 22, demo_alex 16, demo_sam 11, demo_jo 6, demo_morgan 3 cards, each favouring one genre. The profile stat is Events attended (a person's card count). A profile picture can only be replaced, not removed; Edit profile offers Adjust on the stored picture, which re-crops what was saved.
 
 October 4 seed scope: `seed_attendance` now covers every non-superuser account (not just demo_ names): it replaces their EventCard rows with a repeatable set and fills a blank bio and Instagram and Spotify links; anything already written is left alone.
+
+October 4 event form: editing your own event shows Save and a red Cancel event button (a formaction to the cancel route, with a confirm); the Cancelled checkbox and Remove current poster option exist only on the admin form. Event cards in the inspector fade the foil over their lower part and brighten the artwork so printed lineups stay readable.

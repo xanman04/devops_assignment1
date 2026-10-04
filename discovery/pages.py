@@ -5,6 +5,7 @@ from django.contrib.staticfiles.storage import staticfiles_storage
 from django.db.models import Count, Q
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.urls import reverse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
@@ -234,12 +235,13 @@ def event_form(request, event_id=None):
             data={name: data[name] for name in services.EVENT_FIELDS},
             category_ids=data["categories"].values_list("pk", flat=True),
             tag_ids=data["tags"].values_list("pk", flat=True),
-            performer_ids=data["performers"].values_list("pk", flat=True), cancelled=data["cancelled"],
-            poster=data.get("poster_upload"), remove_poster=data.get("remove_poster", False))
+            performer_ids=data["performers"].values_list("pk", flat=True),
+            cancelled=data.get("cancelled"), poster=data.get("poster_upload"), remove_poster=data.get("remove_poster", False))
         return redirect("event-detail", event_id=saved.pk)
     return form_page(request, form, "Edit event" if event_id else "List an event", save,
         context={"hint": "Choose an existing approved venue or propose a new venue first. Pending locations stay off the public map.",
-                 "venue_link": True, "current_poster_id": event.pk if event.poster else None})
+                 "venue_link": True, "current_poster_id": event.pk if event.poster else None,
+                 "cancel_url": reverse("event-cancel", args=[event.pk]) if event_id and not event.cancelled_at else None})
 
 
 @endpoint
