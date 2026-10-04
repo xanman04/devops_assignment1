@@ -2,6 +2,7 @@
 
 The event itself is not created here: list it through the normal form with the poster from
 `tools/build_pickle_rick_poster.py`. Repeatable: DJs are matched by name."""
+from django.contrib.staticfiles import finders
 from django.core.management.base import BaseCommand, CommandError
 
 from discovery import models
@@ -27,4 +28,8 @@ class Command(BaseCommand):
             profile, created = models.DJProfile.objects.get_or_create(
                 name=name, defaults={"description": description, "origin": origin, "active_since": since, "display_order": 900 + order})
             profile.categories.add(category)
-            self.stdout.write(f"{'created' if created else 'kept'} DJ {name}")
+            photo = f"djs/{name.lower().replace(' ', '_')}.webp"          # drop the image here, then run this command again
+            if not profile.photo and finders.find(photo):
+                profile.photo = photo
+                profile.save(update_fields=["photo"])
+            self.stdout.write(f"{'created' if created else 'kept'} DJ {name}" + (" (photo set)" if profile.photo else f" (no photo yet: add static/{photo})"))
