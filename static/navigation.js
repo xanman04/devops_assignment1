@@ -5,12 +5,14 @@
   const filters=document.getElementById('map-filters');
   if(!mapPage||!filters)return;
 
-  const routes=new Set(['/','/discover/','/my-events/','/groups/','/notifications/','/accounts/settings/']);
+  const root=document.body.dataset.root||'/';
+  const local=path=>path.startsWith(root)?'/'+path.slice(root.length):path;
+  const routes=new Set(['/','/discover/','/my-events/','/groups/','/notifications/','/accounts/settings/','/accounts/profile/']);
   let controller;
 
   function updateNav(path){
     for(const link of document.querySelectorAll('.live-nav a')){
-      if(new URL(link.href).pathname===path)link.setAttribute('aria-current','page');
+      if(local(new URL(link.href).pathname)===local(path))link.setAttribute('aria-current','page');
       else link.removeAttribute('aria-current');
     }
   }
@@ -24,17 +26,17 @@
     filters.hidden=false;
     document.title='Bassline';
     document.getElementById('site-search').value='';
-    updateNav('/');
+    updateNav(root);
     if(push)history.pushState({},'',url);
     requestAnimationFrame(()=>window.dispatchEvent(new Event('map:shown')));
   }
 
   async function navigate(url,push=true){
     const target=new URL(url,location.href);
-    if(target.origin!==location.origin||!routes.has(target.pathname)){
+    if(target.origin!==location.origin||!routes.has(local(target.pathname))){
       location.assign(target.href);return;
     }
-    if(target.pathname==='/'){showMap(target.href,push);return;}
+    if(local(target.pathname)==='/'){showMap(target.href,push);return;}
     controller?.abort();
     const active=new AbortController();controller=active;
     try{
@@ -43,6 +45,8 @@
       const page=new DOMParser().parseFromString(await response.text(),'text/html');
       const content=page.getElementById('main-content');
       if(!content)throw new Error('Page content unavailable');
+      // The login changed in another tab: never mix accounts, load the page normally instead.
+      if((page.body.dataset.account||'')!==(document.body.dataset.account||''))throw new Error('Account changed');
       window.cleanupBrowse?.();
       for(const child of [...main.childNodes])if(child!==mapPage)child.remove();
       main.append(...[...content.childNodes]);
@@ -55,6 +59,7 @@
       updateNav(target.pathname);
       main.scrollTop=0;
       window.initializeBrowse?.();
+      window.initializeCrop?.();
       if(push)history.pushState({},'',target.href);
     }catch(error){
       if(error.name!=='AbortError')location.assign(target.href);
@@ -65,13 +70,13 @@
     const link=event.target.closest('a[href]');
     if(!link||event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||link.target||link.hasAttribute('download'))return;
     const target=new URL(link.href,location.href);
-    if(target.origin!==location.origin||!routes.has(target.pathname))return;
+    if(target.origin!==location.origin||!routes.has(local(target.pathname)))return;
     event.preventDefault();navigate(target.href);
   });
   document.querySelector('.live-search').addEventListener('submit',event=>{
     event.preventDefault();
     const query=new FormData(event.currentTarget).get('q').trim();
-    navigate(`/discover/${query?`?q=${encodeURIComponent(query)}`:''}`);
+    navigate(`${root}discover/${query?`?q=${encodeURIComponent(query)}`:''}`);
   });
   window.addEventListener('popstate',()=>navigate(location.href,false));
 })();

@@ -18,6 +18,16 @@ if not SECRET_KEY:
         pass
     SECRET_KEY = key_path.read_text(encoding="utf-8").strip()
 
+
+
+def cookie_suffix(port):
+    """Cookies are shared by every port on a host, so a second local copy of the app would overwrite this one's login."""
+    port = str(port or "8000").strip()
+    return "" if port == "8000" or not port.isdigit() else f"_{port}"
+
+
+SESSION_COOKIE_NAME = "sessionid" + cookie_suffix(os.environ.get("PORT"))
+CSRF_COOKIE_NAME = "csrftoken" + cookie_suffix(os.environ.get("PORT"))
 DEBUG = os.environ.get("DJANGO_DEBUG", "0") == "1"
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get(
     "DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1]"
@@ -30,10 +40,12 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "config.middleware.TabSlotMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "config.middleware.PrivatePagesMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -69,6 +81,8 @@ STATIC_URL = "/static/"
 STATIC_ROOT = DATA_DIR / "static"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 LOGIN_URL = "login"
+# What the profile calls the section holding event cards and achievements. Change this one word to rename it.
+COLLECTION_NAME = "Collection"
 LOGIN_REDIRECT_URL = "activity"
 LOGOUT_REDIRECT_URL = "home"
 # Browser tile requests retain an origin Referer, as required by OSM's tile policy.
