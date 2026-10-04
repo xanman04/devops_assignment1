@@ -46,10 +46,21 @@ class VenueLocalDateTimeField(forms.SplitDateTimeField):
         return super().prepare_value(value)
 
 
+class PerformerSelect(forms.SelectMultiple):
+    """The DJ list, with each option carrying its genres so the page can filter by genre."""
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex=subindex, attrs=attrs)
+        instance = getattr(value, "instance", None)
+        if instance is not None:
+            option["attrs"]["data-genres"] = "|".join(category.name for category in instance.categories.all())
+        return option
+
+
 class EventForm(ClassificationForm):
-    performers = forms.ModelMultipleChoiceField(queryset=models.DJProfile.objects.all(), required=False,
-        widget=forms.SelectMultiple(attrs={"size": 8, "data-multi-picker": "artists and DJs"}), label="Artists / DJs",
-        help_text="Search, then click as many as you like. Add a missing profile in admin first.")
+    performers = forms.ModelMultipleChoiceField(queryset=models.DJProfile.objects.prefetch_related("categories"), required=False,
+        widget=PerformerSelect(attrs={"size": 8, "data-multi-picker": "artists and DJs"}), label="Artists / DJs",
+        help_text="Search or filter by genre, then click as many as you like. Add a missing profile in admin first.")
     starts_at = VenueLocalDateTimeField(label="Start (venue local time)")
     ends_at = VenueLocalDateTimeField(label="End (venue local time)")
     poster_upload = forms.FileField(required=False, label="Event poster", help_text="Optional JPG, PNG, or WebP, up to 5 MiB. Replaces an existing poster.")

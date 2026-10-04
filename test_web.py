@@ -456,12 +456,14 @@ class WebTests(TestCase):
 
     def test_dj_field_is_a_search_picker_and_several_djs_can_be_saved(self):
         self.login()
+        first = dm.DJProfile.objects.create(name='Search One', description='x')
+        first.categories.add(self.category)
+        second = dm.DJProfile.objects.create(name='Search Two', description='x')
         page = self.client.get('/events/new/')
         self.assertContains(page, 'data-multi-picker="artists and DJs"')
         self.assertContains(page, 'multi-picker.js')
         self.assertNotContains(page, 'Hold Ctrl')
-        first = dm.DJProfile.objects.create(name='Search One', description='x')
-        second = dm.DJProfile.objects.create(name='Search Two', description='x')
+        self.assertContains(page, f'data-genres="{self.category.name}"')       # lets the page filter DJs by genre
         response = self.client.post('/events/new/', self.event_data(title='Many DJs', performers=[first.pk, second.pk]))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(set(dm.Event.objects.get(title='Many DJs').performers.values_list('name', flat=True)), {'Search One', 'Search Two'})

@@ -28,7 +28,26 @@
     const chips = el('ul', 'picker-chips');
     chips.setAttribute('aria-label', 'Selected ' + noun);
     chips.setAttribute('aria-live', 'polite');
-    wrap.append(search, results, chips);
+    const genres = [...new Set(options.flatMap(o => (o.dataset.genres || '').split('|').filter(Boolean)))].sort();
+    let genre = '';
+    const filters = el('div', 'picker-filters');
+    filters.setAttribute('role', 'group');
+    filters.setAttribute('aria-label', 'Filter ' + noun + ' by genre');
+    if (genres.length) {
+      for (const name of ['', ...genres]) {
+        const button = el('button', 'picker-filter', name || 'All genres');
+        button.type = 'button';
+        button.dataset.genre = name;
+        button.setAttribute('aria-pressed', String(name === genre));
+        button.addEventListener('click', () => {
+          genre = name;
+          for (const other of filters.children) other.setAttribute('aria-pressed', String(other.dataset.genre === genre));
+          render();
+        });
+        filters.append(button);
+      }
+    }
+    wrap.append(search, filters, results, chips);
     select.insertAdjacentElement('afterend', wrap);
     select.hidden = true;
     select.style.display = 'none';
@@ -45,7 +64,10 @@
       let shown = 0;
       for (const option of options) {
         if (query && !option.text.toLowerCase().includes(query)) continue;
-        const item = el('li', 'picker-option' + (option.selected ? ' is-picked' : ''), option.text);
+        if (genre && !(option.dataset.genres || '').split('|').includes(genre)) continue;
+        const item = el('li', 'picker-option' + (option.selected ? ' is-picked' : ''));
+        item.append(el('span', 'picker-name', option.text));
+        if (option.dataset.genres) item.append(el('small', 'picker-genres', option.dataset.genres.split('|').join(' · ')));
         item.setAttribute('role', 'option');
         item.setAttribute('aria-selected', String(option.selected));
         item.tabIndex = -1;
@@ -54,7 +76,7 @@
         results.append(item);
         shown += 1;
       }
-      if (!shown) results.append(el('li', 'picker-none', 'No ' + noun + ' match.'));
+      if (!shown) results.append(el('li', 'picker-none', 'No ' + noun + ' match' + (genre ? ' in ' + genre : '') + '.'));
       chips.replaceChildren();
       for (const option of options.filter(o => o.selected)) {
         const chip = el('li', 'picker-chip');
