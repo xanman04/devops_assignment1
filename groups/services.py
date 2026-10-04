@@ -6,11 +6,12 @@ support optional coordination and never represent an attendance requirement.
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
+from django.db.models import Count, Max
 from django.utils import timezone
 
 from discovery.services import can_manage, get_event, public_events, require_permission, require_user
 from notifications.models import Notification
-from .models import AttendanceGroup, GroupBan, JoinRequest, Membership, Message
+from .models import AttendanceGroup, GroupBan, GroupHistory, GroupNotice, JoinRequest, Membership, Message
 from .photos import prepare_photo
 
 
@@ -112,6 +113,7 @@ def save_group(*, actor, data, group_id=None, photo=None, remove_photo=False):
             group.save()
             if not group_id:
                 Membership.objects.create(group=group, user=actor)
+                _record(actor, GroupHistory.Kind.CREATED, group)
             if (prepared is not None or remove_photo) and old_name:
                 transaction.on_commit(lambda: storage.delete(old_name), robust=True)
         return group
@@ -121,17 +123,27 @@ def save_group(*, actor, data, group_id=None, photo=None, remove_photo=False):
         raise
 
 
-def _leave(group, user):
+def _record(user, kind, group):
+    GroupHistory.objects.create(user=user, kind=kind, group=group, group_name=group.name, event_title=group.event.title)
+
+
+def _leave(group, user, *, announce=True):
+    """Remove a membership. Leaving or switching away is announced in the chat; removals and bans are not."""
     membership = group.memberships.filter(user=user).first()
     if not membership:
         return
     membership.delete()
+    _record(user, GroupHistory.Kind.LEFT if announce else GroupHistory.Kind.REMOVED, group)
     successor = group.memberships.select_related("user").order_by("joined_at", "id").first()
     if not successor:
         _delete(group)
-    elif group.owner_id == user.pk:
+        return
+    if announce:
+        GroupNotice.objects.create(group=group, kind=GroupNotice.Kind.LEFT, subject=user)
+    if group.owner_id == user.pk:
         group.owner = successor.user
         group.save(update_fields=["owner", "updated_at"])
+        GroupNotice.objects.create(group=group, kind=GroupNotice.Kind.PROMOTED, subject=successor.user)
         _notify(successor.user_id, Notification.Kind.OWNER_TRANSFER,
                 "You are now the owner of an attendance group.", group=group)
 
@@ -174,6 +186,8 @@ def _join(actor, group, *, confirm_switch=False):
     if current:
         _leave(current.group, actor)
     membership = Membership.objects.create(group=group, user=actor)
+    GroupNotice.objects.create(group=group, kind=GroupNotice.Kind.JOINED, subject=actor)
+    _record(actor, GroupHistory.Kind.JOINED, group)
     # Preserve other groups' pending requests/offers; only this destination is accepted.
     # Its old accepted request does not grant permanent private-group access.
     group.join_requests.filter(applicant=actor, status__in=["pending", "approved"]).update(status="accepted", accepted_at=timezone.now())
@@ -264,7 +278,7 @@ def remove_member(*, actor, group_id, user_id, ban=False, reason=""):
             return record
     elif not group.memberships.filter(user=user).exists():
         raise ValidationError("This user is not a current member.")
-    _leave(group, user)
+    _leave(group, user, announce=False)
     group.join_requests.filter(applicant=user, status__in=["pending", "approved"]).update(status="cancelled")
     _notify(user.pk, Notification.Kind.MEMBER_BANNED if ban else Notification.Kind.MEMBER_REMOVED,
             "You were banned from an attendance group." if ban else "You were removed from an attendance group.", group=group)
@@ -327,6 +341,22 @@ def delete_message(*, actor, message_id):
         message.body, message.deleted_at, message.deleted_by = "", timezone.now(), actor
         message.save(update_fields=["body", "deleted_at", "deleted_by"])
     return message
+
+
+def chat_signature(*, actor, group_id):
+    """A cheap fingerprint of everything the live chat shows; changes whenever any of it does.
+
+    Members only. It covers new, edited and removed messages, notices, and the member list/owner, so the page
+    can poll this and fetch fresh content only when it differs.
+    """
+    group = _group(group_id)
+    _member(actor, group)
+    messages = group.messages.aggregate(n=Count("id"), last=Max("id"), edited=Max("edited_at"), deleted=Max("deleted_at"))
+    members = group.memberships.aggregate(n=Count("id"), last=Max("id"))
+    notices = group.notices.aggregate(last=Max("id"))
+    parts = (messages["n"], messages["last"], messages["edited"], messages["deleted"], members["n"], members["last"],
+             notices["last"], group.owner_id, group.capacity)
+    return "|".join("" if part is None else str(part) for part in parts)
 
 
 def open_photo(*, group_id, actor=None):

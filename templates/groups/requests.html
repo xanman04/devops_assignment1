@@ -1,7 +1,34 @@
-{% extends 'base.html' %}{% block content %}
-<h1>Requests for {{ group.name }}</h1><p><a href="{% url 'group-detail' group.pk %}">Back to group</a></p>
-{% for request in requests %}<div class="card"><p>{{ request.applicant.public_name }} · {{ request.get_status_display }}</p>
-{% if request.status == 'pending' %}<div class="actions"><form method="post" action="{% url 'request-approve' request.pk %}">{% csrf_token %}<button>Approve offer</button></form><form method="post" action="{% url 'request-reject' request.pk %}">{% csrf_token %}<button>Decline</button></form></div>{% endif %}</div>{% empty %}<p>No requests.</p>{% endfor %}
-{% include 'pagination.html' with page=requests %}
-<h2>Active bans</h2>{% for ban in bans %}<div class="card"><p>{{ ban.user.public_name }} · {{ ban.reason }}</p><form method="post" action="{% url 'ban-lift' ban.pk %}">{% csrf_token %}<button>Lift ban</button></form></div>{% empty %}<p>No active bans.</p>{% endfor %}
+{% extends 'base.html' %}{% load tz groups_extras %}
+{% block title %}Requests · {{ group.name }} · Bassline{% endblock %}
+{% block content %}
+<article class="grp grp--narrow" style="--event-accent:{{ accent }}">
+  <a class="detail-back" href="{% url 'group-detail' group.pk %}" aria-label="Back to group" title="Back to group" data-back-link><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg></a>
+  <div class="grp-page-head"><p class="event-kicker">GROUP REQUESTS</p><h1>Requests for {{ group.name }}</h1><p>Approving sends an offer and does not reserve a place. The applicant still has to accept it.</p></div>
+
+  <section class="grp-section" aria-labelledby="req-heading">
+    <div class="grp-section-head"><h2 id="req-heading">Join requests</h2></div>
+    {% if requests %}<ul class="grp-req-list">{% for request in requests %}
+      <li class="grp-req grp-req--static">
+        <span class="grp-avatar" style="--hue:{{ request.applicant_id|avatar_hue }}" aria-hidden="true">{{ request.applicant.public_name|initial }}</span>
+        <span class="grp-req-main"><strong>{{ request.applicant.public_name }}</strong><small>Requested {{ request.requested_at|date:'j M, H:i' }} UTC</small></span>
+        <span class="grp-status grp-status--{{ request.status }}">{{ request.get_status_display }}</span>
+        {% if request.status == 'pending' %}<span class="grp-req-actions">
+          <form method="post" action="{% url 'request-approve' request.pk %}">{% csrf_token %}<button class="btn btn-primary btn-sm">Approve offer</button></form>
+          <form method="post" action="{% url 'request-reject' request.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-sm">Decline</button></form></span>{% endif %}
+      </li>{% endfor %}</ul>
+    {% else %}<div class="grp-empty-panel grp-empty-panel--slim"><strong>No requests.</strong><p>New requests from people who want to join will show up here.</p></div>{% endif %}
+    {% include 'pagination.html' with page=requests %}
+  </section>
+
+  <section class="grp-section" aria-labelledby="bans-heading">
+    <div class="grp-section-head"><h2 id="bans-heading">Active bans</h2></div>
+    {% if bans %}<ul class="grp-req-list">{% for ban in bans %}
+      <li class="grp-req grp-req--static">
+        <span class="grp-avatar" style="--hue:{{ ban.user_id|avatar_hue }}" aria-hidden="true">{{ ban.user.public_name|initial }}</span>
+        <span class="grp-req-main"><strong>{{ ban.user.public_name }}</strong><small>{% if ban.reason %}{{ ban.reason }}{% else %}No reason given{% endif %}</small></span>
+        <span class="grp-req-actions"><form method="post" action="{% url 'ban-lift' ban.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-sm">Lift ban</button></form></span>
+      </li>{% endfor %}</ul>
+    {% else %}<div class="grp-empty-panel grp-empty-panel--slim"><strong>No active bans.</strong></div>{% endif %}
+  </section>
+</article>
 {% endblock %}

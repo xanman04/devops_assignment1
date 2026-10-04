@@ -93,6 +93,32 @@ class GroupBan(models.Model):
         constraints = [models.UniqueConstraint(fields=["group", "user"], condition=Q(lifted_at__isnull=True), name="ban_one_active")]
 
 
+class GroupNotice(models.Model):
+    """A short grey line in the chat, like "Sam has left the group", kept in order with the messages."""
+
+    class Kind(models.TextChoices):
+        JOINED = "joined", "Joined the group"
+        LEFT = "left", "Left the group"
+        PROMOTED = "promoted", "Promoted to owner"
+
+    group = models.ForeignKey(AttendanceGroup, on_delete=models.CASCADE, related_name="notices")
+    kind = models.CharField(max_length=8, choices=Kind)
+    subject = models.ForeignKey(USER, on_delete=models.PROTECT, related_name="group_notices")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+        indexes = [models.Index(fields=["group", "created_at"], name="notice_group_created_idx")]
+        constraints = [models.CheckConstraint(condition=Q(kind__in=["joined", "left", "promoted"]), name="notice_valid_kind")]
+
+    @property
+    def text(self):
+        name = self.subject.public_name
+        if self.kind == self.Kind.JOINED:
+            return f"{name} has joined the group"
+        return f"{name} has left the group" if self.kind == self.Kind.LEFT else f"{name} was promoted to owner"
+
+
 class Message(models.Model):
     group = models.ForeignKey(AttendanceGroup, on_delete=models.CASCADE, related_name="messages")
     author = models.ForeignKey(USER, on_delete=models.PROTECT, related_name="group_messages")
@@ -114,3 +140,25 @@ class Message(models.Model):
                       Q(deleted_at__isnull=False, deleted_by__isnull=False, body=""),
             name="message_live_or_tombstone",
         )]
+
+
+class GroupHistory(models.Model):
+    """One person's own record of group changes (created, joined, left, removed), kept after the group is gone."""
+
+    class Kind(models.TextChoices):
+        CREATED = "created", "Created a group"
+        JOINED = "joined", "Joined a group"
+        LEFT = "left", "Left a group"
+        REMOVED = "removed", "Removed from a group"
+
+    user = models.ForeignKey(USER, on_delete=models.CASCADE, related_name="group_history")
+    kind = models.CharField(max_length=8, choices=Kind)
+    group = models.ForeignKey(AttendanceGroup, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    group_name = models.CharField(max_length=120)
+    event_title = models.CharField(max_length=200)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [models.Index(fields=["user", "-created_at"], name="grouphistory_user_idx")]
+        constraints = [models.CheckConstraint(condition=Q(kind__in=["created", "joined", "left", "removed"]), name="grouphistory_valid_kind")]

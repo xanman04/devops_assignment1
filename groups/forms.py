@@ -4,9 +4,10 @@ from .models import AttendanceGroup
 
 class GroupForm(forms.ModelForm):
     # Decode/re-encode in the service rather than ModelForm.save().
-    photo = forms.FileField(required=False, help_text="JPG, PNG or WebP; up to 5 MiB and 20 megapixels. No animation.")
+    photo = forms.FileField(required=False, widget=forms.FileInput(attrs={
+        "accept": "image/jpeg,image/png,image/webp", "data-crop-aspect": "1.333"}), help_text="JPG, PNG or WebP; up to 5 MiB and 20 megapixels. No animation.")
     remove_photo = forms.BooleanField(required=False)
-    description = forms.CharField(max_length=2000, widget=forms.Textarea)
+    description = forms.CharField(max_length=2000, widget=forms.Textarea(attrs={"rows": 5}))
 
     class Meta:
         model = AttendanceGroup
@@ -14,11 +15,11 @@ class GroupForm(forms.ModelForm):
 
 
 class MessageForm(forms.Form):
-    body = forms.CharField(max_length=4000, widget=forms.Textarea(attrs={"rows": 4}), label="Message")
+    body = forms.CharField(max_length=4000, widget=forms.Textarea(attrs={"rows": 1, "placeholder": "Write a message…"}), label="Message")
 
 
 class JoinForm(forms.Form):
-    confirm_switch = forms.BooleanField(required=False, label="Leave my current group for this event and join this group")
+    confirm_switch = forms.BooleanField(required=False)   # set by the confirmation popup when the person already has a group for this event
 
 
 class BanForm(forms.Form):

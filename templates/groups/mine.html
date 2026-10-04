@@ -1,0 +1,59 @@
+{% extends 'base.html' %}{% load static tz groups_extras %}
+{% block title %}Groups · Bassline{% endblock %}
+{% block body_class %}browse-layout{% endblock %}
+{% block content %}
+<div class="browse-page browse-page--discover grp-mine">
+  <header class="discover-masthead"><h1>Groups</h1></header>
+
+  <div class="side-layout">
+  <div class="side-main">
+  <section class="grp-section side-first" aria-labelledby="my-groups-heading">
+    <div class="grp-section-head"><h2 id="my-groups-heading">My groups</h2></div>
+    {% if cards %}<div class="grp-card-grid">{% for card in cards %}
+      <a class="grp-card{% if card.past or card.cancelled %} is-muted{% endif %}" href="{% url 'group-detail' card.group.pk %}" style="--event-accent:{{ card.accent }}">
+        <span class="grp-card-art"{% if card.uploaded_poster_id %} style="background-image:url('{% url 'event-poster' card.uploaded_poster_id %}')"{% elif card.poster %} style="background-image:url('{% static card.poster %}')"{% endif %}>
+          {% if card.photo_id %}<img src="{% url 'group-photo' card.photo_id %}" alt="" loading="lazy">{% elif not card.uploaded_poster_id and not card.poster %}<span class="grp-card-letter" aria-hidden="true">{{ card.group.name|initial }}</span>{% endif %}
+          {% if card.owner %}<span class="grp-badge grp-card-role">Owner</span>{% endif %}
+        </span>
+        <span class="grp-card-body">
+          <strong>{{ card.group.name }}</strong>
+          <span class="grp-card-event">{{ card.event.title }}</span>
+          <span class="grp-card-when">{% timezone card.zone %}{{ card.starts_at|date:'D j M, H:i' }}{% endtimezone %}{% if card.cancelled %} · Cancelled{% elif card.past %} · Past{% endif %}</span>
+          <span class="grp-card-foot"><span class="grp-dots" aria-hidden="true">{% for on in card.dots %}<i{% if on %} class="on"{% endif %}></i>{% endfor %}</span><span>{% if card.full %}Full{% else %}{{ card.joined }} of {{ card.group.capacity }} joined{% endif %}</span><span class="go-mode go-mode--{{ card.group.joining_mode }}">{% if card.group.joining_mode == 'public' %}Open{% else %}Approval{% endif %}</span></span>
+        </span>
+      </a>{% endfor %}</div>
+    {% else %}<div class="grp-empty-panel"><strong>No group memberships yet.</strong><p>Open any event and use "Attending alone?" to join a group or start your own.</p><a class="btn btn-primary" href="{% url 'discover' %}">Find an event</a></div>{% endif %}
+  </section>
+  </div>
+  <aside class="side-aside">
+  <section class="side-panel rq" aria-labelledby="requests-heading">
+    <div class="grp-section-head"><h2 id="requests-heading">Requests</h2></div>
+    <input class="rq-radio" type="radio" name="rq-tab" id="rq-sent"{% if not received %} checked{% endif %}>
+    <input class="rq-radio" type="radio" name="rq-tab" id="rq-received"{% if received %} checked{% endif %}>
+    <div class="rq-tabs"><label for="rq-sent">Sent{% if requests %} <span class="rq-n">{{ requests|length }}</span>{% endif %}</label><label for="rq-received">Received{% if received %} <span class="note-count">{{ received|length }}</span>{% endif %}</label></div>
+    <div class="rq-panel rq-panel--sent">
+      {% if requests %}<div class="grp-req-list">{% for row in requests %}
+        <a class="grp-req grp-req--genre" href="{% url 'group-detail' row.group.pk %}" style="--event-accent:{{ row.accent }}">
+          <span class="grp-avatar" style="--hue:{{ row.group.pk|avatar_hue }}" aria-hidden="true">{{ row.group.name|initial }}</span>
+          <span class="grp-req-main"><strong>{{ row.group.name }}</strong><small>{{ row.event.title }} · {% timezone row.zone %}{{ row.event.starts_at|date:'D j M, H:i' }}{% endtimezone %}</small></span>
+          {% if row.status == 'approved' %}<span class="grp-req-cta">Open to accept →</span>{% endif %}
+          <span class="grp-status grp-status--{{ row.status }}">{{ row.item.get_status_display }}</span>
+        </a>{% endfor %}</div>
+      {% else %}<div class="grp-empty-panel grp-empty-panel--slim"><strong>No requests yet.</strong><p>Private groups ask the owner before you can join. Your requests appear here.</p></div>{% endif %}
+    </div>
+    <div class="rq-panel rq-panel--received">
+      {% if received %}<div class="grp-req-list">{% for row in received %}
+        <a class="grp-req grp-req--genre" href="{% url 'group-requests' row.group.pk %}" style="--event-accent:{{ row.accent }}">
+          <span class="grp-avatar" style="--hue:{{ row.item.applicant_id|avatar_hue }}" aria-hidden="true">{{ row.item.applicant.public_name|initial }}</span>
+          <span class="grp-req-main"><strong>{{ row.item.applicant.public_name }}</strong><small>{{ row.group.name }} · {{ row.event.title }}</small></span>
+          <span class="grp-req-cta">Review →</span>
+        </a>{% endfor %}</div>
+      {% else %}<div class="grp-empty-panel grp-empty-panel--slim"><strong>No requests to review.</strong></div>{% endif %}
+    </div>
+  </section>
+  </aside>
+  </div>
+
+  <p class="grp-more"><a href="{% url 'activity' %}">View all activity and account history →</a></p>
+</div>
+{% endblock %}

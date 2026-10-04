@@ -1,0 +1,11 @@
+{% load groups_extras %}<div class="grp-board-head"><h2 id="members-heading">Members</h2><span>{{ count }} of {{ group.capacity }}</span></div>
+<ul class="grp-member-list">{% for membership in members %}
+  <li class="grp-member"><span class="grp-avatar" style="--hue:{{ membership.user_id|avatar_hue }}" aria-hidden="true">{{ membership.user.public_name|initial }}</span>
+    <span class="grp-member-name"><strong>{{ membership.user.public_name }}</strong>{% if membership.user_id == group.owner_id %}<span class="grp-badge">Owner</span>{% endif %}{% if membership.user_id == user.pk %}<small>You</small>{% endif %}</span>
+    {% if manager and membership.user_id != group.owner_id %}<details class="grp-manage"><summary aria-label="Manage {{ membership.user.public_name }}">⋯</summary>
+      <div class="grp-manage-menu">
+        <form method="post" action="{% url 'member-remove' group.pk membership.user_id %}">{% csrf_token %}<button class="btn btn-ghost btn-sm">Remove from group</button></form>
+        <form method="post" action="{% url 'member-ban' group.pk membership.user_id %}">{% csrf_token %}<label class="sr-only" for="ban-{{ membership.pk }}">Ban reason (optional)</label><input id="ban-{{ membership.pk }}" name="reason" maxlength="2000" placeholder="Ban reason (optional)"><button class="btn btn-danger btn-sm">Ban</button></form>
+      </div></details>{% endif %}
+  </li>{% endfor %}
+</ul>

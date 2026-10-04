@@ -1,36 +1,140 @@
-{% extends 'base.html' %}
+{% extends 'base.html' %}{% load tz groups_extras %}
 {% block title %}{{ group.name }} · Bassline{% endblock %}
 {% block content %}
-<h1>{{ group.name }}</h1>
-{% if event_access %}<p><a href="{% url 'event-detail' group.event_id %}">{{ group.event.title }}</a></p>{% else %}<p class="notice">Event details are currently unavailable. Existing members can still coordinate here.</p>{% endif %}
-{% if group.event.cancelled_at %}<p class="notice">The event is cancelled.</p>{% endif %}
-{% if group.photo %}<img class="group-photo large" src="{% url 'group-photo' group.pk %}" alt="Group photo">{% else %}<div class="photo-placeholder" aria-hidden="true">{{ group.name|first }}</div>{% endif %}
-{{ group.description|linebreaks }}<p>{{ count }}/{{ group.capacity }} members · {{ group.get_joining_mode_display }} · Owned by {{ group.owner.public_name }}</p>
-{% if manager %}<p><a href="{% url 'group-edit' group.pk %}">Edit group</a> · <a href="{% url 'group-requests' group.pk %}">Requests and bans</a></p>{% endif %}
-{% if member %}<form method="post" action="{% url 'group-leave' group.pk %}">{% csrf_token %}<button>Leave group</button><p class="muted">Ownership transfers to the earliest remaining member. An empty group is deleted.</p></form>
-{% elif banned %}<p>You are banned from this group.</p>
-{% elif user.is_authenticated %}
-{% if joining_open %}
-{% if full %}<p>This group is full.</p>{% else %}
-{% if offer %}<form method="post" action="{% url 'request-accept' offer.pk %}">{% csrf_token %}<p>Your request was approved. Places are not reserved.</p>{{ join_form.as_p }}<button>Accept offer</button></form>
-{% elif group.joining_mode == 'public' %}<form method="post" action="{% url 'group-join' group.pk %}">{% csrf_token %}{{ join_form.as_p }}<button>Join group</button></form>
-{% elif pending %}<p>Your join request is pending.</p>
-{% else %}<form method="post" action="{% url 'group-request' group.pk %}">{% csrf_token %}<button>Request to join</button></form>{% endif %}
-{% endif %}
-{% else %}<p>New participation is closed.</p>{% endif %}
-{% if offer %}<form method="post" action="{% url 'request-cancel' offer.pk %}">{% csrf_token %}<button>Cancel offer</button></form>
-{% elif pending %}<form method="post" action="{% url 'request-cancel' pending.pk %}">{% csrf_token %}<button>Cancel request</button></form>{% endif %}
-{% else %}<p><a href="{% url 'login' %}?next={% url 'group-detail' group.pk %}">Log in to join</a></p>{% endif %}
-{% if member or manager %}<h2>Members</h2>{% for membership in members %}<div class="member-row"><span>{{ membership.user.public_name }}{% if membership.user_id == group.owner_id %} (owner){% endif %}</span>
-{% if manager and membership.user_id != group.owner_id %}<div class="actions">
-<form method="post" action="{% url 'member-remove' group.pk membership.user_id %}">{% csrf_token %}<button>Remove</button></form>
-<form method="post" action="{% url 'member-ban' group.pk membership.user_id %}">{% csrf_token %}<label>Ban reason (optional) <input name="reason" maxlength="2000"></label><button>Ban</button></form></div>{% endif %}</div>{% endfor %}{% endif %}
-<h2>Message board</h2>
-{% if member %}<p class="muted">Coordinate plans or arrange an external group chat. Refresh to see new messages.</p>
-{% for message in board %}<article class="card"><p><strong>{{ message.author.public_name }}</strong> · {{ message.created_at|date:'j M Y H:i' }} UTC{% if message.edited_at %} · edited{% endif %}</p>
-{% if message.deleted_at %}<p class="muted">Message removed.</p>{% else %}{{ message.body|linebreaks }}
-{% if message.author_id == user.pk %}<a href="{% url 'message-edit' message.pk %}">Edit</a><form method="post" class="inline" action="{% url 'message-delete' message.pk %}">{% csrf_token %}<button>Delete</button></form>{% endif %}{% endif %}</article>{% empty %}<p>No messages yet.</p>{% endfor %}
-{% include 'pagination.html' with page=board %}
-<form method="post" action="{% url 'message-new' group.pk %}">{% csrf_token %}{{ message_form.as_p }}<button>Post message</button></form>
-{% else %}<p>Only current members can read or post messages.</p>{% endif %}
+<article class="grp" style="--event-accent:{{ accent }}">
+  <a class="detail-back" href="{% if event_access %}{% url 'event-detail' group.event_id %}{% else %}{% url 'my-groups' %}{% endif %}" aria-label="Go back" title="Go back" data-back-link data-back-avoid="/(requests|edit|new)/$"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg></a>
+
+  <header class="grp-hero">
+    <div class="grp-photo">{% if group.photo %}<img src="{% url 'group-photo' group.pk %}" alt="Group photo">{% else %}<span class="grp-photo-letter" aria-hidden="true">{{ group.name|initial }}</span>{% endif %}</div>
+    <div class="grp-hero-copy">
+      <p class="event-kicker">ATTENDANCE GROUP</p>
+      <h1>{{ group.name }}</h1>
+      {% if event_access %}<a class="grp-event" href="{% url 'event-detail' group.event_id %}"><strong>{{ group.event.title }}</strong><span>{% timezone venue_zone %}{{ group.event.starts_at|date:'D j M, H:i' }}{% endtimezone %} · {{ group.event.venue.name }}</span></a>{% endif %}
+      <div class="grp-desc">{{ group.description|linebreaksbr }}</div>
+      <div class="grp-facts">
+        <div><span class="grp-fact-label">MEMBERS</span><strong><span data-member-total>{{ count }}/{{ group.capacity }}</span> members</strong><span class="grp-dots" aria-hidden="true">{% for on in dots %}<i{% if on %} class="on"{% endif %}></i>{% endfor %}</span></div>
+        <div><span class="grp-fact-label">JOINING</span><strong>{{ group.get_joining_mode_display }}</strong></div>
+        <div><span class="grp-fact-label">OWNER</span><strong>{{ group.owner.public_name }}</strong></div>
+      </div>
+
+      <div class="grp-actions">
+        {% if member %}
+        <form method="post" action="{% url 'group-leave' group.pk %}">{% csrf_token %}<button class="btn btn-ghost">Leave group</button></form>
+        {% elif banned %}<p class="grp-note grp-note--bad">You are banned from this group.</p>
+        {% elif user.is_authenticated %}
+          {% if joining_open %}
+            {% if full %}<p class="grp-note">This group is full.</p>
+            {% elif offer %}<form method="post" class="grp-join" action="{% url 'request-accept' offer.pk %}"{% if switch_from %} data-switch-from="{{ switch_from.name }}"{% endif %}>{% csrf_token %}<p class="grp-note grp-note--good">Your request was approved. Places are not reserved.</p><button class="btn btn-primary">Accept offer</button><input type="hidden" name="confirm_switch" value="" data-switch-flag></form>
+            {% elif group.joining_mode == 'public' %}<form method="post" class="grp-join" action="{% url 'group-join' group.pk %}"{% if switch_from %} data-switch-from="{{ switch_from.name }}"{% endif %}>{% csrf_token %}<button class="btn btn-primary">Join group</button><input type="hidden" name="confirm_switch" value="" data-switch-flag></form>
+            {% elif pending %}<p class="grp-note">Your join request is pending.</p>
+            {% else %}<form method="post" action="{% url 'group-request' group.pk %}">{% csrf_token %}<button class="btn btn-primary">Request to join</button></form>{% endif %}
+          {% else %}<p class="grp-note">New participation is closed.</p>{% endif %}
+          {% if offer %}<form method="post" action="{% url 'request-cancel' offer.pk %}">{% csrf_token %}<button class="btn btn-ghost">Cancel offer</button></form>
+          {% elif pending %}<form method="post" action="{% url 'request-cancel' pending.pk %}">{% csrf_token %}<button class="btn btn-ghost">Cancel request</button></form>{% endif %}
+        {% else %}<a class="btn btn-primary" href="{% url 'login' %}?next={% url 'group-detail' group.pk %}">Log in to join</a>{% endif %}
+        {% if manager %}<a class="btn btn-ghost" href="{% url 'group-edit' group.pk %}">Edit group</a><a class="btn btn-ghost" href="{% url 'group-requests' group.pk %}">Requests and bans</a>{% endif %}
+      </div>
+    </div>
+  </header>
+
+  {% if group.event.cancelled_at %}<p class="grp-banner">The event is cancelled. This group stays open for members to coordinate.</p>{% endif %}
+  {% if not event_access %}<p class="grp-banner">Event details are currently unavailable. Existing members can still coordinate here.</p>{% endif %}
+
+  <div class="grp-body{% if member or manager %} has-side{% endif %}">
+    <section class="grp-board" aria-labelledby="board-heading">
+      <div class="grp-board-head"><h2 id="board-heading">Chat</h2>{% if member %}<span>Coordinate plans or arrange an external group chat.</span>{% endif %}</div>
+      {% if member %}
+      <div class="grp-feed">
+        <div class="grp-messages" id="grp-messages" data-feed="{% url 'group-chat' group.pk %}" data-sig="{{ chat_sig }}" data-live="{% if live %}1{% else %}0{% endif %}" data-capacity="{{ group.capacity }}" aria-live="polite">{% include 'groups/_chat.html' %}</div>
+        <button type="button" class="grp-new" id="grp-new" hidden>New messages ↓</button>
+      </div>
+      {% include 'pagination.html' with page=board %}
+      <form class="grp-composer" id="grp-composer" method="post" action="{% url 'message-new' group.pk %}">{% csrf_token %}
+        <label class="sr-only" for="{{ message_form.body.id_for_label }}">Message</label>
+        <div class="grp-composer-row">{{ message_form.body }}<button class="btn btn-primary">Send</button></div>
+        <div class="grp-composer-bar"><span class="grp-count"><span data-count>0</span>/4000 characters</span><span class="grp-send-status" role="status"></span></div>
+      </form>
+      {% else %}
+      <div class="grp-locked"><svg class="live-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><strong>Members only</strong><p>Only current members can read or post messages.</p></div>
+      {% endif %}
+    </section>
+
+    {% if member or manager %}
+    <aside class="grp-members" id="grp-members" aria-labelledby="members-heading">{% include 'groups/_members.html' %}</aside>
+    {% endif %}
+  </div>
+</article>
 {% endblock %}
+{% block scripts %}<script>(()=>{
+  // Only one member menu open at a time; clicking elsewhere or pressing Escape closes them.
+  document.addEventListener('click',event=>{
+    const own=event.target.closest('.grp-manage');
+    document.querySelectorAll('.grp-manage[open]').forEach(menu=>{if(menu!==own)menu.open=false;});
+  });
+  document.addEventListener('keydown',event=>{if(event.key==='Escape')document.querySelectorAll('.grp-manage[open]').forEach(menu=>{menu.open=false;});});
+
+  const box=document.getElementById('grp-messages');
+  const form=document.getElementById('grp-composer');
+  if(!box||!form)return;
+  const area=form.querySelector('textarea'),counter=form.querySelector('[data-count]'),status=form.querySelector('.grp-send-status');
+  const send=form.querySelector('button'),pill=document.getElementById('grp-new'),members=document.getElementById('grp-members');
+  const atBottom=()=>box.scrollHeight-box.scrollTop-box.clientHeight<48;
+  const toBottom=()=>{box.scrollTop=box.scrollHeight;pill.hidden=true;};
+  toBottom();
+  box.addEventListener('scroll',()=>{if(atBottom())pill.hidden=true;});
+  pill.addEventListener('click',toBottom);
+
+  // Character counter and a text box that grows a little with what you type.
+  const fit=()=>{area.style.height='auto';area.style.height=Math.min(area.scrollHeight,150)+'px';};
+  const count=()=>{const length=area.value.length;counter.textContent=length;counter.parentElement.classList.toggle('is-near',length>=3800);};
+  area.addEventListener('input',()=>{count();fit();});
+  count();
+
+  // Live chat: ask for the chat's fingerprint every few seconds and fetch fresh content only when it changed.
+  const feed=box.dataset.feed,live=box.dataset.live==='1';
+  let signature=box.dataset.sig,busy=false,timer=null;
+  const total=members=>{
+    document.querySelectorAll('[data-member-total]').forEach(el=>{el.textContent=`${members}/${box.dataset.capacity}`;});
+    document.querySelectorAll('.grp-facts .grp-dots').forEach(dots=>{
+      dots.replaceChildren(...Array.from({length:Math.min(Number(box.dataset.capacity),12)},(_,index)=>{
+        const dot=document.createElement('i');if(index<members)dot.className='on';return dot;}));
+    });
+  };
+  async function poll(force=false){
+    if(!live)return;
+    while(busy)await new Promise(resolve=>setTimeout(resolve,100));
+    if(document.hidden&&!force)return;
+    busy=true;
+    try{
+      const response=await fetch(`${feed}?sig=${encodeURIComponent(signature)}`,{credentials:'same-origin',headers:{Accept:'application/json'}});
+      if(response.status===403||response.status===404){clearInterval(timer);return;}
+      if(!response.ok)return;
+      const data=await response.json();
+      if(!data.changed)return;
+      // Do not close a member menu the owner is using; try again on the next tick.
+      if(members&&members.querySelector('.grp-manage[open]')&&!force)return;
+      const stick=force||atBottom();
+      box.innerHTML=data.chat;
+      if(members)members.innerHTML=data.members;
+      signature=data.sig;total(data.count);
+      if(stick)toBottom();else pill.hidden=false;
+    }catch{}finally{busy=false;}
+  }
+  timer=setInterval(poll,3000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll();});
+
+  // Send in the background so the page, scroll position and your place in the chat stay put.
+  form.addEventListener('submit',async event=>{
+    event.preventDefault();
+    if(!area.value.trim())return;
+    if(!live){form.submit();return;}
+    send.disabled=true;status.textContent='';
+    try{
+      const response=await fetch(form.action,{method:'POST',body:new FormData(form),credentials:'same-origin'});
+      if(!response.ok)throw new Error('send failed');
+      area.value='';count();fit();
+      await poll(true);
+    }catch{status.textContent="Couldn't send. Check your connection and try again.";}
+    finally{send.disabled=false;area.focus();}
+  });
+})();</script>{% endblock %}

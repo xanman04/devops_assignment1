@@ -1,8 +1,10 @@
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, JsonResponse
+from django.template.loader import render_to_string
 from django.shortcuts import redirect, render
+from zoneinfo import ZoneInfo
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from config.web import endpoint, form_page
@@ -20,6 +22,21 @@ def require_manager(actor, group):
         raise PermissionDenied("Only the owner or an authorized admin may manage this group.")
 
 
+def _chat_items(group, board):
+    """Messages of one page, in order with the grey notices ("X has left the group") that fall within it."""
+    messages = list(board.object_list)
+    notices = group.notices.select_related("subject")
+    if messages:
+        if board.has_previous():
+            notices = notices.filter(created_at__gte=messages[0].created_at)
+        if board.has_next():
+            notices = notices.filter(created_at__lte=messages[-1].created_at)
+    items = [{"kind": "message", "at": message.created_at, "pk": message.pk, "message": message} for message in messages]
+    items += [{"kind": "notice", "at": notice.created_at, "pk": notice.pk, "notice": notice} for notice in notices]
+    items.sort(key=lambda item: (item["at"], item["kind"] != "message", item["pk"]))
+    return items
+
+
 @endpoint
 @require_GET
 def group_detail(request, group_id):
@@ -32,7 +49,18 @@ def group_detail(request, group_id):
     public = discovery.public_events().filter(pk=group.event_id).exists()
     event_access = public or (request.user.is_authenticated and (request.user.pk == group.event.creator_id or discovery.can_manage(request.user, "discovery.change_event")))
     count = group.memberships.count()
+    categories = list(group.event.categories.all())
+    current = (models.Membership.objects.select_related("group").filter(user=request.user, group__event_id=group.event_id)
+               .exclude(group_id=group.pk).first() if request.user.is_authenticated else None)
     return render(request, "groups/detail.html", {
+        "switch_from": current.group if current else None,
+        "timeline": _chat_items(group, board) if board is not None else [],
+        "chat_sig": services.chat_signature(actor=request.user, group_id=group_id) if member else "",
+        "live": board is not None and not board.has_next(),
+        "accent": categories[0].color if categories else "#8d95a6",
+        "venue_zone": ZoneInfo(group.event.venue.timezone),
+        "dots": [index < count for index in range(min(group.capacity, 12))],
+        "spots_left": max(group.capacity - count, 0),
         "group": group, "member": member, "manager": manager(request.user, group),
         "board": board, "message_form": MessageForm(), "join_form": JoinForm(), "count": count,
         "event_access": event_access,
@@ -43,6 +71,28 @@ def group_detail(request, group_id):
         "pending": group.join_requests.filter(applicant=request.user, status="pending").first() if request.user.is_authenticated else None,
         "banned": group.bans.filter(user=request.user, lifted_at__isnull=True).exists() if request.user.is_authenticated else False,
     })
+
+
+@endpoint
+@login_required
+@require_GET
+def chat_updates(request, group_id):
+    """Live chat: the page polls this with the fingerprint it already has and gets HTML only when something changed."""
+    group = services.get_group(group_id=group_id, actor=request.user)
+    signature = services.chat_signature(actor=request.user, group_id=group_id)
+    if request.GET.get("sig") == signature:
+        response = JsonResponse({"changed": False, "sig": signature})
+    else:
+        paginator = Paginator(services.messages(actor=request.user, group_id=group_id), 30)
+        board = paginator.get_page(paginator.num_pages)
+        context = {"group": group, "member": True, "manager": manager(request.user, group), "timeline": _chat_items(group, board),
+                   "venue_zone": ZoneInfo(group.event.venue.timezone), "count": group.memberships.count(),
+                   "members": group.memberships.select_related("user").order_by("joined_at", "id")}
+        response = JsonResponse({"changed": True, "sig": signature, "count": context["count"],
+                                 "chat": render_to_string("groups/_chat.html", context, request),
+                                 "members": render_to_string("groups/_members.html", context, request)})
+    response["Cache-Control"] = "private, no-store"
+    return response
 
 
 @endpoint
@@ -92,8 +142,9 @@ def group_action(request, group_id, action):
 def requests_list(request, group_id):
     group = services.get_group(group_id=group_id, actor=request.user)
     require_manager(request.user, group)
+    categories = list(group.event.categories.all())
     return render(request, "groups/requests.html", {
-        "group": group,
+        "group": group, "accent": categories[0].color if categories else "#8d95a6",
         "requests": Paginator(group.join_requests.select_related("applicant").order_by("-requested_at", "-id"), 30).get_page(request.GET.get("page")),
         "bans": group.bans.filter(lifted_at__isnull=True).select_related("user"),
     })

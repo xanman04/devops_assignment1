@@ -1,6 +1,6 @@
 from django.contrib import admin
 from config.admin import SchemaReadOnlyAdmin
-from .models import AttendanceGroup, Membership, JoinRequest, GroupBan, Message
+from .models import AttendanceGroup, GroupNotice, Membership, JoinRequest, GroupBan, Message
 from . import services
 from django.db import transaction
 
@@ -41,5 +41,5 @@ class MessageAdmin(SchemaReadOnlyAdmin):
         self.message_user(request, "Message content removed; deletion markers retained.")
 
 
-for model in (Membership, JoinRequest, GroupBan):
+for model in (Membership, JoinRequest, GroupBan, GroupNotice):
     admin.site.register(model, SchemaReadOnlyAdmin)
