@@ -44,7 +44,7 @@
     <div class="rq-panel rq-panel--received">
       {% if received %}<div class="grp-req-list">{% for row in received %}
         <a class="grp-req grp-req--genre" href="{% url 'group-requests' row.group.pk %}" style="--event-accent:{{ row.accent }}">
-          <span class="grp-avatar" style="--hue:{{ row.item.applicant_id|avatar_hue }}" aria-hidden="true">{% if row.item.applicant.avatar %}<img src="{% url 'avatar' row.item.applicant_id %}" alt="" loading="lazy">{% else %}{{ row.item.applicant.public_name|initial }}{% endif %}</span>
+          {% user_avatar row.item.applicant %}
           <span class="grp-req-main"><strong>{{ row.item.applicant.public_name }}</strong><small>{{ row.group.name }} · {{ row.event.title }}</small></span>
           <span class="grp-req-cta">Review →</span>
         </a>{% endfor %}</div>

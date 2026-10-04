@@ -187,3 +187,24 @@ class JoinConfirmAndHistoryTests(TestCase):
             self.assertContains(page, text)
         self.client.force_login(self.owner)
         self.assertContains(self.client.get("/my-activity/"), "Created a group")
+
+
+class AvatarEverywhereTests(TestCase):
+    def test_a_uploaded_picture_shows_wherever_a_person_is_listed(self):
+        User = get_user_model()
+        owner = User.objects.create_user("avo", password="x")
+        member = User.objects.create_user("avm", password="x", display_name="Pic Person")
+        member.avatar = "avatars/example.jpg"
+        member.save(update_fields=["avatar"])
+        category = dm.GenreCategory.objects.create(name="House", color="#0066ff", description="x", bpm_min=1, bpm_max=2)
+        venue = dm.Venue.objects.create(name="C", latitude=1, longitude=1, timezone="Europe/Madrid", submitted_by=owner, review_status="approved")
+        start = timezone.now() + timedelta(days=2)
+        event = ds.save_event(actor=owner, data={"venue": venue, "title": "N", "description": "x", "starts_at": start, "ends_at": start + timedelta(hours=4)}, category_ids=[category.pk])
+        group = gs.save_group(actor=owner, data={"event": event, "name": "G", "description": "x", "capacity": 4, "joining_mode": "public"})
+        gs.join_group(actor=member, group_id=group.pk)
+        gs.post_message(actor=member, group_id=group.pk, body="hello")
+        self.client.force_login(owner)
+        mark = f'<img src="/accounts/avatar/{member.pk}/"'
+        page = self.client.get(f"/groups/{group.pk}/")
+        self.assertContains(page, mark, count=2)                      # in the members list and next to the message
+        self.assertIn(mark, self.client.get(f"/groups/{group.pk}/chat/").json()["members"])   # the live update carries it too

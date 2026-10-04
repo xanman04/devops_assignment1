@@ -6,7 +6,7 @@
   <header class="discover-masthead"><h1>Account activity</h1></header>
 
   <div class="act-account">
-    <span class="grp-avatar" style="--hue:{{ user.pk|avatar_hue }}" aria-hidden="true">{{ user.public_name|initial }}</span>
+    {% user_avatar user %}
     <div><strong>{{ user.public_name }}</strong><small>@{{ user.username }}</small></div>
     <div class="act-account-actions"><a class="btn btn-ghost btn-sm" href="{% url 'account-settings' %}">Account settings</a><a class="btn btn-ghost btn-sm" href="{% url 'event-new' %}">List an event</a><a class="btn btn-ghost btn-sm" href="{% url 'venue-new' %}">Propose a venue</a></div>
   </div>

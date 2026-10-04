@@ -14,7 +14,7 @@
       <div class="grp-facts">
         <div><span class="grp-fact-label">MEMBERS</span><strong><span data-member-total>{{ count }}/{{ group.capacity }}</span> members</strong><span class="grp-dots" aria-hidden="true">{% for on in dots %}<i{% if on %} class="on"{% endif %}></i>{% endfor %}</span></div>
         <div><span class="grp-fact-label">JOINING</span><strong>{{ group.get_joining_mode_display }}</strong></div>
-        <div><span class="grp-fact-label">OWNER</span><strong>{{ group.owner.public_name }}</strong></div>
+        <div><span class="grp-fact-label">OWNER</span><span class="grp-fact-person">{% user_avatar group.owner %}<strong>{{ group.owner.public_name }}</strong></span></div>
       </div>
 
       <div class="grp-actions">

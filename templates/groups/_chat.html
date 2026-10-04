@@ -1,6 +1,6 @@
 {% load tz groups_extras %}{% for item in timeline %}{% if item.kind == 'notice' %}<div class="grp-notice"><span>{{ item.notice.text }}</span></div>{% else %}{% with message=item.message %}
 <div class="grp-msg{% if message.author_id == user.pk %} grp-msg--mine{% endif %}{% if message.deleted_at %} grp-msg--removed{% endif %}">
-  <span class="grp-avatar" style="--hue:{{ message.author_id|avatar_hue }}" aria-hidden="true">{{ message.author.public_name|initial }}</span>
+  {% user_avatar message.author %}
   <div class="grp-msg-main">
     <div class="grp-msg-meta"><strong>{{ message.author.public_name }}</strong>{% if message.author_id == group.owner_id %}<span class="grp-badge">Owner</span>{% endif %}<time datetime="{{ message.created_at|date:'c' }}">{% timezone venue_zone %}{{ message.created_at|date:'j M, H:i' }}{% endtimezone %}</time>{% if message.edited_at %}<span class="grp-edited">edited</span>{% endif %}</div>
     {% if message.deleted_at %}<div class="grp-bubble grp-bubble--removed">Message removed.</div>

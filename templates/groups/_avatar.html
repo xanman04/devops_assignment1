@@ -1,0 +1,1 @@
+{% load groups_extras %}<span class="grp-avatar" style="--hue:{{ person.pk|avatar_hue }}" aria-hidden="true">{% if person.avatar %}<img src="{% url 'avatar' person.pk %}" alt="" loading="lazy">{% else %}{{ person.public_name|initial }}{% endif %}</span>

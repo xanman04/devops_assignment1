@@ -254,3 +254,5 @@ October 4 Discover time range: `search_events(unbounded=True)` returns every pub
 October 4 back arrow: `browse.js` records the last two non-form pages in sessionStorage (`bassline-before` and `bassline-here`). A page's back arrow normally calls history.back(); when the previous page was a form (edit, new, report, account settings, log in, register) it instead goes to the recorded page before the form, so saving a form does not trap Back on that form.
 
 October 4 pictures: no user-facing form can remove a picture; a profile picture, group photo or event poster stays until a new one is uploaded. The group edit form offers Adjust on the saved photo. The Django admin keeps poster removal for administrators.
+
+October 4 avatars: `{% user_avatar person %}` (groups/_avatar.html) is the one way to draw a person's round picture, falling back to their coloured initial; use it for any list of people.
