@@ -1245,3 +1245,23 @@ body.account-locked { overflow:hidden; }
 .badge-big--event .badge-art::after { background:linear-gradient(180deg,#0000 55%,#07080bcc 100%); }
 .badge-big--event .badge-art { filter:contrast(1.32) brightness(1.14) saturate(1.1); }
 .badge-big--event .badge-art::after { background:linear-gradient(180deg,#0000 62%,#07080b99 100%); }
+
+/* ---------- Metal borders for achievement cards (tile and opened card) ---------- */
+.badge-face { --face:linear-gradient(#14161b,#14161b); }
+.badge-back { --face:linear-gradient(160deg,color-mix(in srgb,var(--badge) 30%,#1c1e25),#0e1014 80%); }
+.badge-card.tier-bronze { --metal:linear-gradient(135deg,#5c300f,#e0a066 16%,#8a4f1f 34%,#f3be8a 50%,#7a4416 68%,#dba064 84%,#5c300f); }
+.badge-card.tier-silver { --metal:linear-gradient(135deg,#59616c,#f1f4f9 16%,#9aa3b0 34%,#ffffff 50%,#8a93a0 68%,#e3e8f0 84%,#59616c); }
+.badge-card.tier-gold { --metal:linear-gradient(135deg,#7a5200,#ffe27a 16%,#c28a00 34%,#fff1a8 50%,#a87400 68%,#ffd24d 84%,#7a5200); }
+.badge-card.tier-platinum { --metal:linear-gradient(135deg,#6f7f9c,#f7fbff 14%,#b7c7e6 30%,#ffffff 46%,#c9b8ee 62%,#eaf3ff 80%,#6f7f9c); }
+.badge-card.tier-diamond { --metal:conic-gradient(from 30deg,#6ff3ff,#c9a6ff,#ff9be0,#9bffd6,#6ff3ff,#c9a6ff,#ff9be0,#9bffd6,#6ff3ff); }
+.badge-big.tier-bronze .badge-face { --metal:linear-gradient(135deg,#5c300f,#e0a066 16%,#8a4f1f 34%,#f3be8a 50%,#7a4416 68%,#dba064 84%,#5c300f); }
+.badge-big.tier-silver .badge-face { --metal:linear-gradient(135deg,#59616c,#f1f4f9 16%,#9aa3b0 34%,#ffffff 50%,#8a93a0 68%,#e3e8f0 84%,#59616c); }
+.badge-big.tier-gold .badge-face { --metal:linear-gradient(135deg,#7a5200,#ffe27a 16%,#c28a00 34%,#fff1a8 50%,#a87400 68%,#ffd24d 84%,#7a5200); }
+.badge-big.tier-platinum .badge-face { --metal:linear-gradient(135deg,#6f7f9c,#f7fbff 14%,#b7c7e6 30%,#ffffff 46%,#c9b8ee 62%,#eaf3ff 80%,#6f7f9c); }
+.badge-big.tier-diamond .badge-face { --metal:conic-gradient(from 30deg,#6ff3ff,#c9a6ff,#ff9be0,#9bffd6,#6ff3ff,#c9a6ff,#ff9be0,#9bffd6,#6ff3ff); }
+.badge-card[class*="tier-"] { border:4px solid transparent; background:linear-gradient(#1d1f24,#1d1f24) padding-box,repeating-linear-gradient(90deg,#ffffff1c 0 1px,#0000 1px 3px) border-box,var(--metal) border-box; }
+.badge-big[class*="tier-"] .badge-face { border:6px solid transparent; background:var(--face) padding-box,repeating-linear-gradient(90deg,#ffffff1c 0 1px,#0000 1px 4px) border-box,var(--metal) border-box; }
+.badge-card[class*="tier-"] .badge-art { border-radius:calc(0.75rem - 4px); }
+.badge-big[class*="tier-"] .badge-art { border-radius:calc(1.25rem - 6px); }
+.badge-card[class*="tier-"] .badge-glyph { width:2.5rem; height:2.5rem; stroke-width:1.5; }
+.badge-big[class*="tier-"] .badge-glyph { width:7rem; height:7rem; stroke-width:1.2; }

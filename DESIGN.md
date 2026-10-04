@@ -238,3 +238,5 @@ October 4 seeding and profile picture: `seed_attendance` writes `EventCard` rows
 October 4 seed scope: `seed_attendance` now covers every non-superuser account (not just demo_ names): it replaces their EventCard rows with a repeatable set and fills a blank bio and Instagram and Spotify links; anything already written is left alone.
 
 October 4 event form: editing your own event shows Save and a red Cancel event button (a formaction to the cancel route, with a confirm); the Cancelled checkbox and Remove current poster option exist only on the admin form. Event cards in the inspector fade the foil over their lower part and brighten the artwork so printed lineups stay readable.
+
+October 4 tier look: each achievement tier has its own symbol (`icon-tier-*`) and a metal border built from a padding-box fill over a border-box gradient plus a fine brushed-lines layer; the tile and the opened card share the same metals.

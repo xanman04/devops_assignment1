@@ -64,7 +64,7 @@
     </figure>{% endif %}
     <ul class="badge-board" aria-label="{{ collection_name }}: event cards and achievements">
       {% for badge in badges %}<li class="badge-card badge-card--{{ badge.kind }}{% if badge.tier %} tier-{{ badge.tier|lower }}{% endif %}" data-tier="{{ badge.tier }}" style="--badge:{{ badge.color }};--f1:{{ badge.palette.0 }};--f2:{{ badge.palette.1 }};--f3:{{ badge.palette.2 }}" data-genre="{{ badge.genre }}" tabindex="0" role="button" aria-haspopup="dialog">
-        <span class="badge-art"{% if badge.poster_id %} style="background-image:url('{% url 'event-poster' badge.poster_id %}')"{% elif badge.poster %} style="background-image:url('{% static badge.poster %}')"{% endif %}>{% if badge.kind == 'achievement' %}<svg class="live-icon badge-glyph" aria-hidden="true"><use href="#icon-gem"/></svg>{% endif %}</span>
+        <span class="badge-art"{% if badge.poster_id %} style="background-image:url('{% url 'event-poster' badge.poster_id %}')"{% elif badge.poster %} style="background-image:url('{% static badge.poster %}')"{% endif %}>{% if badge.kind == 'achievement' %}<svg class="live-icon badge-glyph" aria-hidden="true"><use href="#icon-tier-{{ badge.tier|lower }}"/></svg>{% endif %}</span>
         <span class="badge-foil" aria-hidden="true"></span>
         <span class="badge-text"><strong>{{ badge.title }}</strong><small>{{ badge.detail }}</small></span>{% if badge.proof %}<div class="badge-proof"><b>Earned from {{ badge.proof|length }} events</b><ul>{% for p in badge.proof %}<li>{{ p.title }} <small>{{ p.detail }}</small></li>{% endfor %}</ul></div>{% endif %}
         {% if badge.tier %}<span class="badge-tier">{{ badge.tier }}</span>{% endif %}
