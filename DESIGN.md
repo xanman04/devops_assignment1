@@ -244,3 +244,5 @@ October 4 tier look: each achievement tier has its own symbol (`icon-tier-*`) an
 October 4 DJ picker: the Artists / DJs field on the event form is a search box over the DJ list; clicking a name adds it, and each choice shows as a chip with a remove button. The original multiple select stays hidden in the form and is updated on every click, so the server receives the same field as before, and without JavaScript the plain list still works.
 
 October 4 DJ genre filter: DJ options on the event form carry a `data-genres` list (from the DJ's genre categories); the picker shows All genres plus one toggle per genre present, and shows only DJs matching both the chosen genre and the search text.
+
+October 4 tag filtering: on the event form, `tag-filter.js` hides and disables tag options whose category is not selected (every tag shows while no category is chosen) and clears any hidden tag that was selected; the tags use the same search and chips picker as the DJs, which skips hidden options. The server still checks that tags belong to the chosen categories.

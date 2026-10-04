@@ -8,9 +8,21 @@ from django.db.models import Q
 from . import models, services
 
 
+class TagSelect(forms.SelectMultiple):
+    """The tag list, with each option carrying its category so the page can show only the chosen categories' tags."""
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex=subindex, attrs=attrs)
+        instance = getattr(value, "instance", None)
+        if instance is not None:
+            option["attrs"]["data-category"] = str(instance.category_id)
+        return option
+
+
 class ClassificationForm(forms.ModelForm):
     categories = forms.ModelMultipleChoiceField(queryset=models.GenreCategory.objects.all())
-    tags = forms.ModelMultipleChoiceField(queryset=models.GenreTag.objects.select_related("category"), required=False)
+    tags = forms.ModelMultipleChoiceField(queryset=models.GenreTag.objects.select_related("category"), required=False,
+                                          widget=TagSelect(attrs={"data-filter-by": "id_categories", "data-multi-picker": "tags"}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

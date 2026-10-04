@@ -63,6 +63,7 @@
       results.replaceChildren();
       let shown = 0;
       for (const option of options) {
+        if (option.hidden || option.disabled) continue;                 // hidden by another filter, such as tags by category
         if (query && !option.text.toLowerCase().includes(query)) continue;
         if (genre && !(option.dataset.genres || '').split('|').includes(genre)) continue;
         const item = el('li', 'picker-option' + (option.selected ? ' is-picked' : ''));
@@ -78,7 +79,7 @@
       }
       if (!shown) results.append(el('li', 'picker-none', 'No ' + noun + ' match' + (genre ? ' in ' + genre : '') + '.'));
       chips.replaceChildren();
-      for (const option of options.filter(o => o.selected)) {
+      for (const option of options.filter(o => o.selected && !o.disabled)) {
         const chip = el('li', 'picker-chip');
         chip.append(el('span', '', option.text));
         const remove = el('button', '', '×');
@@ -91,6 +92,7 @@
       if (!chips.children.length) chips.append(el('li', 'picker-empty', 'None selected yet.'));
     }
 
+    select.addEventListener('change', render);                      // something else changed the choices
     search.addEventListener('input', render);
     search.addEventListener('keydown', event => {
       if (event.key === 'Enter') {                       // Enter picks the first match instead of submitting the form

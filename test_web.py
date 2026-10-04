@@ -463,6 +463,9 @@ class WebTests(TestCase):
         self.assertContains(page, 'data-multi-picker="artists and DJs"')
         self.assertContains(page, 'multi-picker.js')
         self.assertNotContains(page, 'Hold Ctrl')
+        self.assertContains(page, f'data-category="{self.category.pk}"')               # tags can be filtered by category
+        self.assertContains(page, 'data-filter-by="id_categories"')
+        self.assertContains(page, 'data-multi-picker="tags"')                       # tags use the same chip picker
         self.assertContains(page, f'data-genres="{self.category.name}"')       # lets the page filter DJs by genre
         response = self.client.post('/events/new/', self.event_data(title='Many DJs', performers=[first.pk, second.pk]))
         self.assertEqual(response.status_code, 302)
