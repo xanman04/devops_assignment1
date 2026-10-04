@@ -32,7 +32,7 @@
           {% if offer %}<form method="post" action="{% url 'request-cancel' offer.pk %}">{% csrf_token %}<button class="btn btn-ghost">Cancel offer</button></form>
           {% elif pending %}<form method="post" action="{% url 'request-cancel' pending.pk %}">{% csrf_token %}<button class="btn btn-ghost">Cancel request</button></form>{% endif %}
         {% else %}<a class="btn btn-primary" href="{% url 'login' %}?next={% url 'group-detail' group.pk %}">Log in to join</a>{% endif %}
-        {% if manager %}<a class="btn btn-ghost" href="{% url 'group-edit' group.pk %}">Edit group</a><a class="btn btn-ghost" href="{% url 'group-requests' group.pk %}">Requests and bans</a>{% endif %}
+        {% if manager %}<a class="btn btn-ghost" href="{% url 'group-edit' group.pk %}">Edit group</a><a class="btn btn-ghost btn-has-dot" href="{% url 'group-requests' group.pk %}">Requests and bans{% if pending_requests %}<span class="notify-dot" role="img" aria-label="{{ pending_requests }} pending request{{ pending_requests|pluralize }}">{{ pending_requests }}</span>{% endif %}</a>{% endif %}
       </div>
     </div>
   </header>

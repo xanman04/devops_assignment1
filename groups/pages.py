@@ -63,6 +63,7 @@ def group_detail(request, group_id):
         "dots": [index < count for index in range(min(group.capacity, 12))],
         "spots_left": max(group.capacity - count, 0),
         "group": group, "member": member, "manager": manager(request.user, group),
+        "pending_requests": group.join_requests.filter(status="pending").count() if manager(request.user, group) else 0,
         "board": board, "message_form": MessageForm(), "join_form": JoinForm(), "count": count,
         "event_access": event_access,
         "joining_open": public and group.event.cancelled_at is None and timezone.now() < group.event.starts_at,

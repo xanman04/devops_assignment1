@@ -9,7 +9,7 @@
     <div class="grp-section-head"><h2 id="req-heading">Join requests</h2></div>
     {% if requests %}<ul class="grp-req-list">{% for request in requests %}
       <li class="grp-req grp-req--static">
-        <span class="grp-avatar" style="--hue:{{ request.applicant_id|avatar_hue }}" aria-hidden="true">{{ request.applicant.public_name|initial }}</span>
+        <span class="grp-avatar" style="--hue:{{ request.applicant_id|avatar_hue }}" aria-hidden="true">{% if request.applicant.avatar %}<img src="{% url 'avatar' request.applicant_id %}" alt="" loading="lazy">{% else %}{{ request.applicant.public_name|initial }}{% endif %}</span>
         <span class="grp-req-main"><strong>{{ request.applicant.public_name }}</strong><small>Requested {{ request.requested_at|date:'j M, H:i' }} UTC</small></span>
         <span class="grp-status grp-status--{{ request.status }}">{{ request.get_status_display }}</span>
         {% if request.status == 'pending' %}<span class="grp-req-actions">
@@ -24,7 +24,7 @@
     <div class="grp-section-head"><h2 id="bans-heading">Active bans</h2></div>
     {% if bans %}<ul class="grp-req-list">{% for ban in bans %}
       <li class="grp-req grp-req--static">
-        <span class="grp-avatar" style="--hue:{{ ban.user_id|avatar_hue }}" aria-hidden="true">{{ ban.user.public_name|initial }}</span>
+        <span class="grp-avatar" style="--hue:{{ ban.user_id|avatar_hue }}" aria-hidden="true">{% if ban.user.avatar %}<img src="{% url 'avatar' ban.user_id %}" alt="" loading="lazy">{% else %}{{ ban.user.public_name|initial }}{% endif %}</span>
         <span class="grp-req-main"><strong>{{ ban.user.public_name }}</strong><small>{% if ban.reason %}{{ ban.reason }}{% else %}No reason given{% endif %}</small></span>
         <span class="grp-req-actions"><form method="post" action="{% url 'ban-lift' ban.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-sm">Lift ban</button></form></span>
       </li>{% endfor %}</ul>

@@ -193,6 +193,22 @@ class RequestsSplitTests(TestCase):
         page = self.client.get("/groups/")
         self.assertContains(page, f'<img src="/groups/{group.pk}/photo/"')
 
+    def test_requests_button_shows_a_dot_with_the_pending_count_and_pictures_show_on_the_requests_page(self):
+        from groups.models import JoinRequest
+        group = self.make_group()
+        self.client.force_login(self.owner)
+        self.assertNotContains(self.client.get(f"/groups/{group.pk}/"), "notify-dot")
+        self.guest.avatar = "avatars/example.jpg"
+        self.guest.save(update_fields=["avatar"])
+        JoinRequest.objects.create(group=group, applicant=self.guest)
+        page = self.client.get(f"/groups/{group.pk}/")
+        self.assertContains(page, 'class="notify-dot"')
+        self.assertContains(page, "1 pending request")
+        self.client.force_login(self.guest)
+        self.assertNotContains(self.client.get(f"/groups/{group.pk}/"), "notify-dot")           # only the people who manage it see it
+        self.client.force_login(self.owner)
+        self.assertContains(self.client.get(f"/groups/{group.pk}/requests/"), f'<img src="/accounts/avatar/{self.guest.pk}/"')
+
 
 @override_settings(MEDIA_ROOT=__import__("tempfile").mkdtemp())
 class GroupPhotoKeepTests(TestCase):
@@ -219,4 +235,5 @@ class GroupPhotoKeepTests(TestCase):
         self.assertEqual(self.client.post(f"/groups/{group.pk}/edit/", {"name": "G2", "description": "x", "capacity": 4, "joining_mode": "public"}).status_code, 302)
         group.refresh_from_db()
         self.assertTrue(group.photo)                      # saving without a file keeps it
+
 
