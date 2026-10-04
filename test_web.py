@@ -143,7 +143,7 @@ class WebTests(TestCase):
         discover = self.client.get('/discover/')
         self.assertContains(discover, 'Playing near me')
         self.assertContains(discover, 'Artists &amp; DJs')
-        self.assertContains(discover, 'Alex Mix', count=1)
+        self.assertContains(discover, f'href="/djs/{performer.pk}/"', count=1)
         self.assertNotContains(discover, 'heading-djs')
         self.assertContains(self.client.get(f'/events/{self.event.pk}/'), f'/djs/{performer.pk}/')
         self.assertContains(self.client.get(f'/djs/{performer.pk}/'), 'House night')

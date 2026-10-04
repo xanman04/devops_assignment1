@@ -19,8 +19,8 @@
       </div>
       <div class="event-actions">
         {% if user.is_authenticated and public %}
-          {% if following %}<form method="post" action="{% url 'event-unfollow' event.pk %}">{% csrf_token %}<button>Stop tracking</button></form>
-          {% else %}<form method="post" action="{% url 'event-follow' event.pk %}">{% csrf_token %}<button>Track event updates</button></form>{% endif %}
+          {% if following %}<form method="post" action="{% url 'event-unfollow' event.pk %}">{% csrf_token %}<button>Unfollow</button></form>
+          {% else %}<form method="post" action="{% url 'event-follow' event.pk %}">{% csrf_token %}<button>Follow event</button></form>{% endif %}
         {% endif %}
         {% if event.ticket_url %}<a class="event-action-link" href="{{ event.ticket_url }}" target="_blank" rel="noopener noreferrer">Tickets ↗</a>{% endif %}
       </div>
@@ -51,17 +51,28 @@
 
   <section class="event-lower-section" aria-labelledby="event-listen-heading">
     <div class="event-section-heading"><p class="event-section-kicker">EXPLORE THE SOUND</p><h2 id="event-listen-heading">What does this music sound like?</h2></div>
-    <div class="cards">{% for reference in event.listening_references.all %}<div class="card"><a href="{{ reference.url }}" target="_blank" rel="noopener noreferrer">{{ reference.title }} ↗</a><p>{{ reference.artist_credit }} · {{ reference.get_kind_display }}</p>
-    {% if editor %}<a href="{% url 'reference-edit' event.pk reference.pk %}">Edit</a><form class="inline" method="post" action="{% url 'reference-delete' reference.pk %}">{% csrf_token %}<button>Remove reference</button></form>{% endif %}</div>
-    {% empty %}<p class="muted">No listening references yet. Explore the genre links above for examples.</p>{% endfor %}</div>
+    <div class="event-sound-grid{% if lineup_media %} has-lineup{% endif %}">
+      {% if sound_samples %}<div class="event-sound-col"><h3 class="event-sound-sub">The genre</h3>
+        <ol class="dj-media-list">{% for ref in sound_samples %}<li><a class="dj-media-row dj-media-row--{{ ref.platform }}" href="{{ ref.url }}" target="_blank" rel="noopener noreferrer"><span class="dj-media-num">{{ forloop.counter }}</span><span class="dj-media-title">{{ ref.title }}<small>{{ ref.artist_credit }}</small></span><span class="dj-media-source">{{ ref.platform_label }} ↗</span></a></li>{% endfor %}</ol></div>{% endif %}
+      {% if lineup_media %}<div class="event-sound-col"><h3 class="event-sound-sub">From the lineup</h3>
+        {% for item in lineup_media %}<div class="event-sound-artist"><a class="event-sound-artist-name" href="{% url 'dj-detail' item.performer.pk %}">{{ item.performer.name }}</a>
+          <ol class="dj-media-list">{% for link in item.links %}<li><a class="dj-media-row dj-media-row--{{ link.platform }}" href="{{ link.url }}" target="_blank" rel="noopener noreferrer"><span class="dj-media-num">{{ forloop.counter }}</span><span class="dj-media-title">{{ link.title }}<small>{{ link.get_kind_display }}</small></span><span class="dj-media-source">{{ link.get_platform_display }} ↗</span></a></li>{% endfor %}</ol></div>{% endfor %}</div>{% endif %}
+    </div>
+    {% if not sound_samples and not lineup_media and not event.listening_references.all %}<p class="muted">No listening examples yet. Explore the genre links above.</p>{% endif %}
+    {% if event.listening_references.all %}<div class="event-organiser-links"><h3 class="event-sound-sub">Added by the organiser</h3><div class="cards">{% for reference in event.listening_references.all %}<div class="card"><a href="{{ reference.url }}" target="_blank" rel="noopener noreferrer">{{ reference.title }} ↗</a><p>{{ reference.artist_credit }} · {{ reference.get_kind_display }}</p>
+      {% if editor %}<a href="{% url 'reference-edit' event.pk reference.pk %}">Edit</a><form class="inline" method="post" action="{% url 'reference-delete' reference.pk %}">{% csrf_token %}<button>Remove reference</button></form>{% endif %}</div>{% endfor %}</div></div>{% endif %}
     {% if editor %}<p><a href="{% url 'reference-new' event.pk %}">Add a listening reference</a></p>{% endif %}
   </section>
 
   <section class="event-lower-section" aria-labelledby="event-groups-heading">
-    <div class="event-section-heading"><p class="event-section-kicker">GO TOGETHER</p><h2 id="event-groups-heading">Attending alone?</h2><p class="muted">Find company if you want it. Joining a group is optional and does not book a ticket.</p></div>
-    {% if joining_open and user.is_authenticated %}<p><a href="{% url 'group-new' event.pk %}">Create a group</a></p>{% elif not joining_open %}<p>New group participation is closed.</p>{% endif %}
-    <div class="cards">{% for group in groups %}<a class="card" href="{% url 'group-detail' group.pk %}">
-    {% if group.photo %}<img class="group-photo" src="{% url 'group-photo' group.pk %}" alt="" loading="lazy">{% else %}<div class="photo-placeholder" aria-hidden="true">{{ group.name|first }}</div>{% endif %}
-    <h3>{{ group.name }}</h3><p>{{ group.description|truncatechars:180 }}</p><p>{{ group.get_joining_mode_display }}</p></a>{% empty %}<p>No groups yet.</p>{% endfor %}</div>
+    <div class="event-group-heading"><div class="event-section-heading"><p class="event-section-kicker">GO TOGETHER</p><h2 id="event-groups-heading">Attending alone?</h2></div>
+      {% if joining_open and user.is_authenticated %}<a class="event-group-create" href="{% url 'group-new' event.pk %}">Create a group +</a>{% endif %}</div>
+    {% if not joining_open %}<p class="muted">New group participation is closed.</p>{% endif %}
+    {% if groups %}<ul class="go-list">{% for group in groups %}<li><a class="go-row" href="{% url 'group-detail' group.pk %}">
+      {% if group.photo %}<img class="go-avatar" src="{% url 'group-photo' group.pk %}" alt="" loading="lazy">{% else %}<span class="go-avatar go-avatar-letter" aria-hidden="true">{{ group.name|first|upper }}</span>{% endif %}
+      <span class="go-main"><strong>{{ group.name }}</strong><span class="go-desc">{{ group.description|truncatechars:110 }}</span></span>
+      <span class="go-meta"><span class="go-mode go-mode--{{ group.joining_mode }}">{% if group.joining_mode == 'public' %}Open{% else %}Approval{% endif %}</span><span class="go-spots">{% if group.member_count >= group.capacity %}Full{% else %}{{ group.member_count }} of {{ group.capacity }} joined{% endif %}</span></span>
+      <span class="go-arrow" aria-hidden="true">→</span></a></li>{% endfor %}</ul>
+    {% else %}<p class="go-empty">No groups yet. You can be the first to start one.</p>{% endif %}
   </section>
 </article>{% endblock %}

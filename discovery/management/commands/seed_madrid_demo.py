@@ -136,6 +136,8 @@ class Command(BaseCommand):
             f"Madrid demo: {created_venues} venues, {created_events} events created; {refreshed_events} event dates refreshed."
         ))
         self.stdout.write("All event titles, lineups, descriptions and posters are fictional. No accounts or genres were created.")
+        from django.core.management import call_command
+        call_command("seed_attendance", stdout=self.stdout)
 
     def _users(self):
         users = list(get_user_model().objects.filter(username__in=USERS))

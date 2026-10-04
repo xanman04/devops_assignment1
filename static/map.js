@@ -36,12 +36,19 @@ import { Map as MapLibreMap, Marker } from 'maplibre-gl';
   let locationDot,currentLocation;
   let timer,controller,selectedVenueId=null,lastRefresh=0,lastFilterKey=null;
   const node=(tag,value)=>{const item=document.createElement(tag);item.textContent=value;return item;};
-  function eventLink(event) {const link=node('a',event.title);link.href=`/events/${event.id}/`;return link;}
+  function eventLink(event) {const link=node('a',event.title);link.href=`${document.body.dataset.root||'/'}events/${event.id}/`;return link;}
   function eventTime(event) {
     return new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short',timeZone:event.timezone}).format(new Date(event.starts_at));
   }
   function dateLabel() {
     const defaultEnd=localDate(addDays(new Date(),14));
+    // Highlight the shortcut that matches the current range, if any.
+    for(const button of document.querySelectorAll('.date-presets [data-days]')){
+      const days=Number(button.dataset.days)||1;
+      button.setAttribute('aria-pressed',String(start.value===localDate(new Date())&&end.value===localDate(addDays(new Date(),days))));
+    }
+    const hint=document.getElementById('date-range-hint');
+    if(hint)hint.textContent=start.value&&end.value?`${start.value} – ${end.value}`:'';
     dateSummary.textContent=start.value===localDate(new Date())&&end.value===defaultEnd?'Next two weeks':
       start.value&&end.value?`${start.value} – ${end.value}`:'Choose dates';
   }
@@ -86,7 +93,7 @@ import { Map as MapLibreMap, Marker } from 'maplibre-gl';
       const tags=document.createElement('div');tags.className='tags';
       const categoryColors=new Map(event.categories.map(category=>[category.id,category.color]));
       for(const category of event.categories){
-        const link=node('a',category.name);link.className='genre';link.href=`/genres/${category.id}/`;
+        const link=node('a',category.name);link.className='genre';link.href=`${document.body.dataset.root||'/'}genres/${category.id}/`;
         if(/^#[0-9a-f]{6}$/i.test(category.color)) link.style.setProperty('--genre',category.color);
         tags.append(link);
       }

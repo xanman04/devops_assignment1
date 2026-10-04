@@ -87,7 +87,13 @@ document.addEventListener('keydown', event => {
 document.addEventListener('click', event => {
   const link=event.target instanceof Element ? event.target.closest('[data-back-link]') : null;
   if (!link || event.button!==0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-  if (document.referrer && new URL(document.referrer).origin===location.origin && history.length>1) {
-    event.preventDefault();history.back();
-  }
+  let referrer=null;
+  try{referrer=document.referrer?new URL(document.referrer):null;}catch{referrer=null;}
+  if (!referrer || referrer.origin!==location.origin || history.length<=1) return;
+  // Never "go back" into the same page (right after a form post) or into a sub-page this page links to
+  // (data-back-avoid), which would bounce between the two forever; follow the link's own address instead.
+  if (referrer.pathname===location.pathname) return;
+  const avoid=link.dataset.backAvoid;
+  if (avoid && new RegExp(avoid).test(referrer.pathname)) return;
+  event.preventDefault();history.back();
 });

@@ -183,11 +183,11 @@
   $('#track-preview').onclick=()=>{
     state.tracked=!state.tracked; save();
     $('#track-preview').setAttribute('aria-pressed',String(state.tracked));
-    $('#track-preview').textContent=state.tracked?'Tracking event':'Track event';
+    $('#track-preview').textContent=state.tracked?'Following event':'Follow event';
     if(state.page==='events')renderPage();
   };
   $('#track-preview').setAttribute('aria-pressed',String(state.tracked));
-  $('#track-preview').textContent=state.tracked?'Tracking event':'Track event';
+  $('#track-preview').textContent=state.tracked?'Following event':'Follow event';
   $('#ticket-preview').onclick=()=>toast('An external ticket link would open here.');
   $('#groups-preview').onclick=()=>{$('#detail-dialog').close();location.hash='groups';};
 
@@ -257,7 +257,7 @@
   $('#event-form').onsubmit=event=>{event.preventDefault();toast('Layout preview only. No event was created.');};
 
   const pageInfo={
-    discover:{title:'Discover',intro:'Explore the music. Find what moves you.'},
+    discover:{title:'Discover',intro:'Find what moves you.'},
     events:{title:'My events',intro:'The nights you’re keeping an eye on.'},
     groups:{title:'Groups',intro:'A little company for your next night out.'},
     profile:{title:'Profile',intro:'Your corner of the map.',icon:'profile'}

@@ -2,7 +2,7 @@ import re
 from zoneinfo import ZoneInfo
 from django.http import FileResponse, Http404, JsonResponse
 from django.contrib.staticfiles.storage import staticfiles_storage
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
@@ -131,7 +131,7 @@ def discover(request):
     ]
     if query:
         sections = [section for section in sections if section["cards"] or section["id"] == "playing"]
-    return render(request, "browse.html", {"title": "Discover", "intro": "Explore the music. Find what moves you.",
+    return render(request, "browse.html", {"title": "Discover", "intro": "Find what moves you.",
                                            "sections": sections, "query": query, "discover_page": True})
 
 
@@ -165,12 +165,22 @@ def playing_near_me(request):
 def genres(request, genre_id=None):
     category = get_object_or_404(models.GenreCategory, pk=genre_id) if genre_id else None
     tags = list(category.tags.order_by("name")) if category else []
-    tag_cards = [{"tag": tag, "preview": _first_sentence(tag.description)} for tag in tags]
+    # Songs are shown where they belong: a subgenre's songs inside its card, and the broad genre's own
+    # songs up in the header. A song shared with another category counts only for this category's tags.
+    songs_by_tag, general_songs = {}, []
+    if category:
+        for ref in category.listening_references.prefetch_related("tags"):
+            here = [tag for tag in ref.tags.all() if tag.category_id == category.pk]
+            if not here:
+                general_songs.append(ref)
+            for tag in here:
+                songs_by_tag.setdefault(tag.pk, []).append(ref)
+    tag_cards = [{"tag": tag, "preview": _first_sentence(tag.description), "songs": songs_by_tag.get(tag.pk, [])} for tag in tags]
     return render(request, "discovery/genres.html", {
         "category": category, "categories": models.GenreCategory.objects.all(),
         "tag_cards": tag_cards,
         "motif": GENRE_ART.get(category.name, "wave") if category else "wave",
-        "references": category.listening_references.prefetch_related("categories", "tags") if category else [],
+        "general_songs": general_songs,
         "djs": category.djs.prefetch_related("categories") if category else [],
     })
 
@@ -178,10 +188,17 @@ def genres(request, genre_id=None):
 @endpoint
 @require_GET
 def dj_detail(request, dj_id):
-    dj = get_object_or_404(models.DJProfile.objects.prefetch_related("categories"), pk=dj_id)
+    dj = get_object_or_404(models.DJProfile.objects.prefetch_related("categories", "media_links", "social_links"), pk=dj_id)
     upcoming = services.public_events().filter(performers=dj, cancelled_at__isnull=True,
         ends_at__gt=timezone.now()).select_related("venue").order_by("starts_at")[:12]
-    return render(request, "discovery/dj.html", {"dj": dj, "upcoming": upcoming})
+    media_links = list(dj.media_links.all())
+    return render(request, "discovery/dj.html", {
+        "dj": dj, "upcoming": upcoming, "social_links": list(dj.social_links.all()),
+        "tracks": [link for link in media_links if link.kind == models.DJMediaLink.Kind.TRACK],
+        "sets": [link for link in media_links if link.kind == models.DJMediaLink.Kind.SET],
+        "genre_previews": [{"category": category, "preview": _first_sentence(category.description)}
+                           for category in dj.categories.all()],
+    })
 
 
 @endpoint
@@ -195,7 +212,9 @@ def event_detail(request, event_id):
         "editor": request.user.is_authenticated and (request.user.pk == event.creator_id or services.can_manage(request.user, "discovery.change_event")),
         "following": request.user.is_authenticated and event.follows.filter(user=request.user).exists(),
         "public": services.public_events().filter(pk=event.pk).exists(),
-        "groups": group_services.visible_groups(event_id=event_id, actor=request.user),
+        "groups": group_services.visible_groups(event_id=event_id, actor=request.user).annotate(member_count=Count("memberships")),
+        "sound_samples": services.event_sound_samples(event),
+        "lineup_media": services.lineup_media(event),
         "joining_open": event.cancelled_at is None and not event.moderation_hidden and event.venue.review_status == "approved" and timezone.now() < event.starts_at,
     })
 

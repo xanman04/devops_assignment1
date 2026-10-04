@@ -5,8 +5,11 @@
 <form id="map-filters" class="live-filters">
   <p class="live-label">WHEN</p>
   <details class="filter-menu" id="date-menu"><summary><svg class="live-icon" aria-hidden="true"><use href="#icon-events"/></svg><span id="date-summary">Next two weeks</span><span aria-hidden="true">⌄</span></summary>
-    <div class="filter-menu-content"><div class="date-presets"><button type="button" data-days="0">Tonight</button><button type="button" data-days="3">Next 3 days</button><button type="button" data-days="14">Next two weeks</button><button type="button" data-days="30">Next 30 days</button></div>
-      <label>From <input type="date" name="start" id="start-date"></label><label>Until <input type="date" name="end" id="end-date"></label></div>
+    <div class="filter-menu-content date-filter-content">
+      <div class="filter-head"><strong>When</strong><span class="date-range-hint" id="date-range-hint"></span></div>
+      <div class="date-presets"><button type="button" data-days="0">Tonight</button><button type="button" data-days="3">Next 3 days</button><button type="button" data-days="14">Next two weeks</button><button type="button" data-days="30">Next 30 days</button></div>
+      <div class="filter-head subgenre-head"><strong>Custom range</strong></div>
+      <div class="date-fields"><label>From <input type="date" name="start" id="start-date"></label><label>Until <input type="date" name="end" id="end-date"></label></div></div>
   </details>
   <p class="live-label">GENRES</p>
   <details class="filter-menu" id="genre-menu"><summary><svg class="live-icon" aria-hidden="true"><use href="#icon-filter"/></svg><span id="genre-summary">All genres</span><span aria-hidden="true">+</span></summary>
@@ -32,4 +35,4 @@
   <noscript><section class="live-no-script"><h2>Upcoming public events</h2>{% for event in events %}<p><a href="{% url 'event-detail' event.pk %}">{{ event.title }}</a> · {{ event.venue.name }}</p>{% empty %}<p>No upcoming public events.</p>{% endfor %}</section></noscript>
 </section>
 {% endblock %}
-{% block scripts %}<script type="module" src="{% static 'map.js' %}?v=20260930g"></script>{% endblock %}
+{% block scripts %}<script type="module" src="{% static 'map.js' %}?v=20261002a"></script>{% endblock %}

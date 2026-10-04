@@ -1,10 +1,11 @@
 """Discovery records. Use discovery.services for authorized business operations."""
 from pathlib import Path
+from urllib.parse import urlsplit
 from uuid import uuid4
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import F, Q
 from django.db.models.functions import Lower
@@ -98,6 +99,9 @@ class DJProfile(models.Model):
     photo_credit = models.CharField(max_length=200, blank=True)
     photo_source_url = models.URLField(max_length=2048, blank=True, validators=[http_url])
     photo_license = models.CharField(max_length=80, blank=True)
+    origin = models.CharField(max_length=120, blank=True, help_text="Hometown and country, for example Ghent, Belgium.")
+    active_since = models.PositiveSmallIntegerField(null=True, blank=True, validators=[MinValueValidator(1900), MaxValueValidator(2100)])
+    labels = models.CharField(max_length=200, blank=True, help_text="Main labels, separated by commas.")
     display_order = models.PositiveIntegerField(default=0)
     categories = models.ManyToManyField(GenreCategory, related_name="djs")
 
@@ -108,6 +112,53 @@ class DJProfile(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class DJSocialLink(models.Model):
+    """An official social or streaming profile shown beside a profile's website link."""
+
+    class Platform(models.TextChoices):
+        INSTAGRAM = "instagram", "Instagram"
+        YOUTUBE = "youtube", "YouTube"
+        SOUNDCLOUD = "soundcloud", "SoundCloud"
+        SPOTIFY = "spotify", "Spotify"
+
+    dj = models.ForeignKey(DJProfile, on_delete=models.CASCADE, related_name="social_links")
+    platform = models.CharField(max_length=10, choices=Platform)
+    url = models.URLField(max_length=2048, validators=[http_url])
+
+    class Meta:
+        ordering = ["id"]
+        constraints = [models.UniqueConstraint(fields=["dj", "platform"], name="dj_social_one_per_platform")]
+
+    def __str__(self):
+        return f"{self.dj.name}: {self.get_platform_display()}"
+
+
+class DJMediaLink(models.Model):
+    """A curated recording or set linked from an artist / DJ profile."""
+
+    class Kind(models.TextChoices):
+        TRACK = "track", "Track"
+        SET = "set", "Set"
+
+    class Platform(models.TextChoices):
+        SOUNDCLOUD = "soundcloud", "SoundCloud"
+        YOUTUBE = "youtube", "YouTube"
+
+    dj = models.ForeignKey(DJProfile, on_delete=models.CASCADE, related_name="media_links")
+    title = models.CharField(max_length=200)
+    url = models.URLField(max_length=2048, validators=[http_url])
+    kind = models.CharField(max_length=5, choices=Kind)
+    platform = models.CharField(max_length=10, choices=Platform)
+    display_order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["display_order", "id"]
+        constraints = [models.UniqueConstraint(fields=["dj", "url"], name="dj_media_unique_url")]
+
+    def __str__(self):
+        return f"{self.dj.name}: {self.title}"
 
 
 class Venue(Timestamped):
@@ -194,6 +245,22 @@ class ListeningReference(models.Model):
         ordering = ["display_order", "id"]
         constraints = [models.CheckConstraint(condition=Q(kind__in=["track", "set", "artist_page"]), name="%(class)s_valid_kind")]
 
+    @property
+    def platform(self):
+        """Where the link leads, derived from its host; used for the badge on listing rows."""
+        host = urlsplit(self.url).netloc.lower()
+        if "youtube.com" in host or "youtu.be" in host:
+            return "youtube"
+        if "soundcloud.com" in host:
+            return "soundcloud"
+        if "spotify.com" in host:
+            return "spotify"
+        return "link"
+
+    @property
+    def platform_label(self):
+        return {"youtube": "YouTube", "soundcloud": "SoundCloud", "spotify": "Spotify"}.get(self.platform, "Listen")
+
 
 class EventListeningReference(ListeningReference):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="listening_references")
@@ -271,3 +338,17 @@ class EventChange(models.Model):
 
     class Meta:
         constraints = [models.CheckConstraint(condition=Q(kind__in=["event_edit", "venue_details_edit"]), name="event_change_valid_kind")]
+
+
+class EventCard(models.Model):
+    """An event a person has been verified at. The profile collection and its achievements are built from these.
+
+    Nothing creates them yet (check-in is not built); `seed_attendance` fills them for demo accounts."""
+
+    user = models.ForeignKey(USER, on_delete=models.CASCADE, related_name="event_cards")
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="cards")
+    collected_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["user", "event"], name="event_card_unique")]
+

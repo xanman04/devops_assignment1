@@ -9,19 +9,19 @@
     <div class="genre-detail-intro">
       <p class="event-kicker">EXPLORE THE SOUND</p><h1>{{ category.name }}</h1><p>{{ category.description }}</p>
       <div class="genre-detail-facts"><div><span class="event-fact-label">REFERENCE TEMPO</span><strong>{{ category.bpm_display }}</strong></div><div><span class="event-fact-label">EXPLORE</span><strong>{{ tag_cards|length }} subgenres</strong></div></div>
+
     </div>
+  {% if general_songs %}<div class="genre-start"><p class="genre-start-label">HEAR THE GENRE</p>
+        <ol class="dj-media-list">{% for ref in general_songs %}<li><a class="dj-media-row dj-media-row--{{ ref.platform }}" href="{{ ref.url }}" target="_blank" rel="noopener noreferrer"><span class="dj-media-num">{{ forloop.counter }}</span><span class="dj-media-title">{{ ref.title }}<small>{{ ref.artist_credit }}</small></span><span class="dj-media-source">{{ ref.platform_label }} ↗</span></a></li>{% endfor %}</ol></div>{% endif %}
   </header>
   <section class="event-lower-section" aria-labelledby="subgenres-heading">
     <div class="event-section-heading"><p class="event-section-kicker">FIND YOUR CORNER</p><h2 id="subgenres-heading">Subgenres</h2><p class="muted">A quick guide to the sounds within {{ category.name }}.</p></div>
-    <div class="subgenre-grid">{% for card in tag_cards %}<details class="subgenre-card" id="subgenre-{{ card.tag.pk }}"><summary><span class="subgenre-card-heading"><strong>{{ card.tag.name }}</strong><span>{{ card.tag.bpm_display }}</span></span><span class="subgenre-preview">{{ card.preview }}</span><span class="subgenre-more">Read more <span aria-hidden="true">⌄</span></span></summary><div class="subgenre-full">{{ card.tag.description|linebreaks }}</div></details>{% empty %}<p class="muted">No subgenres yet.</p>{% endfor %}</div>
+    <div class="subgenre-grid">{% for card in tag_cards %}<details class="subgenre-card" id="subgenre-{{ card.tag.pk }}"><summary><span class="subgenre-card-heading"><strong>{{ card.tag.name }}</strong><span>{{ card.tag.bpm_display }}</span></span><span class="subgenre-preview">{{ card.preview }}</span><span class="subgenre-more">Read more{% if card.songs %} · ♪ {{ card.songs|length }}{% endif %} <span aria-hidden="true">⌄</span></span></summary><div class="subgenre-full">{{ card.tag.description|linebreaks }}
+        {% if card.songs %}<div class="subgenre-songs"><p class="subgenre-songs-label">HEAR IT</p><ul class="dj-media-list">{% for ref in card.songs %}<li><a class="dj-media-row dj-media-row--{{ ref.platform }}" href="{{ ref.url }}" target="_blank" rel="noopener noreferrer"><span class="dj-media-title">{{ ref.title }}<small>{{ ref.artist_credit }}</small></span><span class="dj-media-source">{{ ref.platform_label }} ↗</span></a></li>{% endfor %}</ul></div>{% endif %}</div></details>{% empty %}<p class="muted">No subgenres yet.</p>{% endfor %}</div>
   </section>
   <section class="event-lower-section" aria-labelledby="genre-djs-heading">
     <div class="event-section-heading"><p class="event-section-kicker">PEOPLE BEHIND THE SOUND</p><h2 id="genre-djs-heading">Artists & DJs to explore</h2></div>
     <div class="genre-dj-grid">{% for dj in djs %}<a class="genre-dj-card" href="{% url 'dj-detail' dj.pk %}">{% if dj.photo %}<img src="{% static dj.photo %}" alt="" loading="lazy">{% else %}<span class="performer-photo-fallback" aria-hidden="true"><svg class="live-icon"><use href="#icon-profile"/></svg></span>{% endif %}<span class="genre-dj-info"><strong>{{ dj.name }}</strong><span class="browse-dj-chips">{% for genre in dj.categories.all %}<span class="genre" style="--genre:{{ genre.color }}">{{ genre.name }}</span>{% endfor %}</span></span></a>{% empty %}<p class="muted">No curated artists or DJs for this genre yet.</p>{% endfor %}</div>
-  </section>
-  <section class="event-lower-section" aria-labelledby="genre-listen-heading">
-    <div class="event-section-heading"><p class="event-section-kicker">LISTEN IN</p><h2 id="genre-listen-heading">What does this music sound like?</h2></div>
-    <div class="genre-reference-grid">{% for reference in references %}<a class="genre-reference-card" href="{{ reference.url }}" target="_blank" rel="noopener noreferrer"><span class="event-fact-label">{{ reference.get_kind_display }}</span><strong>{{ reference.title }} ↗</strong><span>{{ reference.artist_credit }}</span></a>{% empty %}<p class="muted">No listening references yet.</p>{% endfor %}</div>
   </section>
 </article>
 {% else %}<h1>Explore genres</h1><p class="muted">Follow the music. Genre colors match event pins.</p><div class="cards">

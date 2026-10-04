@@ -2,7 +2,9 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from discovery.models import DJProfile, GenreCategory
+from discovery.models import DJMediaLink, DJProfile, DJSocialLink, GenreCategory
+from ._dj_media import MEDIA
+from ._dj_profiles import DETAILS
 
 
 PROFILES = [
@@ -22,14 +24,13 @@ PROFILES = [
      "https://carlcox.com/biography/", "carl_cox", "Sergey Kozak", "Carl_Cox_@_ADE_2012.jpg", "CC BY 2.0", ["Techno", "House"]),
 ]
 
-
 class Command(BaseCommand):
-    help = "Add seven researched DJ profiles using existing genre categories; retain later admin edits."
+    help = "Add seven researched DJ profiles and their listening links using existing genre categories; retain later admin edits."
 
     @transaction.atomic
     def handle(self, *args, **options):
         categories = {category.name: category for category in GenreCategory.objects.all()}
-        created = existing = skipped = 0
+        created = existing = skipped = media_created = 0
         for order, (name, description, official_url, slug, credit, file_name, license_name, names) in enumerate(PROFILES):
             if any(category_name not in categories for category_name in names):
                 skipped += 1
@@ -42,6 +43,29 @@ class Command(BaseCommand):
             })
             if was_created:
                 profile.categories.set(categories[category_name] for category_name in names)
+            details = DETAILS.get(name, {})
+            # Fill only blank facts so later admin edits are kept.
+            changed = [field for field in ("origin", "active_since", "labels")
+                       if details.get(field) and not getattr(profile, field)]
+            for field in changed:
+                setattr(profile, field, details[field])
+            if changed:
+                profile.save(update_fields=changed)
+            for platform, url in details.get("social", {}).items():
+                DJSocialLink.objects.get_or_create(dj=profile, platform=platform, defaults={"url": url})
+            for link_order, (kind, title, platform, url) in enumerate(MEDIA.get(name, [])):
+                link, link_created = DJMediaLink.objects.get_or_create(dj=profile, url=url, defaults={
+                    "kind": kind, "title": title, "platform": platform, "display_order": link_order,
+                })
+                # The seed owns the order of the links it lists (most popular first);
+                # titles, other fields and curator-added links are never touched.
+                if not link_created and link.display_order != link_order:
+                    link.display_order = link_order
+                    link.save(update_fields=["display_order"])
+                media_created += link_created
             created += was_created
             existing += not was_created
-        self.stdout.write(self.style.SUCCESS(f"DJ profiles: {created} created, {existing} retained, {skipped} skipped (missing categories)."))
+        self.stdout.write(self.style.SUCCESS(
+            f"DJ profiles: {created} created, {existing} retained, {skipped} skipped (missing categories); "
+            f"{media_created} listening links added."
+        ))

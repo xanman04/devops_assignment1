@@ -109,7 +109,7 @@ class DiscoveryServicesTests(TestCase):
         with self.assertRaises(ValidationError):
             self.make_event(ticket_url="ftp://example.org/tickets")
 
-    def test_tracked_multi_field_edit_is_one_history_and_one_notice(self):
+    def test_followed_multi_field_edit_is_one_history_and_one_notice(self):
         event = self.make_event()
         s.follow_event(actor=self.other, event_id=event.pk)
         self.edit(event, data={"starts_at": self.start + timedelta(hours=1), "ends_at": self.start + timedelta(hours=6)})

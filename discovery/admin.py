@@ -73,11 +73,24 @@ class TagAdmin(TempoReferenceAdmin):
         apply_saved(obj, services.save_tag(actor=request.user, tag_id=obj.pk, data=form.cleaned_data))
 
 
+class DJMediaLinkInline(admin.TabularInline):
+    model = models.DJMediaLink
+    extra = 0
+    fields = ("kind", "title", "platform", "url", "display_order")
+
+
+class DJSocialLinkInline(admin.TabularInline):
+    model = models.DJSocialLink
+    extra = 0
+    fields = ("platform", "url")
+
+
 @admin.register(models.DJProfile)
 class DJProfileAdmin(admin.ModelAdmin):
     list_display = ("name", "display_order")
     search_fields = ("name", "description")
     filter_horizontal = ("categories",)
+    inlines = (DJSocialLinkInline, DJMediaLinkInline)
 
 
 @admin.register(models.Venue)

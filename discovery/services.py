@@ -151,7 +151,7 @@ def _record_changes(event, actor, before, after, kind=EventChange.Kind.EVENT_EDI
     record.save()
     # Summaries intentionally contain no coordinates, event text, or private snapshots.
     labels = {"venue": "venue", "starts_at": "start time", "ends_at": "end time", "cancelled": "cancellation status"}
-    summary = "A tracked event changed: " + ", ".join(labels[key] for key in changes) + "."
+    summary = "An event you follow changed: " + ", ".join(labels[key] for key in changes) + "."
     if event.venue.review_status != Venue.ReviewStatus.APPROVED:
         summary += " Location is awaiting approval or unavailable."
     recipients = event.follows.filter(user__is_active=True).values_list("user_id", flat=True)
@@ -384,6 +384,57 @@ def _tempo_parts(event):
 def tempo_estimate(event):
     parts = _tempo_parts(event)
     return parts[:2] if parts else None
+
+
+def event_sound_samples(event, limit=4):
+    """About four representative songs for an event, derived from its genres.
+
+    Nothing is stored per event, so existing and future events work alike and later
+    edits to the curated genre songs show up automatically. Songs tagged with one of
+    the event's subgenres come first, then the broad genre's own songs; several
+    categories are interleaved so a mixed night samples each of its sounds.
+    """
+    event_tag_ids = {tag.pk for tag in event.tags.all()}
+    pools = []
+    for category in event.categories.all():
+        refs = list(GenreListeningReference.objects.filter(categories=category).prefetch_related("tags"))
+        by_tag, general, others = {}, [], []
+        for ref in refs:
+            matching = [tag.pk for tag in ref.tags.all() if tag.pk in event_tag_ids]
+            if matching:
+                by_tag.setdefault(matching[0], []).append(ref)
+            elif not any(tag.category_id == category.pk for tag in ref.tags.all()):
+                general.append(ref)  # tagged only in some other category: still general here
+            else:
+                others.append(ref)
+        first_per_tag = [group[0] for group in by_tag.values()]
+        spare_tagged = [ref for group in by_tag.values() for ref in group[1:]]
+        pools.append(first_per_tag + general + spare_tagged + others)
+    picked, seen = [], set()
+    while len(picked) < limit and any(pools):
+        for pool in pools:
+            while pool and pool[0].pk in seen:
+                pool.pop(0)
+            if pool and len(picked) < limit:
+                ref = pool.pop(0)
+                seen.add(ref.pk)
+                picked.append(ref)
+    return picked
+
+
+def lineup_media(event, per_performer=3):
+    """Songs and sets for the artists on an event's lineup (profiles without links are skipped)."""
+    result = []
+    for performer in event.performers.prefetch_related("media_links"):
+        links = list(performer.media_links.all())
+        tracks = [link for link in links if link.kind == "track"]
+        sets = [link for link in links if link.kind == "set"]
+        # Two songs and a set when both exist; otherwise fill the slots with what there is.
+        chosen = (tracks[:2] + sets[:1]) if tracks and sets else (tracks or sets)
+        chosen = (chosen + [link for link in tracks[2:] + sets[1:] if link not in chosen])[:per_performer]
+        if chosen:
+            result.append({"performer": performer, "links": chosen})
+    return result
 
 
 def _format_tempo(parts):

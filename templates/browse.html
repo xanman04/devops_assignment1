@@ -30,7 +30,7 @@
           </span>{% else %}<small>{{ card.subtitle }}</small>{% endif %}{% if card.status %}<small class="status">{{ card.status }}</small>{% endif %}
         {% endif %}
       {% if card.href %}</a>{% else %}</div>{% endif %}
-      {% empty %}<p class="browse-empty">{{ section.empty }}{% if section.id == 'tracked' or section.id == 'listings' %} <a href="{% url 'home' %}">Explore nearby</a>{% endif %}</p>{% endfor %}
+      {% empty %}<p class="browse-empty">{{ section.empty }}{% if section.id == 'followed' or section.id == 'listings' %} <a href="{% url 'home' %}">Explore nearby</a>{% endif %}</p>{% endfor %}
     </div>
   </section>
   {% endfor %}

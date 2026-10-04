@@ -3,16 +3,28 @@
 {% block content %}
 <article class="dj-detail event-detail" style="--event-accent:{{ dj.categories.first.color|default:'#9da5b4' }}">
   <a class="detail-back" href="{% url 'discover' %}" aria-label="Go back" title="Go back" data-back-link><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg></a>
-  <div class="event-hero">
-    <div>{% if dj.photo %}<img class="dj-detail-photo" src="{% static dj.photo %}" alt="{{ dj.name }}">{% else %}<div class="dj-detail-photo performer-hero-fallback" aria-hidden="true"><svg class="live-icon"><use href="#icon-profile"/></svg></div>{% endif %}{% if dj.photo_credit %}<p class="dj-photo-credit">Photo: <a href="{{ dj.photo_source_url }}" target="_blank" rel="noopener noreferrer">{{ dj.photo_credit }}</a> · {{ dj.photo_license }} · resized WebP</p>{% endif %}</div>
-    <div class="event-hero-copy"><p class="event-kicker">ARTIST / DJ PROFILE</p><h1>{{ dj.name }}</h1>
-      <div class="event-detail-grid dj-info-grid">
-        <section class="event-section event-music"><p class="event-section-kicker">THE SOUND</p><h2>Genres</h2><div class="tags">{% for category in dj.categories.all %}<a class="genre" style="--genre:{{ category.color }}" href="{% url 'genre-detail' category.pk %}">{{ category.name }}</a>{% endfor %}</div></section>
-        <section class="event-section event-about"><p class="event-section-kicker">ABOUT THE ARTIST</p><h2>Behind the decks</h2><div class="event-description">{{ dj.description|linebreaks }}</div></section>
-      </div>
-      {% if dj.official_url %}<div class="event-actions"><a class="event-action-link" href="{{ dj.official_url }}" target="_blank" rel="noopener noreferrer">Official site ↗</a></div>{% endif %}
+  <header class="dj-hero">
+    <div class="dj-hero-image">{% if dj.photo %}<img class="dj-detail-photo" src="{% static dj.photo %}" alt="{{ dj.name }}">{% else %}<div class="dj-detail-photo performer-hero-fallback" aria-hidden="true"><svg class="live-icon"><use href="#icon-profile"/></svg></div>{% endif %}{% if dj.photo_credit %}<p class="dj-photo-credit">Photo: <a href="{{ dj.photo_source_url }}" target="_blank" rel="noopener noreferrer">{{ dj.photo_credit }}</a> · {{ dj.photo_license }} · resized WebP</p>{% endif %}</div>
+    <div class="dj-hero-copy">
+      <p class="event-kicker">ARTIST / DJ PROFILE</p><h1>{{ dj.name }}</h1>
+      <p class="dj-lead">{{ dj.description }}</p>
+      <div class="dj-hero-genres" aria-label="Genres">{% for category in dj.categories.all %}<a class="genre" style="--genre:{{ category.color }}" href="{% url 'genre-detail' category.pk %}">{{ category.name }}</a>{% endfor %}</div>
+      {% if dj.origin or dj.active_since or dj.labels %}<dl class="dj-facts">{% if dj.origin %}<div><dt>FROM</dt><dd>{{ dj.origin }}</dd></div>{% endif %}{% if dj.active_since %}<div><dt>ACTIVE SINCE</dt><dd>{{ dj.active_since }}</dd></div>{% endif %}{% if dj.labels %}<div><dt>LABELS</dt><dd>{{ dj.labels }}</dd></div>{% endif %}</dl>{% endif %}
+      {% if dj.official_url or social_links %}<div class="dj-links">{% if dj.official_url %}<a class="dj-official-link" href="{{ dj.official_url }}" target="_blank" rel="noopener noreferrer">Official site ↗</a>{% endif %}{% if social_links %}<ul class="dj-social" aria-label="Social and streaming profiles">{% for link in social_links %}<li><a href="{{ link.url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ dj.name }} on {{ link.get_platform_display }}" title="{{ link.get_platform_display }}"><svg class="live-icon" aria-hidden="true"><use href="#icon-{{ link.platform }}"/></svg></a></li>{% endfor %}</ul>{% endif %}</div>{% endif %}
     </div>
-  </div>
-  {% if upcoming %}<section class="event-lower-section"><div class="event-section-heading"><p class="event-section-kicker">COMING UP</p><h2>Upcoming events</h2></div><div class="cards">{% for event in upcoming %}<a class="card" href="{% url 'event-detail' event.pk %}"><strong>{{ event.title }}</strong><p>{{ event.venue.name }} · {{ event.starts_at|date:'j M Y' }}</p></a>{% endfor %}</div></section>{% endif %}
+  </header>
+
+  <div class="dj-explore-grid{% if tracks and sets %} has-sets{% endif %}">{% if tracks or not sets %}<section class="event-lower-section dj-listen-section" aria-labelledby="dj-sound-heading">
+    <div class="event-section-heading"><p class="event-section-kicker">{% if tracks %}FROM THE STUDIO{% else %}LISTEN IN{% endif %}</p><h2 id="dj-sound-heading">{% if tracks %}Top songs{% else %}Explore their sound{% endif %}</h2></div>
+    {% if tracks %}<ol class="dj-media-list">{% for link in tracks %}<li><a class="dj-media-row dj-media-row--{{ link.platform }}" href="{{ link.url }}" target="_blank" rel="noopener noreferrer"><span class="dj-media-num">{{ forloop.counter }}</span><span class="dj-media-title">{{ link.title }}</span><span class="dj-media-source">{{ link.get_platform_display }} ↗</span></a></li>{% endfor %}</ol>
+    {% else %}<div class="dj-genre-grid">{% for item in genre_previews %}<a class="dj-genre-card" href="{% url 'genre-detail' item.category.pk %}" style="--genre:{{ item.category.color }}"><strong>{{ item.category.name }}</strong><span>{{ item.preview }}</span><span class="dj-media-action">Explore the genre ↗</span></a>{% endfor %}</div>{% endif %}
+  </section>{% endif %}
+
+  {% if sets %}<section class="event-lower-section dj-sets-section" aria-labelledby="dj-sets-heading">
+    <div class="event-section-heading"><p class="event-section-kicker">FROM THE BOOTH</p><h2 id="dj-sets-heading">Past sets & mixes</h2></div>
+    <ol class="dj-media-list">{% for link in sets %}<li><a class="dj-media-row dj-media-row--{{ link.platform }}" href="{{ link.url }}" target="_blank" rel="noopener noreferrer"><span class="dj-media-num">{{ forloop.counter }}</span><span class="dj-media-title">{{ link.title }}</span><span class="dj-media-source">{{ link.get_platform_display }} ↗</span></a></li>{% endfor %}</ol>
+  </section>{% endif %}</div>
+
+  {% if upcoming %}<section class="event-lower-section" aria-labelledby="dj-upcoming-heading"><div class="event-section-heading"><p class="event-section-kicker">COMING UP</p><h2 id="dj-upcoming-heading">Upcoming events</h2></div><div class="dj-upcoming-list">{% for event in upcoming %}<a class="dj-upcoming-item" href="{% url 'event-detail' event.pk %}"><time datetime="{{ event.starts_at|date:'c' }}">{{ event.starts_at|date:'j M' }}</time><span><strong>{{ event.title }}</strong><small>{{ event.venue.name }}</small></span><span aria-hidden="true">↗</span></a>{% endfor %}</div></section>{% endif %}
 </article>
 {% endblock %}

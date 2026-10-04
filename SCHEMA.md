@@ -29,6 +29,8 @@ Keep standard Django permission relationships. No profile photos, public email, 
 
 `DJProfile` now represents a single admin-curated artist or DJ, including people who do both. It has name, description, optional official URL and static photo/credit/source/license, ordering, and many-to-many broad genre categories. `Event.performers` links an event to these profiles; a listening reference's text credit remains distinct from a confirmed event lineup. The repeatable `seed_djs` command adds seven sourced examples only when their existing categories are present; it does not create or change genre taxonomy. The Madrid fixture seed creates fictional lineup profiles and links them to its events.
 
+`DJMediaLink` attaches curated listening links directly to a profile: `dj` FK, `title` string(200), validated `url` URL(2048), `kind` (`track` or `set`), `platform` (`soundcloud` or `youtube`), and nonnegative `display_order`. The pair (`dj`, `url`) is unique. Admins edit links inline on the profile; recordings stay on their publishers' sites. Profiles without links show their curated genre descriptions as a sound guide.
+
 ### GenreCategory and GenreTag
 
 | Object | Fields |
