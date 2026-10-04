@@ -3,7 +3,7 @@
 {% block content %}
 <article class="grp grp--narrow" style="--event-accent:{{ accent }}">
   <a class="detail-back" href="{% url 'group-detail' group.pk %}" aria-label="Back to group" title="Back to group" data-back-link><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg></a>
-  <div class="grp-page-head"><p class="event-kicker">GROUP REQUESTS</p><h1>Requests for {{ group.name }}</h1><p>Approving sends an offer and does not reserve a place. The applicant still has to accept it.</p></div>
+  <div class="grp-page-head"><p class="event-kicker">GROUP REQUESTS</p><h1>Requests for {{ group.name }}</h1><p>Approving adds the person to the group straight away. If they are already in another group for this event, they get an offer to accept instead, and no place is reserved.</p></div>
 
   <section class="grp-section" aria-labelledby="req-heading">
     <div class="grp-section-head"><h2 id="req-heading">Join requests</h2></div>

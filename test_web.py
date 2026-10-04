@@ -379,8 +379,6 @@ class WebTests(TestCase):
 
     def test_owner_cannot_review_or_cancel_another_users_request(self):
         gs.save_group(actor=self.owner,group_id=self.group.pk,data={'joining_mode':'approval_required'})
-        elsewhere=gs.save_group(actor=self.other,data={'event':self.event,'name':'Elsewhere','description':'x','capacity':4,'joining_mode':'public'})
-        gs.join_group(actor=self.guest,group_id=elsewhere.pk)                 # already in a group, so the owner reviews the request
         record=gs.request_join(actor=self.guest,group_id=self.group.pk)
         self.login(self.other)
         self.assertEqual(self.client.post(f'/requests/{record.pk}/approve/').status_code,403)

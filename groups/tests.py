@@ -43,12 +43,6 @@ class GroupServicesTests(TestCase):
         return s.save_group(actor=actor or self.owner, data={"event": self.event, "name": "Company",
             "description": "Meet then coordinate elsewhere", "capacity": capacity, "joining_mode": mode}, **kwargs)
 
-    def elsewhere(self, user):
-        """Put someone in a different group for the same event, so their next request needs the owner's review."""
-        holder = get_user_model().objects.create_user(f"holder{user.pk}")
-        other_group = s.save_group(actor=holder, data={"event": self.event, "name": "Elsewhere", "description": "x", "capacity": 4, "joining_mode": "public"})
-        s.join_group(actor=user, group_id=other_group.pk)
-
     def photo(self, size=(1800, 900), name="picture.png"):
         output = BytesIO()
         image = Image.new("RGB", size, "blue")
@@ -72,26 +66,43 @@ class GroupServicesTests(TestCase):
             s.join_group(actor=self.other, group_id=group.pk)
         self.assertEqual(group.memberships.count(), 2)
 
-    def test_private_offers_require_acceptance_and_do_not_reserve_spaces(self):
-        group = self.make_group(mode="approval_required", capacity=2)
+    def elsewhere(self, user):
+        """Put someone in a different group for the same event."""
+        holder = get_user_model().objects.create_user(f"holder{user.pk}")
+        other_group = s.save_group(actor=holder, data={"event": self.event, "name": "Elsewhere", "description": "x", "capacity": 4, "joining_mode": "public"})
+        s.join_group(actor=user, group_id=other_group.pk)
+
+    def test_owner_approval_adds_someone_with_no_other_group_straight_away(self):
+        group = self.make_group(mode="approval_required")
         request = s.request_join(actor=self.guest, group_id=group.pk)
-        self.assertEqual(request.status, "approved")                     # nothing to leave: approved straight away
+        self.assertEqual(request.status, "pending")                      # the owner still decides
+        approved = s.review_request(actor=self.owner, request_id=request.pk, approve=True)
+        self.assertEqual(approved.status, "accepted")                    # no second step for the applicant
+        self.assertTrue(group.memberships.filter(user=self.guest).exists())
+        self.assertTrue(Notification.objects.filter(recipient=self.guest, summary__contains="have joined").exists())
+        self.assertTrue(group.notices.filter(kind="joined", subject=self.guest).exists())
+
+    def test_approval_for_someone_in_another_group_stays_an_offer_and_does_not_reserve_a_place(self):
+        group = self.make_group(mode="approval_required", capacity=2)
+        self.elsewhere(self.guest)
+        request = s.request_join(actor=self.guest, group_id=group.pk)
         self.assertEqual(s.request_join(actor=self.guest, group_id=group.pk), request)
         with self.assertRaises(ValidationError):
             s.join_group(actor=self.guest, group_id=group.pk)
-        self.assertEqual(group.memberships.count(), 1)
+        s.review_request(actor=self.owner, request_id=request.pk, approve=True)
+        request.refresh_from_db()
+        self.assertEqual((request.status, group.memberships.count()), ("approved", 1))      # an offer, nobody added
         second = s.request_join(actor=self.other, group_id=group.pk)
-        s.accept_offer(actor=self.other, request_id=second.pk)
+        s.review_request(actor=self.owner, request_id=second.pk, approve=True)             # joins directly and fills the group
+        self.assertEqual(group.memberships.count(), 2)
         with self.assertRaises(ValidationError):
-            s.accept_offer(actor=self.guest, request_id=request.pk)
+            s.accept_offer(actor=self.guest, request_id=request.pk, confirm_switch=True)   # full now
         request.refresh_from_db()
         self.assertEqual(request.status, "approved")
 
     def test_private_request_rejection_and_reapplication(self):
         group = self.make_group(mode="approval_required")
-        self.elsewhere(self.guest)
         request = s.request_join(actor=self.guest, group_id=group.pk)
-        self.assertEqual(request.status, "pending")                      # already in another group: the owner decides
         s.review_request(actor=self.owner, request_id=request.pk, approve=False)
         replacement = s.request_join(actor=self.guest, group_id=group.pk)
         self.assertNotEqual(replacement.pk, request.pk)
@@ -157,14 +168,14 @@ class GroupServicesTests(TestCase):
         s.leave_group(actor=self.guest, group_id=group.pk)
         with self.assertRaises(ValidationError):
             s.join_group(actor=self.guest, group_id=group.pk)
-        self.assertEqual(s.request_join(actor=self.guest, group_id=group.pk).status, "approved")
+        self.assertEqual(s.request_join(actor=self.guest, group_id=group.pk).status, "pending")
 
     def test_private_to_public_preserves_requests_and_members(self):
         group = self.make_group(mode="approval_required")
         request = s.request_join(actor=self.guest, group_id=group.pk)
         s.save_group(actor=self.owner, group_id=group.pk, data={"joining_mode": "public"})
         request.refresh_from_db()
-        self.assertEqual(request.status, "approved")
+        self.assertEqual(request.status, "pending")
         s.join_group(actor=self.guest, group_id=group.pk)
         request.refresh_from_db()
         self.assertEqual(request.status, "accepted")
@@ -193,6 +204,7 @@ class GroupServicesTests(TestCase):
     def test_join_cutoff_creation_requests_and_offer_acceptance(self):
         group = self.make_group(mode="approval_required")
         request = s.request_join(actor=self.guest, group_id=group.pk)
+        s.review_request(actor=self.owner, request_id=request.pk, approve=True)
         boundary = self.event.starts_at
         with patch("groups.services.timezone.now", return_value=boundary):
             with self.assertRaises(ValidationError):

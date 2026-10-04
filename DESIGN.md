@@ -258,3 +258,5 @@ October 4 pictures: no user-facing form can remove a picture; a profile picture,
 October 4 avatars: `{% user_avatar person %}` (groups/_avatar.html) is the one way to draw a person's round picture, falling back to their coloured initial; use it for any list of people.
 
 October 4 requests: `request_join` approves a request straight away (status approved, an offer notification to the applicant) when the applicant has no membership in another group for the event; otherwise it stays pending and the owner is notified, as before. Approved requests are still accepted by the applicant, who confirms any switch then. The card flip keeps a short transition even when the browser asks for reduced motion.
+
+October 4 approval (correcting the earlier entry): requests always start pending and the owner decides. Approving adds the applicant to the group immediately when they are in no other group for the event and there is room (the request becomes accepted); if they are in another group, or the group is full, approving leaves an offer that the applicant accepts, confirming any switch. The earlier automatic approval was removed.
