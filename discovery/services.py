@@ -275,21 +275,30 @@ def open_poster(*, event_id, actor=None):
     return event.poster.open("rb")
 
 
-def search_events(*, starts_at=None, ends_at=None, category_ids=(), tag_ids=(), match="any", bounds=None, now=None):
+def search_events(*, starts_at=None, ends_at=None, category_ids=(), tag_ids=(), match="any", bounds=None, now=None,
+                  unbounded=False):
+    """Public events from starts_at (now by default) to ends_at (two weeks on by default), earliest first.
+
+    With unbounded=True there is no end date: everything that has not finished yet, nearest in time first."""
     now = now or timezone.now()
     starts_at = starts_at or now
-    try:
-        ends_at = ends_at or (starts_at + timedelta(days=14))
-    except (TypeError, OverflowError):
-        raise ValidationError("Date window is outside supported limits.")
-    validate_event_times(starts_at, ends_at)
+    if unbounded:
+        ends_at = None
+    else:
+        try:
+            ends_at = ends_at or (starts_at + timedelta(days=14))
+        except (TypeError, OverflowError):
+            raise ValidationError("Date window is outside supported limits.")
+        validate_event_times(starts_at, ends_at)
     if match not in {"any", "all"}:
         raise ValidationError("Genre matching must be 'any' or 'all'.")
     categories, tags = _ids(category_ids), _ids(tag_ids)
     if GenreCategory.objects.filter(pk__in=categories).count() != len(categories) or GenreTag.objects.filter(pk__in=tags).count() != len(tags):
         raise ValidationError("Unknown genre selection.")
-    events = public_events().filter(cancelled_at__isnull=True, starts_at__lt=ends_at,
-                                    ends_at__gt=starts_at).select_related("venue").prefetch_related("categories", "tags")
+    events = public_events().filter(cancelled_at__isnull=True, ends_at__gt=starts_at)
+    if ends_at is not None:
+        events = events.filter(starts_at__lt=ends_at)
+    events = events.select_related("venue").prefetch_related("categories", "tags")
     if match == "all":
         for category_id in categories:
             events = events.filter(categories__id=category_id)
@@ -315,7 +324,7 @@ def search_events(*, starts_at=None, ends_at=None, category_ids=(), tag_ids=(), 
 
 
 def nearby_performers(*, latitude, longitude, radius_km=30, now=None, search_terms=()):
-    """One profile per performer, tied to their next public event within 14 days."""
+    """One profile per performer, tied to their next public event (any date), the soonest first."""
     try:
         lat, lon = float(latitude), float(longitude)
         if not (-90 <= lat <= 90 and -180 <= lon <= 180):
@@ -327,7 +336,7 @@ def nearby_performers(*, latitude, longitude, radius_km=30, now=None, search_ter
     now = now or timezone.now()
     lat_delta = radius_km / 111.0
     lon_delta = min(180, radius_km / max(111.0 * abs(cos(radians(lat))), 0.001))
-    events = search_events(starts_at=now, ends_at=now + timedelta(days=14), now=now).filter(
+    events = search_events(starts_at=now, now=now, unbounded=True).filter(
         venue__latitude__gte=max(-90, lat - lat_delta),
         venue__latitude__lte=min(90, lat + lat_delta), performers__isnull=False,
     )

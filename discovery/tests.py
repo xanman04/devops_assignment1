@@ -524,3 +524,25 @@ class DiscoveryServicesTests(TestCase):
         second.performers.add(performer)
         results = s.nearby_performers(latitude=48.85, longitude=2.35, search_terms={"Deep House"})
         self.assertEqual(results, [(performer, second)])
+
+    def test_far_future_events_still_appear_soonest_first(self):
+        soon = self.make_event(title="Soon night", starts_at=self.start + timedelta(days=2), ends_at=self.start + timedelta(days=2, hours=5))
+        far = self.make_event(title="Far night", starts_at=self.start + timedelta(days=200), ends_at=self.start + timedelta(days=200, hours=5))
+        self.assertNotIn(far, list(s.search_events()))                                # the map's default window is still two weeks
+        titles = [event.title for event in s.search_events(unbounded=True)]
+        self.assertLess(titles.index("Soon night"), titles.index("Far night"))
+        discover = self.client.get("/discover/")
+        events = next(section for section in discover.context["sections"] if section["id"] == "events")
+        self.assertIn("Far night", [card["title"] for card in events["cards"]])
+
+    def test_nearby_performers_have_no_date_limit_and_come_in_date_order(self):
+        later = DJProfile.objects.create(name="Later DJ", description="x")
+        sooner = DJProfile.objects.create(name="Sooner DJ", description="x")
+        for dj in (later, sooner):
+            dj.categories.add(self.house)
+        far = self.make_event(title="Months away", starts_at=self.start + timedelta(days=90), ends_at=self.start + timedelta(days=90, hours=5))
+        near = self.make_event(title="Next week", starts_at=self.start + timedelta(days=7), ends_at=self.start + timedelta(days=7, hours=5))
+        far.performers.add(later)
+        near.performers.add(sooner)
+        results = s.nearby_performers(latitude=48.85, longitude=2.35)
+        self.assertEqual([performer.name for performer, event in results], ["Sooner DJ", "Later DJ"])

@@ -67,7 +67,7 @@ def discover(request):
     query = request.GET.get("q", "").strip()[:80]
     category_query = models.GenreCategory.objects.all()
     tag_query = models.GenreTag.objects.select_related("category")
-    event_query = services.search_events()
+    event_query = services.search_events(unbounded=True)
     reference_query = models.GenreListeningReference.objects.all()
     dj_query = models.DJProfile.objects.all()
     if query:
