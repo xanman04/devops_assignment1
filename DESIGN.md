@@ -256,3 +256,5 @@ October 4 back arrow: `browse.js` records the last two non-form pages in session
 October 4 pictures: no user-facing form can remove a picture; a profile picture, group photo or event poster stays until a new one is uploaded. The group edit form offers Adjust on the saved photo. The Django admin keeps poster removal for administrators.
 
 October 4 avatars: `{% user_avatar person %}` (groups/_avatar.html) is the one way to draw a person's round picture, falling back to their coloured initial; use it for any list of people.
+
+October 4 requests: `request_join` approves a request straight away (status approved, an offer notification to the applicant) when the applicant has no membership in another group for the event; otherwise it stays pending and the owner is notified, as before. Approved requests are still accepted by the applicant, who confirms any switch then. The card flip keeps a short transition even when the browser asks for reduced motion.

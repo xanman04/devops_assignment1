@@ -216,6 +216,13 @@ def request_join(*, actor, group_id):
     if existing:
         return existing
     request = JoinRequest.objects.create(group=group, applicant=actor)
+    if not Membership.objects.filter(user=actor, group__event_id=group.event_id).exists():
+        # Nothing to give up, so there is nothing for the owner to weigh: approve straight away. The person still
+        # accepts the offer themselves, and a place is not reserved until they do.
+        request.status, request.reviewed_at = JoinRequest.Status.APPROVED, timezone.now()
+        request.save(update_fields=["status", "reviewed_at"])
+        _notify(actor.pk, Notification.Kind.GROUP_OFFER, "Your group request was approved. Accept to join; space is not reserved.", request=request)
+        return request
     _notify(group.owner_id, Notification.Kind.GROUP_REQUEST, "Someone requested to join your attendance group.", request=request)
     return request
 
