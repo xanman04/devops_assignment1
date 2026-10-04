@@ -1290,3 +1290,6 @@ body.account-locked { overflow:hidden; }
 
 .filter-note { margin:0.375rem 0 0; color:#8f96a4; font-size:0.75rem; }
 .form-page select[multiple] option[hidden] { display:none; }
+
+.form-page select.time-select { width:auto; min-width:7.5rem; margin-left:0.5rem; vertical-align:top; }
+.form-page input[type=date] { width:auto; min-width:11rem; }

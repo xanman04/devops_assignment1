@@ -9,7 +9,7 @@
   location.replace('/'+s.getItem('bassline-slot')+location.pathname+location.search+location.hash);}}catch(e){}})();</script>
   <title>{% block title %}Bassline{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'app.css' %}?v=20261001e">
-  <link rel="stylesheet" href="{% static 'live.css' %}?v=20261004k">
+  <link rel="stylesheet" href="{% static 'live.css' %}?v=20261004l">
   {% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}" data-account="{% if user.is_authenticated %}{{ user.pk }}{% endif %}" data-root="{% url 'home' %}">

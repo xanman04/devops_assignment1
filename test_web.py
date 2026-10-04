@@ -1,5 +1,6 @@
 """HTTP integration checks for permissions, form/service boundaries and privacy."""
 from datetime import timedelta
+from zoneinfo import ZoneInfo
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -484,3 +485,17 @@ class WebTests(TestCase):
         self.assertEqual(self.client.post(edit, self.event_data()).status_code, 302)       # saving does not reinstate it
         self.event.refresh_from_db()
         self.assertIsNotNone(self.event.cancelled_at)
+
+    def test_times_are_a_quarter_hour_drop_down_without_seconds_and_old_times_survive(self):
+        self.login()
+        page = self.client.get('/events/new/')
+        self.assertContains(page, 'class="time-select"')
+        self.assertContains(page, '<option value="21:15:00">21:15</option>')
+        self.assertNotContains(page, 'type="time"')
+        self.assertNotContains(page, 'step="1"')
+        odd = timezone.now().replace(hour=21, minute=7, second=0, microsecond=0) + timedelta(days=5)
+        dm.Event.objects.filter(pk=self.event.pk).update(starts_at=odd, ends_at=odd + timedelta(hours=3))
+        zone = ZoneInfo(self.event.venue.timezone)
+        local = odd.astimezone(zone)
+        edit = self.client.get(f'/events/{self.event.pk}/edit/')
+        self.assertContains(edit, f'<option value="{local:%H:%M}:00" selected>{local:%H:%M}</option>')

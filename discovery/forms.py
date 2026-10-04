@@ -1,6 +1,6 @@
 """Validate public/admin inputs before service-backed saves."""
 from django import forms
-from datetime import datetime
+from datetime import datetime, time
 from zoneinfo import ZoneInfo
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -37,15 +37,43 @@ class ClassificationForm(forms.ModelForm):
         return data
 
 
+class TimeSelect(forms.Select):
+    """A time of day as a drop-down in 24-hour time every 15 minutes, with no seconds. A saved time that is not on the
+    quarter hour is still offered so editing an old event does not change it."""
+    STEP = 15
+
+    def __init__(self, attrs=None):
+        choices = [("", "--:--")] + [(f"{h:02d}:{m:02d}:00", f"{h:02d}:{m:02d}") for h in range(24) for m in range(0, 60, self.STEP)]
+        super().__init__(attrs={"class": "time-select", **(attrs or {})}, choices=choices)
+
+    def format_value(self, value):
+        if isinstance(value, time):
+            value = value.strftime("%H:%M:00")
+        elif isinstance(value, str) and len(value) == 5:
+            value += ":00"
+        return super().format_value(value)
+
+    def optgroups(self, name, value, attrs=None):
+        wanted = value[0] if value else ""
+        if wanted and wanted not in dict(self.choices):
+            self.choices = sorted(list(self.choices) + [(wanted, wanted[:5])], key=lambda choice: choice[0])
+        return super().optgroups(name, value, attrs)
+
+
+class DateAndTimeWidget(forms.SplitDateTimeWidget):
+    """Date picker plus the quarter-hour time drop-down."""
+
+    def __init__(self, **kwargs):
+        super().__init__(date_attrs={"type": "date"}, date_format="%Y-%m-%d", **kwargs)
+        self.widgets = [self.widgets[0], TimeSelect()]
+
+
 class VenueLocalDateTimeField(forms.SplitDateTimeField):
     """Interpret wall-clock input in the venue zone, with Django's DST checks."""
     venue_timezone = ZoneInfo("UTC")
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault("widget", forms.SplitDateTimeWidget(
-            date_attrs={"type": "date"}, time_attrs={"type": "time", "step": "1"},
-            date_format="%Y-%m-%d", time_format="%H:%M:%S",
-        ))
+        kwargs.setdefault("widget", DateAndTimeWidget())
         super().__init__(*args, **kwargs)
 
     def compress(self, data_list):
