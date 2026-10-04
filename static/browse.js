@@ -1,4 +1,19 @@
+/* Remember the last two ordinary pages (not forms) this tab showed, so Back can skip over a form the person just saved. */
+const FORM_PAGE = /\/(edit|new|report)\/$|\/accounts\/(settings|login|register)\/$/;
+function noteTrail() {
+  try {
+    const here = location.pathname;
+    if (FORM_PAGE.test(here)) return;
+    const current = sessionStorage.getItem('bassline-here');
+    if (current !== here) {
+      if (current) sessionStorage.setItem('bassline-before', current);
+      sessionStorage.setItem('bassline-here', here);
+    }
+  } catch { /* storage blocked: Back falls back to the link address */ }
+}
+
 window.initializeBrowse = () => {
+  noteTrail();
   window.cleanupBrowse?.();
   const observers=[];
   const controller=new AbortController();
@@ -93,6 +108,12 @@ document.addEventListener('click', event => {
   // Never "go back" into the same page (right after a form post) or into a sub-page this page links to
   // (data-back-avoid), which would bounce between the two forever; follow the link's own address instead.
   if (referrer.pathname===location.pathname) return;
+  if (FORM_PAGE.test(referrer.pathname)) {                    // came back from saving a form: go to where the form was opened from
+    let before=null;
+    try{before=sessionStorage.getItem('bassline-before');}catch{before=null;}
+    if (before && before!==location.pathname && !FORM_PAGE.test(before)) {event.preventDefault();location.assign(before);}
+    return;
+  }
   const avoid=link.dataset.backAvoid;
   if (avoid && new RegExp(avoid).test(referrer.pathname)) return;
   event.preventDefault();history.back();
