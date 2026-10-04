@@ -97,7 +97,7 @@ class TabSlotTests(TestCase):
         first, second = self.sign_in(self.SLOT_A, "alice"), self.sign_in(self.SLOT_B, "bob")
         self.assertEqual(first.status_code, 302)
         self.assertEqual(second.status_code, 302)
-        self.assertEqual(first["Location"], f"/{self.SLOT_A}/my-activity/")
+        self.assertEqual(first["Location"], f"/{self.SLOT_A}/accounts/profile/")
         self.assertEqual(self.who(f"/{self.SLOT_A}"), "Alice")
         self.assertEqual(self.who(f"/{self.SLOT_B}"), "Bob")
         self.assertEqual(self.who(""), "")          # an address without a prefix has no login of its own

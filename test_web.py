@@ -218,7 +218,7 @@ class WebTests(TestCase):
 
     def test_login_logout_and_external_next(self):
         response = self.client.post('/accounts/login/?next=https://example.org/', {'username':'guest','password':'Test-password-492!'})
-        self.assertRedirects(response, '/my-activity/')
+        self.assertRedirects(response, '/accounts/profile/')
         self.assertEqual(self.client.get('/accounts/logout/').status_code, 405)
         self.assertRedirects(self.client.post('/accounts/logout/'), '/')
         self.assertEqual(self.client.get('/accounts/settings/').status_code, 302)

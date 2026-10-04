@@ -83,7 +83,7 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 LOGIN_URL = "login"
 # What the profile calls the section holding event cards and achievements. Change this one word to rename it.
 COLLECTION_NAME = "Collection"
-LOGIN_REDIRECT_URL = "activity"
+LOGIN_REDIRECT_URL = "profile"
 LOGOUT_REDIRECT_URL = "home"
 # Browser tile requests retain an origin Referer, as required by OSM's tile policy.
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
