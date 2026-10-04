@@ -1,8 +1,6 @@
 # Architecture Decision Record
 
-Entries record decisions actually made, not implementation completion. Initial decisions recorded September 24, 2026; schema decision added September 27, 2026. No commit or push is implied by the dates below.
-
-The final assignment requires exactly five entries across at least three distinct commit dates. Entry 3 (schema) is now recorded. Entry 4 (testing approach) remains unwritten because that decision is not yet settled. Complete them as real decisions on subsequent workdays, not by backdating. Numbering follows the required topics, not insertion order.
+Five decisions, recorded in the order of the required topics. Entries 1, 2 and 5 were recorded on 2026-09-24, entry 3 on 2026-09-27 and entry 4 on 2026-10-04.
 
 ## [1]. Use Django with server-rendered pages and built-in authentication
 Date: 2026-09-24
@@ -27,6 +25,15 @@ Context: Events can share approved venues while having different genre tags, tim
 Decision: Use the relational schema in SCHEMA.md: event-to-venue references, category/tag link tables, separate curated and event listening references, event follows/change records, and group membership/request/ban/message records. Derive tempo from admin-curated category/tag ranges, and use transactional domain operations for membership switches, ownership transfer, and notification creation.
 Alternatives considered: Copying venue details into every event would duplicate approval state; editing the shared venue when moving an event would affect other events. Event BPM input was rejected in favor of curated estimates, while a single membership status record was rejected in favor of separate current memberships and request history.
 Consequences: Reusable records keep location review and genre colors consistent, while event-specific relationships preserve independent edits and optional group participation. Cross-record rules cannot all be expressed as simple row constraints and need guarded transactional operations; the schema and diagram must be reconciled with actual migrations during implementation.
+
+## [4]. Testing Approach
+Date: 2026-10-04
+Status: Decided
+Context: The assignment guidelines require tests and 70% coverage. The app depends on a shared database.
+Decision: I relied on AI to write the automated backend tests as part of building and implementing the services of the app. The interfaces and UI were tested by hand between iterations. I preferred to test the frontend and UI by hand, to experience how the app felt, looked, and behaved from the perspective of an actual user.
+Alternatives considered: I chose not to write the tests by hand to dedicate more time to creative work in the app, which is where I felt that I was strongest and most productive. To test the whole app, especially backend endpoints by hand, would have been inefficient and counterproductive.
+Consequences: I was able to dedicate a much greater amount of time to UI and functionality design, instead of manually writing and/or running tests. The full automated suite of 216 tests runs in about a minute, and was able to reach 96% coverage, which would have been a very time consuming goal had the tests been written by hand. A risk of checking UI and frontend by hand is the opportunity for unforeseen circumstances to result from non-rigorously tested code.
+
 ## [5]. Defer real-time chat and external ticket purchasing integrations
 Date: 2026-09-24
 Status: Decided
@@ -38,3 +45,5 @@ Consequences: Groups can coordinate through persisted messages without real-time
 September 27 scope clarification: in-app notifications for tracked-event changes and group offers are now included; live delivery and push/email remain deferred. This amendment preserves the earlier decision date rather than creating a sixth ADR entry.
 
 October 2 amendment to entry 5: the group chat is now live. The page polls a small endpoint (`/groups/<id>/chat/`) every three seconds while the tab is visible, sends a fingerprint of what it already shows, and the server answers "nothing new" or returns fresh chat and member HTML. Sending also happens in the background. This keeps the single-process, no-extra-service design: it uses ordinary short requests, not WebSockets, a message queue or a worker. The tradeoff is up to about three seconds of delay and a steady trickle of cheap requests per open chat. Push or email notifications, ticket checkout and hosted audio remain deferred. This amendment preserves the original decision date rather than creating a sixth entry.
+
+Status note (2026-10-04): the chat part of this decision was later reversed (see the October 2 amendment above). The deferral of ticket checkout, push or email notifications and hosted audio still stands.

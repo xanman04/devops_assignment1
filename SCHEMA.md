@@ -141,7 +141,7 @@ The cross-group event rule requires transactional business logic, not merely `(g
 
 `group` FK, `applicant` User FK, `status` (`pending`, `approved`, `rejected`, `accepted`, `cancelled`), `requested_at`, optional `reviewed_by` User FK, `reviewed_at`, `accepted_at`.
 
-Keep attempts as history; at most one unresolved (`pending` or `approved`) request per `(group, applicant)` through a conditional uniqueness constraint. Rejected/removed applicants may request again unless banned. Applicants may cancel pending/approved offers. Approvals do not create memberships or reserve capacity.
+Keep attempts as history; at most one unresolved (`pending` or `approved`) request per `(group, applicant)` through a conditional uniqueness constraint. Rejected/removed applicants may request again unless banned. Applicants may cancel pending/approved offers. An approval never reserves capacity in advance. When the owner approves and the applicant is in no other group for the event and there is room, the service adds them at once and marks the request `accepted` (October 4 behavior); otherwise the approval stays an offer that the applicant accepts, confirming any switch.
 
 ### GroupBan
 
@@ -157,7 +157,7 @@ The live chat stores nothing extra: `chat_signature` fingerprints the message co
 
 `group` FK, `author` User FK, `body` text, `created_at`, optional `edited_at`, `deleted_at`, and `deleted_by` User FK. Non-deleted messages require nonempty text. On deletion, clear body and retain a tombstone with deletion metadata; do not retain edit history/deleted text.
 
-Only current members read/post. Messages contain 1–4,000 characters. Authors may edit/delete their own messages while authorized to access the group; admins can remove messages. Group owners cannot edit/delete others' messages just because they own the group. No attachments or live delivery.
+Only current members read/post. Messages contain 1–4,000 characters. Authors may edit/delete their own messages while authorized to access the group; admins can remove messages. Group owners cannot edit/delete others' messages just because they own the group. No attachments. The chat updates by short polling (see GroupNotice below), not WebSockets.
 
 ### Atomic membership behavior
 
@@ -193,7 +193,7 @@ Delivery is in-app on load/refresh. Phone push, browser banners/push, email, pri
 
 ## Relationship diagram
 
-Main entities and relationships; FK reviewer/actor aliases and Django internal permission/session tables are omitted for readability. Field tables above specify their attributes. Many-to-many links correspond to the explicit unique-pair tables described above.
+All 26 model tables and their relationships (October 4, 2026, reconciled with the migrations). Repeated reviewer/actor/subject foreign keys to User and Django's own auth/session tables are omitted for readability; the column-level tables are in the sections above. Many-to-many links through explicit unique-pair tables are shown as their own entities; `DJProfile`-`GenreCategory` and `Event`-`DJProfile` use Django's automatic join tables (`discovery_djprofile_categories`, `discovery_event_performers`).
 
 ```mermaid
 erDiagram
@@ -229,6 +229,16 @@ erDiagram
     EventChange o|--o{ Notification : announces
     JoinRequest o|--o{ Notification : offers
     AttendanceGroup o|--o{ Notification : announces
+    DJProfile ||--o{ DJSocialLink : has
+    DJProfile ||--o{ DJMediaLink : lists
+    DJProfile }o--o{ GenreCategory : plays
+    Event }o--o{ DJProfile : features
+    User ||--o{ EventCard : collects
+    Event ||--o{ EventCard : proves
+    AttendanceGroup ||--o{ GroupNotice : announces
+    User ||--o{ GroupNotice : subject
+    User ||--o{ GroupHistory : records
+    AttendanceGroup o|--o{ GroupHistory : refers_to
 ```
 
 ## Implementation handoff
@@ -243,7 +253,7 @@ September 28: group services implement creation/editing, membership transitions,
 
 September 28 step 2: public Django request handlers, forms/templates, registration/login/settings, recipient inbox, group photo access, and Leaflet map UI are implemented. POST writes use CSRF and service calls with the authenticated actor; form fields cannot assign creators, owners, review state, or moderation hiding. GET views restrict access to private event/message/request data. Existing members retain boards after event changes without receiving unapproved location coordinates. My Activity and long message/request/inbox histories are paginated. No additional schema migration was needed.
 
-Raw ORM writes bypass service rules. 101 schema/discovery/group/HTTP tests pass against migrated SQLite, including competing joins, capacity, permissions, and privacy. No coverage percentage is claimed; browser visual/interaction review remains pending because automation could not start. The final report diagram must show actual table columns and relationships. ADR-4 remains pending until broader testing priorities and coverage approach are decided. Implemented routes are in ROUTES.md.
+Raw ORM writes bypass service rules. 216 tests pass against migrated SQLite (October 4, 2026), including competing joins, capacity, permissions, and privacy; the coverage command and result are in the README. Implemented routes are in ROUTES.md.
 
 ### EventCard (added October 4)
 

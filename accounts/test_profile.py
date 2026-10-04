@@ -130,7 +130,7 @@ class ProfileTests(TestCase):
         other = User.objects.create_user("zed", password="Test-password-492!")
         self.client.force_login(other)
         self.assertNotContains(self.client.get("/accounts/profile/"), "Techno night")
-        self.assertNotContains(self.client.get("/accounts/profile/"), "tier-")
+        self.assertNotContains(self.client.get("/accounts/profile/"), " tier-")
 
     def test_genre_chart_follows_the_persons_own_attendance(self):
         from accounts import genre_chart

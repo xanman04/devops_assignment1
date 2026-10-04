@@ -128,7 +128,7 @@ python -m venv .venv
 
 On Linux/macOS use `.venv/bin/python` instead. Open http://localhost:8000/ for map discovery. Startup applies committed migrations and collects static assets automatically, then starts Waitress on `0.0.0.0` in one process, without a reloader or frontend server. Restart the process after code changes; it does not auto-reload.
 
-Create an account through the public navigation. Use admin to curate genres and approve proposed venues; then list events and use optional groups through the public pages. Map JavaScript requests browser location permission and falls back to Paris when unavailable/declined. Pan to explore another area. Map results refresh automatically; the server-rendered upcoming-events list is also usable without JavaScript. Browser date filters span local midnight through the selected end date exclusively; event detail/form times use the venue timezone. No location history is saved to accounts.
+A fresh clone starts with an empty database: no genre categories, events or users. The demo and import commands further down expect the broad genre categories to exist first, and no command creates them, so add them in admin. Create an account through the public navigation. Use admin to curate genres and approve proposed venues; then list events and use optional groups through the public pages. Map JavaScript requests browser location permission and falls back to Paris when unavailable/declined. Pan to explore another area. Map results refresh automatically; the server-rendered upcoming-events list is also usable without JavaScript. Browser date filters span local midnight through the selected end date exclusively; event detail/form times use the venue timezone. No location history is saved to accounts.
 
 The live map uses MapLibre GL JS 6.3.0 directly with [OpenFreeMap's Dark vector style](https://openfreemap.org/quick_start/), adjusted in the browser to a clearer charcoal palette. Map vectors move continuously while the event endpoint refreshes after movement; existing pins remain visible until replacement results arrive. Main navigation keeps the map mounted across Near me, Discover, My events, Groups, Notifications, and Profile, so returning to Near me restores the same view without recreating the WebGL map. Other detail/form links remain normal page loads; the last map center and zoom are kept in session storage for those returns. The map library and tiles require internet access; no API key, Node runtime, or frontend package manifest is needed. Browser geolocation draws only a small dot, and the center control animates back to it. The bottom label contains only the matching event and venue counts. The map position is not saved to accounts. Tile requests reveal the viewed map area to the provider; no offline download or prefetch is provided. The list panel closes with X, Escape, a second click on List, or a map click.
 
@@ -234,12 +234,24 @@ Venue names and addresses were checked against the [RA Madrid club directory](ht
 ```powershell
 .venv/Scripts/python.exe manage.py check
 .venv/Scripts/python.exe manage.py makemigrations --check --dry-run
-.venv/Scripts/python.exe manage.py test groups discovery test_schema test_web
+.venv/Scripts/python.exe manage.py test
 ```
 
-**142 tests pass** across schema, discovery, groups, HTTP, and demo data. These cover permissions, rollback, filters, timezone/DST, notifications, membership switching, offers/capacity, bans/ownership, messages, image processing and replacement, private event posters, performer deduplication and nearby selection, separate-connection SQLite races, CSRF, forged form fields, private venue/message access, and automatic tempo recalculation. Migration consistency and live public page/static asset responses were also checked. No coverage percentage has been measured; the **70% core-logic coverage** requirement and ADR-4 remain outstanding.
+**216 tests pass** (measured October 4, 2026) across schema, discovery, groups, accounts, HTTP, and demo data. These cover permissions, rollback, filters, timezone/DST, notifications, membership switching, offers/capacity, bans/ownership, messages, image processing and replacement, private event posters, performer deduplication and nearby selection, separate-connection SQLite races, CSRF, forged form fields, private venue/message access, and automatic tempo recalculation. Migration consistency and live public page/static asset responses were also checked.
 
-Database constraints guard row-level invariants. Both domains' services validate and use transactions; raw ORM writes can bypass these rules and are not a supported interface. SQLite uses IMMEDIATE transactions and a timeout; handlers translate competing lock failures into retry responses. Pages use GET for reads, POST plus CSRF for writes, and redirects after successful saves. Visual polish, a browser interaction review, measured coverage, and the remaining submission records/report are still outstanding.
+### Coverage
+
+Coverage is measured with coverage.py, which is not in `requirements.txt` (install it with `pip install coverage`; it is a test tool, not an application dependency):
+
+```powershell
+.venv/Scripts/python.exe -m pip install coverage
+.venv/Scripts/python.exe -m coverage run --source=accounts,config,discovery,groups,notifications --omit="*/migrations/*,*/tests.py,*/test_*.py,*/management/commands/*,*/admin.py" manage.py test
+.venv/Scripts/python.exe -m coverage report
+```
+
+Result (October 4, 2026): **96%** statement coverage of the selected Python production code (2,296 statements, 97 missed), and **95%** for the three `services.py` files that hold the business logic (716 statements, 35 missed), against the course's 70% core-logic requirement. Migrations, tests, admin files and management commands are excluded, and no JavaScript or branch coverage was measured. A `.coverage` data file is written to the working directory; it is ignored by Git.
+
+Database constraints guard row-level invariants. Both domains' services validate and use transactions; raw ORM writes can bypass these rules and are not a supported interface. SQLite uses IMMEDIATE transactions and a timeout; handlers translate competing lock failures into retry responses. Pages use GET for reads, POST plus CSRF for writes, and redirects after successful saves. There are no automated JavaScript tests; browser behavior was checked by hand and with simulated input.
 
 ### Group services
 
@@ -251,7 +263,7 @@ Photos accept JPG/PNG/WebP up to 5 MiB and 20 megapixels, reject animation/inval
 
 ## Scope boundaries
 
-Deferred: React/React Native frontend, native mobile app, ticket purchasing integrations, automated event imports, venue partnerships, verified organizer accounts, live chat, hidden invite-only groups, audio hosting, and community editing of the genre directory. Listening references are external links, not an uploaded music catalog.
+Deferred: React/React Native frontend, native mobile app, ticket purchasing integrations, automated event imports, venue partnerships, verified organizer accounts, push or email notifications, hidden invite-only groups, audio hosting, and community editing of the genre directory. Listening references are external links, not an uploaded music catalog.
 
 Venue approval means a location record was reviewed, not that an event or organizer is guaranteed safe. Reports trigger review rather than automatic bans or removal. Location history is not part of the product.
 
