@@ -1303,3 +1303,6 @@ body.account-locked { overflow:hidden; }
 
 .grp-fact-person { display:flex; align-items:center; gap:0.5rem; }
 .grp-fact-person .grp-avatar { width:1.75rem; height:1.75rem; font-size:0.75rem; }
+
+.note-readall { margin:0 0 0 auto; }
+.note-readall + .note-tab--link { margin-left:0; }

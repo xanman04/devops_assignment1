@@ -11,6 +11,11 @@ def inbox(*, actor, unread_only=False):
     return records.filter(read_at__isnull=True) if unread_only else records
 
 
+def mark_all_read(*, actor):
+    """Mark every unread notification of this person as read; returns how many changed."""
+    return inbox(actor=actor, unread_only=True).update(read_at=timezone.now())
+
+
 def mark_read(*, actor, notification_id):
     record = inbox(actor=actor).get(pk=notification_id)
     if record.read_at is None:

@@ -19,7 +19,7 @@
           <strong>{{ card.group.name }}</strong>
           <span class="grp-card-event">{{ card.event.title }}</span>
           <span class="grp-card-when">{% timezone card.zone %}{{ card.starts_at|date:'D j M, H:i' }}{% endtimezone %}{% if card.cancelled %} · Cancelled{% elif card.past %} · Past{% endif %}</span>
-          <span class="grp-card-foot"><span class="grp-dots" aria-hidden="true">{% for on in card.dots %}<i{% if on %} class="on"{% endif %}></i>{% endfor %}</span><span>{% if card.full %}Full{% else %}{{ card.joined }} of {{ card.group.capacity }} joined{% endif %}</span><span class="go-mode go-mode--{{ card.group.joining_mode }}">{% if card.group.joining_mode == 'public' %}Open{% else %}Approval{% endif %}</span></span>
+          <span class="grp-card-foot"><span class="grp-dots" aria-hidden="true">{% for on in card.dots %}<i{% if on %} class="on"{% endif %}></i>{% endfor %}</span><span>{% if card.full %}Full{% else %}{{ card.joined }} of {{ card.group.capacity }} joined{% endif %}</span><span class="go-mode go-mode--{{ card.group.joining_mode }}">{% if card.group.joining_mode == 'public' %}Open{% else %}Private{% endif %}</span></span>
         </span>
       </a>{% endfor %}</div>
     {% else %}<div class="grp-empty-panel"><strong>No group memberships yet.</strong><p>Open any event and use "Attending alone?" to join a group or start your own.</p><a class="btn btn-primary" href="{% url 'discover' %}">Find an event</a></div>{% endif %}

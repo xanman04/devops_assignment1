@@ -20,6 +20,14 @@ def inbox(request):
 @endpoint
 @login_required
 @require_POST
+def read_all(request):
+    services.mark_all_read(actor=request.user)
+    return redirect("inbox")
+
+
+@endpoint
+@login_required
+@require_POST
 def read(request, notification_id):
     services.mark_read(actor=request.user, notification_id=notification_id)
     return redirect("inbox")

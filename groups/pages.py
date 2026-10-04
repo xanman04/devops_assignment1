@@ -147,9 +147,17 @@ def requests_list(request, group_id):
     group = services.get_group(group_id=group_id, actor=request.user)
     require_manager(request.user, group)
     categories = list(group.event.categories.all())
+    page = Paginator(group.join_requests.select_related("applicant").order_by("-requested_at", "-id"), 30).get_page(request.GET.get("page"))
+    elsewhere = set(models.Membership.objects.filter(group__event_id=group.event_id, user_id__in=[r.applicant_id for r in page])
+                    .exclude(group_id=group.pk).values_list("user_id", flat=True))
+    for record in page:
+        # Approving adds the person straight away, so Approved is the whole story unless they are in another group
+        # for this event; then it is still an offer they must accept.
+        record.label = ("Approved offer" if record.applicant_id in elsewhere else "Approved") if record.status in ("approved", "accepted") \
+            else record.get_status_display()
     return render(request, "groups/requests.html", {
         "group": group, "accent": categories[0].color if categories else "#8d95a6",
-        "requests": Paginator(group.join_requests.select_related("applicant").order_by("-requested_at", "-id"), 30).get_page(request.GET.get("page")),
+        "requests": page,
         "bans": group.bans.filter(lifted_at__isnull=True).select_related("user"),
     })
 

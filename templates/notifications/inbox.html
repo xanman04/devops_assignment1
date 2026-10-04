@@ -8,6 +8,7 @@
   <div class="note-tabs" role="tablist" aria-label="Filter notifications">
     <a class="note-tab{% if not unread %} is-active{% endif %}" href="{% url 'inbox' %}" role="tab" aria-selected="{% if not unread %}true{% else %}false{% endif %}">All</a>
     <a class="note-tab{% if unread %} is-active{% endif %}" href="{% url 'inbox' %}?unread=1" role="tab" aria-selected="{% if unread %}true{% else %}false{% endif %}">Unread{% if unread_count %}<span class="note-count">{{ unread_count }}</span>{% endif %}</a>
+    {% if unread_count %}<form method="post" action="{% url 'notification-read-all' %}" class="note-readall">{% csrf_token %}<button class="btn btn-ghost btn-sm">Mark all as read</button></form>{% endif %}
     <a class="note-tab note-tab--link" href="{% url 'activity' %}">My requests and followed events →</a>
   </div>
 

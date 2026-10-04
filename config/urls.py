@@ -65,6 +65,7 @@ urlpatterns = [
     path("messages/<int:message_id>/edit/", groups.message_edit, name="message-edit"),
     path("messages/<int:message_id>/delete/", groups.message_delete, name="message-delete"),
     path("notifications/", notices.inbox, name="inbox"),
+    path("notifications/read-all/", notices.read_all, name="notification-read-all"),
     path("notifications/<int:notification_id>/read/", notices.read, name="notification-read"),
     path("my-activity/", activity, name="activity"),
 ]

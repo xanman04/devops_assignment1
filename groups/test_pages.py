@@ -209,6 +209,24 @@ class RequestsSplitTests(TestCase):
         self.client.force_login(self.owner)
         self.assertContains(self.client.get(f"/groups/{group.pk}/requests/"), f'<img src="/accounts/avatar/{self.guest.pk}/"')
 
+    def test_requests_page_says_approved_and_only_calls_it_an_offer_when_in_another_group(self):
+        from groups.models import JoinRequest
+        group = self.make_group()
+        group.joining_mode = "approval_required"
+        group.save(update_fields=["joining_mode"])
+        record = JoinRequest.objects.create(group=group, applicant=self.guest, status="accepted")
+        self.client.force_login(self.owner)
+        page = self.client.get(f"/groups/{group.pk}/requests/")
+        self.assertContains(page, ">Approved</span>")
+        self.assertNotContains(page, "Approved offer")
+        record.status = "approved"
+        record.save(update_fields=["status"])
+        self.assertNotContains(self.client.get(f"/groups/{group.pk}/requests/"), "Approved offer")
+        holder = self.User.objects.create_user("holder_x", password="x")
+        other = gs.save_group(actor=holder, data={"event": group.event, "name": "Elsewhere", "description": "x", "capacity": 4, "joining_mode": "public"})
+        gs.join_group(actor=self.guest, group_id=other.pk)
+        self.assertContains(self.client.get(f"/groups/{group.pk}/requests/"), "Approved offer")
+
 
 @override_settings(MEDIA_ROOT=__import__("tempfile").mkdtemp())
 class GroupPhotoKeepTests(TestCase):
@@ -235,5 +253,4 @@ class GroupPhotoKeepTests(TestCase):
         self.assertEqual(self.client.post(f"/groups/{group.pk}/edit/", {"name": "G2", "description": "x", "capacity": 4, "joining_mode": "public"}).status_code, 302)
         group.refresh_from_db()
         self.assertTrue(group.photo)                      # saving without a file keeps it
-
 

@@ -472,6 +472,17 @@ class WebTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(set(dm.Event.objects.get(title='Many DJs').performers.values_list('name', flat=True)), {'Search One', 'Search Two'})
 
+    def test_mark_all_as_read_clears_only_my_unread_notifications(self):
+        self.login(self.guest)
+        self.assertEqual(self.client.post(f'/events/{self.event.pk}/follow/').status_code,302)
+        self.login()
+        self.assertEqual(self.client.post(f'/events/{self.event.pk}/cancel/').status_code,302)
+        self.login(self.guest)
+        self.assertContains(self.client.get('/notifications/'),'Mark all as read')
+        self.assertEqual(self.client.post('/notifications/read-all/').status_code,302)
+        self.assertNotContains(self.client.get('/notifications/'),'Mark all as read')
+        self.assertFalse(Notification.objects.filter(recipient=self.guest,read_at__isnull=True).exists())
+
     def test_cancel_event_button_cancels_and_is_hidden_once_cancelled(self):
         self.login()
         edit = f'/events/{self.event.pk}/edit/'
