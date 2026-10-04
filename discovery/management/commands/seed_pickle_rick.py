@@ -31,5 +31,6 @@ class Command(BaseCommand):
             photo = f"djs/{name.lower().replace(' ', '_')}.webp"          # drop the image here, then run this command again
             if not profile.photo and finders.find(photo):
                 profile.photo = photo
-                profile.save(update_fields=["photo"])
+                profile.photo_credit = "Character art supplied by the project owner (Rick and Morty); classroom demo only"
+                profile.save(update_fields=["photo", "photo_credit"])
             self.stdout.write(f"{'created' if created else 'kept'} DJ {name}" + (" (photo set)" if profile.photo else f" (no photo yet: add static/{photo})"))
