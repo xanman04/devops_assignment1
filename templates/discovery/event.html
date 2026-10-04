@@ -71,7 +71,7 @@
     {% if groups %}<ul class="go-list">{% for group in groups %}<li><a class="go-row" href="{% url 'group-detail' group.pk %}">
       {% if group.photo %}<img class="go-avatar" src="{% url 'group-photo' group.pk %}" alt="" loading="lazy">{% else %}<span class="go-avatar go-avatar-letter" aria-hidden="true">{{ group.name|first|upper }}</span>{% endif %}
       <span class="go-main"><strong>{{ group.name }}</strong><span class="go-desc">{{ group.description|truncatechars:110 }}</span></span>
-      <span class="go-meta"><span class="go-mode go-mode--{{ group.joining_mode }}">{% if group.joining_mode == 'public' %}Open{% else %}Approval{% endif %}</span><span class="go-spots">{% if group.member_count >= group.capacity %}Full{% else %}{{ group.member_count }} of {{ group.capacity }} joined{% endif %}</span></span>
+      <span class="go-meta"><span class="go-mode go-mode--{{ group.joining_mode }}">{% if group.joining_mode == 'public' %}Open{% else %}Private{% endif %}</span><span class="go-spots">{% if group.member_count >= group.capacity %}Full{% else %}{{ group.member_count }} of {{ group.capacity }} joined{% endif %}</span></span>
       <span class="go-arrow" aria-hidden="true">→</span></a></li>{% endfor %}</ul>
     {% else %}<p class="go-empty">No groups yet. You can be the first to start one.</p>{% endif %}
   </section>

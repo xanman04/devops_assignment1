@@ -499,3 +499,15 @@ class WebTests(TestCase):
         local = odd.astimezone(zone)
         edit = self.client.get(f'/events/{self.event.pk}/edit/')
         self.assertContains(edit, f'<option value="{local:%H:%M}:00" selected>{local:%H:%M}</option>')
+
+    def test_event_page_group_card_says_private_for_approval_groups(self):
+        self.login()
+        url = f'/events/{self.event.pk}/'
+        self.group.joining_mode = 'approval_required'
+        self.group.save(update_fields=['joining_mode'])
+        page = self.client.get(url)
+        self.assertContains(page, 'Private</span>')
+        self.assertNotContains(page, 'Approval</span>')
+        self.group.joining_mode = 'public'
+        self.group.save(update_fields=['joining_mode'])
+        self.assertContains(self.client.get(url), 'Open</span>')
