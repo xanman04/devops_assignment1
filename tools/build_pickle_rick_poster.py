@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Draw the Pickle Rick demo flyer: an acid-green swirling portal on black, with the lineup underneath.
 
 Run from the repository root with `.venv/Scripts/python.exe tools/build_pickle_rick_poster.py`. The artwork is drawn

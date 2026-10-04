@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Discovery records. Use discovery.services for authorized business operations."""
 from pathlib import Path
 from urllib.parse import urlsplit

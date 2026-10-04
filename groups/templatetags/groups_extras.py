@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 from django import template
 
 register = template.Library()

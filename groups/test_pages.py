@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Rendering of the restyled group pages: list, detail/conversation, requests."""
 from datetime import timedelta
 

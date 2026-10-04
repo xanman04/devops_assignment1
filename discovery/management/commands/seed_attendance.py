@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Give every non-admin account its own set of event cards, stored exactly as check-in will store them, plus a
 bio and music links where those are blank so no profile is empty.
 

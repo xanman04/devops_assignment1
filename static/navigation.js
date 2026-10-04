@@ -1,3 +1,4 @@
+// Copyright © 2026 Xander Chen. All rights reserved.
 /* Keep the live map mounted while moving among the app's main pages. */
 (() => {
   const main=document.getElementById('main-content');

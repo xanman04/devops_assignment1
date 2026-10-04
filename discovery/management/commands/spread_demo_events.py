@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Spread the demo events over the next 30 days so every date shortcut (Tonight, 3 days, two weeks, 30 days) has some.
 
 Keeps each event's local time of day and length; only the date changes. Run it again whenever the dates have drifted

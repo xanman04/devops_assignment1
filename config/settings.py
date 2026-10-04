@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Local assignment settings. Configure through environment variables."""
 import os
 import secrets

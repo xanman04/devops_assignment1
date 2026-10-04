@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Curated DJ discovery profiles; source and photo credits: DJ_SOURCES.md."""
 from django.core.management.base import BaseCommand
 from django.db import transaction

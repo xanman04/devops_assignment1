@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 from datetime import datetime, timedelta, timezone as dt_timezone
 from unittest.mock import patch
 

@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 from pathlib import Path
 from urllib.parse import urlsplit
 from uuid import uuid4

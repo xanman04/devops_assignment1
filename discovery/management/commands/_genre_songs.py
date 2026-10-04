@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Representative songs for every genre category and subgenre tag (data for seed_genre_songs).
 
 Each entry lists where it applies: (category, None) for a broad-genre example, or (category, tag) for the

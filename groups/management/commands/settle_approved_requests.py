@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Add people whose join request was approved earlier but never accepted, when approval alone is now enough.
 
 Since owner approval adds the applicant straight away, an old "approved" request from someone with no other group

@@ -281,3 +281,15 @@ Venue approval means a location record was reviewed, not that an event or organi
 Deadline: **October 4, 2026, 23:59**; confirm the submission timezone in the course portal. Final deliverables also include a 4–5 page report with SDLC reasoning, SMART goals, matching architecture/schema diagrams, and the course AI-disclosure statement, plus the written comprehension check.
 
 History requirements: at least 12 meaningful commits across at least 6 calendar days, no day exceeding 40% of all commits, pushed as work progresses. Generic “Initial commit” messages do not count. The final ADR log must contain exactly five entries spanning at least three distinct commit dates. Do not fabricate dates or defer all pushes to submission day.
+
+## Copyright
+
+Copyright © 2026 Xander Chen. All rights reserved.
+
+This project is published for demonstration purposes only.
+No rights to use, copy, modify, or redistribute the original project code are granted.
+
+Third-party components and assets remain the property of their respective owners
+and are subject to their own licenses and terms. In particular, Funnel Display
+is licensed under the SIL Open Font License 1.1; see static/fonts/OFL.txt.
+See DJ_SOURCES.md for third-party media credits and sources.

@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Build original, clearly fictional Madrid demo flyers from bundled artwork.
 
 Run from the repository root with `.venv/Scripts/python.exe tools/build_demo_posters.py`.

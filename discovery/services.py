@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Authorized discovery operations shared by admin and public forms.
 
 Writes are atomic. SQLite IMMEDIATE transactions serialize these short operations;

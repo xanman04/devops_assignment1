@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Read-only map JSON endpoint; public page handlers live in discovery.pages."""
 from datetime import datetime
 from django.core.exceptions import ValidationError

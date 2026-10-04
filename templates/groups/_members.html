@@ -1,3 +1,4 @@
+{# Copyright © 2026 Xander Chen. All rights reserved. #}
 {% load groups_extras %}<div class="grp-board-head"><h2 id="members-heading">Members</h2><span>{{ count }} of {{ group.capacity }}</span></div>
 <ul class="grp-member-list">{% for membership in members %}
   <li class="grp-member">{% user_avatar membership.user %}

@@ -1,3 +1,4 @@
+{# Copyright © 2026 Xander Chen. All rights reserved. #}
 {% extends 'base.html' %}{% block title %}Unable to complete this action · Bassline{% endblock %}{% block content %}
 <div class="status-page"><span class="status-code">!</span><h1>Unable to complete this action</h1>
 <ul class="status-errors">{% for error in errors %}<li role="alert">{{ error }}</li>{% endfor %}</ul>

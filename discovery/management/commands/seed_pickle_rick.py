@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Add five fictional Psy-Trance DJ profiles (Pickle Rick headlines) and the Pickle Rick Portal Rave demo event.
 
 The event uses the bundled flyer `static/demo-posters/pickle-rick-portal-rave.webp` (drawn from scratch; the poster

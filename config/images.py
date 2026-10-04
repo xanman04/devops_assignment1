@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Decode bounded uploads and strip metadata before storing user images."""
 from io import BytesIO
 from pathlib import Path

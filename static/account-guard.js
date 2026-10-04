@@ -1,3 +1,4 @@
+// Copyright © 2026 Xander Chen. All rights reserved.
 /* Notice when this browser's login changes in another tab, and stop this tab from showing the old account. */
 (() => {
   const mine = document.body.dataset.account || '';

@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Recipient-scoped inbox access. Never expose EventChange snapshots here."""
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone

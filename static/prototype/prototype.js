@@ -1,3 +1,4 @@
+// Copyright © 2026 Xander Chen. All rights reserved.
 /* Standalone desktop interaction prototype. No API requests or account writes. */
 (() => {
   'use strict';

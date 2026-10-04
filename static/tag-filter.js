@@ -1,3 +1,4 @@
+// Copyright © 2026 Xander Chen. All rights reserved.
 /* Tags follow the categories: only tags that belong to a selected category are offered (all of them while no category
    is chosen), and a tag whose category gets deselected is unselected so it cannot be saved by mistake. */
 (() => {

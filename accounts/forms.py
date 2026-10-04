@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import User

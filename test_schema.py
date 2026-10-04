@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Focused migration/constraint checks, not full business-logic coverage."""
 from datetime import timedelta
 

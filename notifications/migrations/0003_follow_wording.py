@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 from django.db import migrations
 from django.db.models import Value
 from django.db.models.functions import Concat, Substr

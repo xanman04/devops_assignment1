@@ -1,3 +1,4 @@
+/* Copyright © 2026 Xander Chen. All rights reserved. */
 @font-face { font-family: "Funnel Display"; src: url("../fonts/FunnelDisplay-VariableFont_wght.ttf") format("truetype"); font-style: normal; font-weight: 300 800; font-display: swap; }
 :root { color-scheme: dark; font-family: "Funnel Display", system-ui, sans-serif; color: #ededf0; background: #191a1c; font-synthesis: none; --border: #303135; --muted: #95969f; --sidebar-width: 310px; }
 * { box-sizing: border-box; }

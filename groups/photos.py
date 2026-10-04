@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Group-photo preparation kept as a stable entry point for the group service."""
 from config.images import prepare_image
 

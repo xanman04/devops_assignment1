@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Following an event belongs to the one account that pressed Follow."""
 from datetime import timedelta
 

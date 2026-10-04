@@ -1,3 +1,4 @@
+{# Copyright © 2026 Xander Chen. All rights reserved. #}
 {% load tz groups_extras %}{% for item in timeline %}{% if item.kind == 'notice' %}<div class="grp-notice"><span>{{ item.notice.text }}</span></div>{% else %}{% with message=item.message %}
 <div class="grp-msg{% if message.author_id == user.pk %} grp-msg--mine{% endif %}{% if message.deleted_at %} grp-msg--removed{% endif %}">
   {% user_avatar message.author %}

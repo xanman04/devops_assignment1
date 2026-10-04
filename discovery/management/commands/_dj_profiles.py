@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Profile facts and official social links for the seeded artist / DJ profiles.
 
 Handles, hometowns, start years and labels come from Wikidata (queried October 1, 2026);

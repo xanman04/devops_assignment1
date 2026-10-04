@@ -1,3 +1,4 @@
+{# Copyright © 2026 Xander Chen. All rights reserved. #}
 {% load static tz %}<a class="grp-card{% if card.past or card.status == 'Cancelled' %} is-muted{% endif %}" href="{% url 'event-detail' card.event.pk %}" style="--event-accent:{{ card.accent }}">
   <span class="grp-card-art"{% if card.uploaded_poster_id %} style="background-image:url('{% url 'event-poster' card.uploaded_poster_id %}')"{% elif card.poster %} style="background-image:url('{% static card.poster %}')"{% endif %}>
     {% if not card.uploaded_poster_id and not card.poster %}<svg class="live-icon grp-card-glyph" aria-hidden="true"><use href="#icon-events"/></svg>{% endif %}

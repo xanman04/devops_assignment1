@@ -1,3 +1,4 @@
+// Copyright © 2026 Xander Chen. All rights reserved.
 /* Picture adjuster. Choosing a picture opens a popup showing it under an overlay the size of the frame it will be
    shown in (a circle for profile pictures). Drag to move it, pinch, scroll or use the slider to zoom, then "Use photo".
    The visible part is cut out in the browser and replaces the file in the form, so the server only receives what is

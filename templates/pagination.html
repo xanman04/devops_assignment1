@@ -1,3 +1,4 @@
+{# Copyright © 2026 Xander Chen. All rights reserved. #}
 {% if page.has_other_pages %}<nav class="pagination" aria-label="Pages">
 {% if page.has_previous %}<a class="btn btn-ghost btn-sm" href="?{{ parameter|default:'page' }}={{ page.previous_page_number }}{% if request.GET.unread == '1' %}&amp;unread=1{% endif %}">Previous</a>{% endif %}
 <span class="pg-info">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>

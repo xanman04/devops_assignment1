@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 from django import forms
 from .models import AttendanceGroup
 

@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Representative listening links for every genre category and subgenre tag.
 
 Each song is attached to the broad category (and, for subgenre examples, the tag it

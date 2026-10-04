@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Fictional music nights at real Madrid venues for a classroom demonstration.
 
 Venue names/addresses and coordinates are reference data, not copied event listings.

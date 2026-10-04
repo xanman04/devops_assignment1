@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Fill an empty database with the curated genres and the demo content, in the order the seed commands need.
 
 `app.py` runs this once on startup when the database has no genre categories, so a fresh clone opens with a working

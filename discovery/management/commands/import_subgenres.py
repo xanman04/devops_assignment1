@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Import the author-curated electronic subgenre CSV into existing categories."""
 
 import csv

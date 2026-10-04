@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Group operations; SQLite IMMEDIATE transactions guard membership changes.
 
 Requests and views must use these operations rather than raw ORM writes. Groups

@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Curated listening links for the seeded artist / DJ profiles.
 
 Each profile lists its most-listened songs (kind "track", roughly by popularity)

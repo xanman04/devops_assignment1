@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Event "Explore the sound", genre-page song lists and the Go together section."""
 from datetime import timedelta
 from io import StringIO

@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Mock collection for the profile, so the layout and card effects can be judged before anything is earned.
 
 Only event cards are stored. Achievements are never listed by hand: `achievements()` works them out from the event

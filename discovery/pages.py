@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 import re
 from zoneinfo import ZoneInfo
 from django.http import FileResponse, Http404, JsonResponse

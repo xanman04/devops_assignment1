@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Geometry for the genre chart on the profile: one spoke per genre category, coloured by the genre, reaching
 further out the more that genre is attended. Everything is worked out here so the page only draws shapes."""
 import math

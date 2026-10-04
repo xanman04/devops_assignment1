@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.core.exceptions import ValidationError

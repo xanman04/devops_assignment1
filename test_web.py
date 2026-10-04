@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """HTTP integration checks for permissions, form/service boundaries and privacy."""
 from datetime import timedelta
 from zoneinfo import ZoneInfo

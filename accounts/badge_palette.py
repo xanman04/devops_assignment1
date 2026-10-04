@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Foil colours for a badge, taken from the badge itself so the shimmer matches what is on the card.
 
 For a poster, the three most prominent hues in the picture are used (bright, saturated versions of them). For a

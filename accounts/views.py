@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 from django.contrib.auth import login
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required

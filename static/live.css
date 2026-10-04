@@ -1,3 +1,4 @@
+/* Copyright © 2026 Xander Chen. All rights reserved. */
 :root { --sidebar-width:19.375rem; --edge:#36383f; --muted:#a3a6b0; --surface-shadow:0 0.75rem 1.75rem #0003; --card-shadow:0 0.4375rem 1.125rem #0004; }
 .live-icon-definitions { position:absolute; width:0; height:0; overflow:hidden; }
 .live-icon { width:1.5rem; height:1.5rem; flex-shrink:0; fill:none; stroke:currentColor; stroke-width:1.65; stroke-linecap:round; stroke-linejoin:round; }

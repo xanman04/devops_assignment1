@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Keep per-account pages out of browser and shared caches, and give each tab its own login."""
 import re
 

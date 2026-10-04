@@ -1,3 +1,4 @@
+// Copyright © 2026 Xander Chen. All rights reserved.
 /* Live MapLibre vector map with the OpenFreeMap dark basemap. */
 import { Map as MapLibreMap, Marker } from 'maplibre-gl';
 (() => {

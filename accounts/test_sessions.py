@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """What a tab left open on the old account can and cannot do after another tab signs in as someone else."""
 from datetime import timedelta
 import re

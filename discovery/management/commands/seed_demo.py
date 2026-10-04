@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Explicit fictional fixtures. Never creates or edits genre classifications."""
 from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo

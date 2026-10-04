@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Initialize SQLite, then serve the local application in one process."""
 import os
 

@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Small HTTP helpers; domain services own transactions and authorization."""
 from functools import wraps
 from django.core.exceptions import ObjectDoesNotExist, ValidationError

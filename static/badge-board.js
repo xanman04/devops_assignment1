@@ -1,3 +1,4 @@
+// Copyright © 2026 Xander Chen. All rights reserved.
 /* Collection: genre chips filter the badges, and clicking a badge opens it large over the board.
    The open card follows the pointer in 3D and its foil changes colour with the angle, a bit like a collectible card
    game. Everything is delegated from the document, so it also works on pages swapped in without a reload. */

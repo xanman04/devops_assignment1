@@ -1,3 +1,4 @@
+// Copyright © 2026 Xander Chen. All rights reserved.
 /* Joining a group while already in another group for the same event asks first, in a popup. */
 (() => {
   function ask(name) {

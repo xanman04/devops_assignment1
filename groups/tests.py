@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 from datetime import timedelta
 from io import BytesIO
 from pathlib import Path

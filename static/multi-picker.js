@@ -1,3 +1,4 @@
+// Copyright © 2026 Xander Chen. All rights reserved.
 /* Search-and-pick for a multiple <select data-multi-picker>: type to filter, click to add, chips show what is chosen.
    The original select stays in the form and is kept in step, so the server receives exactly what it did before and
    nothing needs Ctrl. Without JavaScript the plain list still works. */

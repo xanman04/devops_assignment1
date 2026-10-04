@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Chat notices ("X has left the group") and live updates."""
 from datetime import timedelta
 

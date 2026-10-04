@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 import os
 from django.core.wsgi import get_wsgi_application
 

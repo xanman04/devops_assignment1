@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Validate public/admin inputs before service-backed saves."""
 from django import forms
 from datetime import datetime, time

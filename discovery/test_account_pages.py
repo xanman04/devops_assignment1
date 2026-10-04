@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """My events, Notifications, Account activity, log in and status pages share the app's style."""
 from datetime import timedelta
 from importlib import import_module

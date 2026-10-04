@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 from io import StringIO
 import csv
 from datetime import timedelta

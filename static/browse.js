@@ -1,3 +1,4 @@
+// Copyright © 2026 Xander Chen. All rights reserved.
 /* Remember the last two ordinary pages (not forms) this tab showed, so Back can skip over a form the person just saved. */
 const FORM_PAGE = /\/(edit|new|report)\/$|\/accounts\/(settings|login|register)\/$/;
 function noteTrail() {

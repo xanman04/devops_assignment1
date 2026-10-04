@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Refresh the curated, freely licensed DJ thumbnails from Wikimedia Commons.
 
 Run manually when updating the profiles. Photo credits and licenses are recorded

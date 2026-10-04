@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Profile page, profile picture and connected music links."""
 from io import BytesIO
 import shutil

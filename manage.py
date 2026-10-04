@@ -1,3 +1,4 @@
+# Copyright © 2026 Xander Chen. All rights reserved.
 """Django's development and database management commands."""
 import os
 import sys
