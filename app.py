@@ -10,6 +10,13 @@ if __name__ == "__main__":
     from django.core.management import call_command
     from waitress import serve
     call_command("migrate", interactive=False)
+    if os.environ.get("SEED_DEMO_DATA", "1") != "0":
+        from discovery.models import GenreCategory
+        if not GenreCategory.objects.exists():
+            try:
+                call_command("load_demo_content", verbosity=0)
+            except Exception as error:
+                print(f"Demo content was not loaded ({error}); the app will start empty.", flush=True)
     call_command("collectstatic", interactive=False, verbosity=0)
     from config.wsgi import application
 

@@ -18,3 +18,10 @@ uploads/
 .coverage
 htmlcov/
 .pytest_cache/
+
+# Editor settings and one-off local scripts
+.vscode/
+scratch_*.py
+# Local copy of the demo flyer; build it with tools/build_pickle_rick_poster.py instead
+/pickle-ricks-portal-rave.png
+/pickle-rick-poster.png

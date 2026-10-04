@@ -1,0 +1,266 @@
+[
+{
+  "model": "discovery.genrecategory",
+  "pk": 1,
+  "fields": {
+    "bpm_min": 135,
+    "bpm_max": 145,
+    "name": "Dubstep / 140",
+    "color": "#5A0F1A",
+    "description": "Heavy, spacious and bass-first. Expect huge low end, half-time rhythms, dark atmosphere and everything from deep, meditative soundsystem music to aggressive wobbling drops.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 2,
+  "fields": {
+    "bpm_min": 145,
+    "bpm_max": 160,
+    "name": "Hard Techno",
+    "color": "#9F1239",
+    "description": "Fast, relentless and built for intensity. This is the kind of music for dark warehouses, pounding kicks, industrial textures and very little downtime.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 3,
+  "fields": {
+    "bpm_min": 150,
+    "bpm_max": 200,
+    "name": "Hard Dance / Hardcore",
+    "color": "#F01845",
+    "description": "Even more extreme and rave-driven than hard techno. Expect huge kicks, euphoric or chaotic melodies, very high energy and a crowd that came specifically to go hard.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 4,
+  "fields": {
+    "bpm_min": 125,
+    "bpm_max": 130,
+    "name": "Mainstage / Commercial EDM",
+    "color": "#FF7F6A",
+    "description": "Big, immediate and designed for huge moments. Think festival drops, recognizable hooks, dramatic buildups and music that works just as well for casual listeners as dedicated clubbers.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 5,
+  "fields": {
+    "bpm_min": 100,
+    "bpm_max": 130,
+    "name": "Latin Electronic",
+    "color": "#A6532C",
+    "description": "Electronic club music with strong Latin rhythmic and cultural influence. Expect percussion, swagger, dancefloor energy and styles that can move between house, bass, reggaeton-adjacent sounds and more experimental club music.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 6,
+  "fields": {
+    "bpm_min": 165,
+    "bpm_max": 180,
+    "name": "Drum & Bass",
+    "color": "#FF7A00",
+    "description": "Fast, kinetic and addictive. Rapid breakbeats sit over deep basslines, ranging from smooth and emotional liquid DnB to aggressive neurofunk and massive dancefloor anthems.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 7,
+  "fields": {
+    "bpm_min": 95,
+    "bpm_max": 125,
+    "name": "Afro Electronic",
+    "color": "#C79A63",
+    "description": "Warm, rhythmic and deeply groove-focused. Expect rolling percussion, rich basslines and hypnotic repetition, covering everything from amapiano and Afro House to more bass-heavy African club sounds.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 8,
+  "fields": {
+    "bpm_min": 110,
+    "bpm_max": 150,
+    "name": "Breaks / Breakbeat",
+    "color": "#FACC15",
+    "description": "Funky, syncopated and less predictable than four-on-the-floor dance music. The broken drum patterns give it a bouncing, restless energy that can feel playful, gritty or futuristic.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 9,
+  "fields": {
+    "bpm_min": 100,
+    "bpm_max": 122,
+    "name": "Indie Dance",
+    "color": "#66753A",
+    "description": "Stylish, leftfield club music with a slightly alternative edge. It often blends electronic grooves with disco, synth-pop, post-punk or psychedelic influences and tends to feel cooler and less polished than mainstream dance.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 10,
+  "fields": {
+    "bpm_min": 135,
+    "bpm_max": 150,
+    "name": "Psy-Trance",
+    "color": "#7CFF00",
+    "description": "Hypnotic, psychedelic and extremely energetic. Expect rolling basslines, strange sound design, rapid rhythms and a feeling of being pulled into a neon alien tunnel for several hours.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 11,
+  "fields": {
+    "bpm_min": 125,
+    "bpm_max": 150,
+    "name": "Brazilian Funk",
+    "color": "#228B22",
+    "description": "Raw, rhythmic and built around movement. Heavy percussion, chopped vocals and aggressive grooves give it a street-party energy that can swing from playful to absolutely ferocious.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 12,
+  "fields": {
+    "bpm_min": 125,
+    "bpm_max": 140,
+    "name": "Electro",
+    "color": "#0B3F1A",
+    "description": "Funky, robotic and retro-futuristic. Expect punchy drum machines, synthetic basslines and a slightly mechanical groove that feels somewhere between old-school futurism and underground club music.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 13,
+  "fields": {
+    "bpm_min": 130,
+    "bpm_max": 160,
+    "name": "Trap / Future Bass",
+    "color": "#7DFFC1",
+    "description": "Bass-heavy but more dramatic and melodic than dubstep. Trap brings booming drums and swagger, while future bass adds emotional chords, bright synths and huge cinematic drops.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 14,
+  "fields": {
+    "bpm_min": 130,
+    "bpm_max": 140,
+    "name": "UK Garage / Bassline",
+    "color": "#4FC3F7",
+    "description": "Bouncy, fast and full of swing. Shuffling drums, chopped vocals and elastic basslines make it feel lively, playful and perfect for a packed dancefloor.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 15,
+  "fields": {
+    "bpm_min": 115,
+    "bpm_max": 130,
+    "name": "House",
+    "color": "#1D4ED8",
+    "description": "Groovy, warm and endlessly danceable. House can be soulful, deep, funky, minimal or driving, but the core feeling is usually smooth four-on-the-floor rhythm and a strong sense of flow.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 16,
+  "fields": {
+    "bpm_min": 125,
+    "bpm_max": 160,
+    "name": "Bass / Club",
+    "color": "#172554",
+    "description": "A broad home for modern, rhythm-heavy club music that doesn’t fit neatly elsewhere. Expect unusual drum patterns, heavy low end, global influences and a more experimental, forward-thinking dancefloor vibe.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 17,
+  "fields": {
+    "bpm_min": 125,
+    "bpm_max": 145,
+    "name": "Trance",
+    "color": "#9670F4",
+    "description": "Euphoric, emotional and expansive. Long buildups, soaring melodies and driving rhythms create that classic hands-in-the-air feeling, whether the sound is dreamy, uplifting or more intense.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 18,
+  "fields": {
+    "bpm_min": 125,
+    "bpm_max": 145,
+    "name": "Techno",
+    "color": "#5B21B6",
+    "description": "Hypnotic, driving and focused on rhythm and texture. It can be deep and subtle or dark and powerful, but the appeal is usually getting locked into a steady groove and losing track of time.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 19,
+  "fields": {
+    "bpm_min": 110,
+    "bpm_max": 130,
+    "name": "Nu Disco / Disco",
+    "color": "#C026FF",
+    "description": "Funky, glamorous and feel-good. Expect groovy basslines, shiny synths, soulful vocals and a retro dancefloor energy with a modern electronic polish.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 20,
+  "fields": {
+    "bpm_min": 100,
+    "bpm_max": 130,
+    "name": "Dance / Pop",
+    "color": "#FFB3D9",
+    "description": "Catchy, bright and vocal-forward. This is electronic music built around memorable choruses, polished production and easy crossover between clubs, radio and pop playlists.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 21,
+  "fields": {
+    "bpm_min": 60,
+    "bpm_max": 120,
+    "name": "Ambient / Experimental",
+    "color": "#7B8088",
+    "description": "Atmospheric, strange and often more about immersion than dancing. It can be calm, cinematic, abstract or challenging, making it ideal for listeners who want electronic music that feels more like a world than a beat.",
+    "display_order": 0
+  }
+},
+{
+  "model": "discovery.genrecategory",
+  "pk": 22,
+  "fields": {
+    "bpm_min": 115,
+    "bpm_max": 140,
+    "name": "Industrial / EBM",
+    "color": "#374151",
+    "description": "Dark, mechanical and confrontational. Expect pounding rhythms, cold synths, distorted textures and a gritty underground aesthetic that sits somewhere between electronic body music, industrial and dark club culture.",
+    "display_order": 0
+  }
+}
+]

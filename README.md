@@ -6,7 +6,7 @@ The idea comes from difficulty discovering smaller and niche events. It covers m
 
 **Status:** discovery/group services and Django workflows are implemented. The map and browsing layout are now connected to Django at `/`, `/discover/`, `/my-events/`, and `/groups/`. The professor approved the proposal, as reported by the author on September 24. Bassline is the current working title.
 
-## Planned features
+## Features
 
 ### Desktop UI prototype
 
@@ -70,7 +70,7 @@ In Django admin, enter each broad category color as `#RRGGBB` text and supply a 
 
 Dependencies are pinned in the single root `requirements.txt`: Django 5.2.17 LTS, Pillow for image-field support, Waitress for a single-process Windows-compatible server, WhiteNoise for static assets, tzdata for Windows timezones, and Django's transitive dependencies. Verified with Python 3.13.1. Frontend assets must not introduce another package manifest.
 
-## Planned architecture
+## Architecture
 
 One Django project runs as one process, with two logical domain apps sharing one SQLite database:
 
@@ -128,7 +128,7 @@ python -m venv .venv
 
 On Linux/macOS use `.venv/bin/python` instead. Open http://localhost:8000/ for map discovery. Startup applies committed migrations and collects static assets automatically, then starts Waitress on `0.0.0.0` in one process, without a reloader or frontend server. Restart the process after code changes; it does not auto-reload.
 
-A fresh clone starts with an empty database: no genre categories, events or users. The demo and import commands further down expect the broad genre categories to exist first, and no command creates them, so add them in admin. Create an account through the public navigation. Use admin to curate genres and approve proposed venues; then list events and use optional groups through the public pages. Map JavaScript requests browser location permission and falls back to Paris when unavailable/declined. Pan to explore another area. Map results refresh automatically; the server-rendered upcoming-events list is also usable without JavaScript. Browser date filters span local midnight through the selected end date exclusively; event detail/form times use the venue timezone. No location history is saved to accounts.
+On its first start with an empty database, `app.py` runs `manage.py load_demo_content` once, so a fresh clone opens with a working map and Discover page: the 22 curated genre categories (`discovery/fixtures/genre_categories.json`), the 251 subgenre tags, 7 real DJ profiles with credited photos, 439 representative songs, 24 fictional events at real Madrid venues with bundled flyers, and the demo accounts described below. This takes a few seconds and is skipped on later starts. Set `SEED_DEMO_DATA=0` to start with an empty database instead. Create an account through the public navigation. Use admin to curate genres and approve proposed venues; then list events and use optional groups through the public pages. Map JavaScript requests browser location permission and falls back to Madrid when unavailable/declined. Pan to explore another area. Map results refresh automatically; the server-rendered upcoming-events list is also usable without JavaScript. Browser date filters span local midnight through the selected end date exclusively; event detail/form times use the venue timezone. No location history is saved to accounts.
 
 The live map uses MapLibre GL JS 6.3.0 directly with [OpenFreeMap's Dark vector style](https://openfreemap.org/quick_start/), adjusted in the browser to a clearer charcoal palette. Map vectors move continuously while the event endpoint refreshes after movement; existing pins remain visible until replacement results arrive. Main navigation keeps the map mounted across Near me, Discover, My events, Groups, Notifications, and Profile, so returning to Near me restores the same view without recreating the WebGL map. Other detail/form links remain normal page loads; the last map center and zoom are kept in session storage for those returns. The map library and tiles require internet access; no API key, Node runtime, or frontend package manifest is needed. Browser geolocation draws only a small dot, and the center control animates back to it. The bottom label contains only the matching event and venue counts. The map position is not saved to accounts. Tile requests reveal the viewed map area to the provider; no offline download or prefetch is provided. The list panel closes with X, Escape, a second click on List, or a map click.
 
@@ -139,6 +139,7 @@ The live map uses MapLibre GL JS 6.3.0 directly with [OpenFreeMap's Dark vector 
 | `DJANGO_SECRET_KEY` | If absent, a generated local key is persisted in `DATA_DIR/.django-secret-key`; set explicitly for future deployment |
 | `DJANGO_ALLOWED_HOSTS` | `localhost,127.0.0.1,[::1]`; add the real hostname/IP for access from another device |
 | `DJANGO_DEBUG` | `0`; use `1` only for local debugging |
+| `SEED_DEMO_DATA` | `1`; set `0` to skip loading the demo content into an empty database |
 
 No `.env` file or source edit is required. Runtime data and the virtual environment are ignored by Git. Group photos and uploaded event posters are served through visibility-checked routes; raw media directories are not public.
 
@@ -148,7 +149,7 @@ Optional administration, not required for startup:
 .venv/Scripts/python.exe manage.py createsuperuser
 ```
 
-Then visit http://localhost:8000/admin/. You can create/edit categories, tags, venues, events, and listening references, and resolve reports. Discovery saves use services. Groups are inspectable; authorized admins can delete a populated group with confirmation and remove selected message content through moderation. Direct group/membership/request/ban/message editing remains disabled to prevent bypassing services. No default users or seeded listings are introduced.
+Then visit http://localhost:8000/admin/. You can create/edit categories, tags, venues, events, and listening references, and resolve reports. Discovery saves use services. Groups are inspectable; authorized admins can delete a populated group with confirmation and remove selected message content through moderation. Direct group/membership/request/ban/message editing remains disabled to prevent bypassing services. Apart from the demo content loaded on a first start (see above), no users or listings are introduced; the individual seed commands below can also be run by hand.
 
 To try discovery: create a genre category, add a venue and set its review status to approved, then add a future event with at least one category. Optional tags must belong to selected categories. Event forms interpret and display date/time in the selected venue's IANA timezone, storing UTC. Changing venue reinterprets the entered wall-clock times in its timezone; confirm those times when moving an event. Ambiguous/nonexistent daylight-saving times are rejected. Admins may inspect pending locations; they are never returned publicly.
 
@@ -198,7 +199,7 @@ The importer uses each CSV `pitch` as the tag description and its BPM columns as
 .venv/Scripts/python.exe manage.py seed_demo
 ```
 
-Adds five fictional users (`demo_organizer`, `demo_alex`, `demo_sam`, `demo_jo`, `demo_morgan`) and five clearly labeled fictional Paris-area venues: three approved fixture states, one pending, and one rejected. These are synthetic locations, not real venue recommendations or verification. New demo accounts have password `Demo-music-2026!` and no staff/admin permissions. The command is explicit and never runs automatically at startup.
+Adds five fictional users (`demo_organizer`, `demo_alex`, `demo_sam`, `demo_jo`, `demo_morgan`) and five clearly labeled fictional Paris-area venues: three approved fixture states, one pending, and one rejected. These are synthetic locations, not real venue recommendations or verification. New demo accounts have password `Demo-music-2026!` and no staff/admin permissions. The command is explicit and runs automatically only as part of `load_demo_content` on the first start of an empty database.
 
 `seed_demo` never creates or changes genres or subgenre tags. Without a category selection, no events/groups are created, so venues alone do not produce map pins. After curating a genre in admin, select its existing ID:
 

@@ -10,10 +10,10 @@ The professor approved the proposal according to the author. That does not imply
 
 ## Agreed: map and filtering
 
-- Browser requests current location on opening, subject to permission. If declined/unavailable, use a default city (city still undecided).
+- Browser requests current location on opening, subject to permission. If declined/unavailable, use Madrid as the default city.
 - Users can pan/zoom freely. Do not snap back to their position; a locate-me control recenters intentionally.
 - Refresh pins automatically after movement stops, retaining current filters. Ignore stale search responses. Exact delay is an implementation detail still to choose.
-- Default date window: next 14 days. Date shortcuts and a custom range are planned; exact timezone, end-boundary, and ongoing-event semantics need definition.
+- Default date window: next 14 days. Date shortcuts and a custom range are implemented; windows are start-inclusive and end-exclusive, and ongoing events match.
 - Genre matching supports ANY/OR and ALL/AND. Default ANY; no selection shows all.
 - One pin per venue. Count only matching events; show a count when more than one matches. Ombre combines their genre colors; selecting the pin opens matching events ordered by date.
 - Use a subdued charcoal/grey basemap with readable roads/labels so genre colors stand out. Retain textual genre labels and adequate pin contrast.
@@ -54,7 +54,7 @@ The author's later visual review compared the carousel repetition to a game-site
 - Private join requests can be approved or declined by the creator. Hidden invite-only groups are explicitly out of scope.
 - Group name, description (up to 2,000 characters), capacity, and one optional uploaded photo. Use a default image when absent. Accept JPG/PNG/WebP up to 5 MiB and 20 megapixels, reject animation, resize to a maximum 1,600-pixel edge, and re-encode to JPEG without metadata. Store files in the configured data directory, paths in SQLite.
 - Prevent duplicate memberships and exceeding capacity. Members can leave. The owner counts toward capacity. One membership per user per event; switching uses an atomic operation.
-- Only current members read/post messages. Text-only messages have author and timestamp, with a 4,000-character maximum; no live updates, message notifications, attachments, or read receipts. The board supports simple coordination, including arranging an external chat group.
+- Only current members read/post messages. Text-only messages have author and timestamp, with a 4,000-character maximum; no message notifications, attachments, or read receipts (the chat later gained polling-based live updates; see the October 2 notes). The board supports simple coordination, including arranging an external chat group.
 - Creators count as members: one group per person per event, including groups they create. Owner departure transfers ownership by membership seniority; empty groups are deleted. Removal permits rejoining, bans prevent it. Authors may edit/delete their messages; admins may remove messages. Approved private requests are offers without reserved spaces. New participation closes at event start.
 - Owners may edit name, description, photo, joining mode, and capacity, but not below current membership. Changing mode preserves existing members and unresolved requests. Only admins may disband a populated group.
 - Notify owners of new requests and applicants of approval/rejection. Also notify members of removal, bans, and ownership transfer. Ordinary messages do not generate notices.
@@ -63,21 +63,16 @@ The author's later visual review compared the carousel repetition to a game-site
 
 - Django, SQLite ORM/migrations, built-in auth/admin, templates, CSS, plain browser JavaScript, built-in JSON responses, MapLibre GL JS.
 - One project with discovery and groups apps; shared identity, one database/process. No React, Node build pipeline, Django REST Framework, background worker, or actual service split.
-- Models define storage; request handlers deal with HTTP; domain functions implement rules. Exact service/helper names and schema are not yet selected.
+- Models define storage; request handlers deal with HTTP; domain functions implement rules.
 - Future frontend reuse motivates separation of business logic from templates, not building a full external API now.
 
 ## Proposed page structure (not separately confirmed)
 
 Map landing page with event previews; full event page with music and groups; group page with membership/message controls; Explore Genres; submit/edit event; My Activity for own listings/groups/requests. Separate detail pages were recommended immediately before documentation was requested. Treat the exact navigation as a proposal.
 
-## Still to decide during implementation
+## Decisions made during implementation
 
-- Implement the agreed SCHEMA.md design and reconcile it with real models/migrations and the final report diagram (ADR-3 recorded September 27).
-- Runtime versions, root manifest, image handling dependency, local asset delivery, tile provider.
-- Startup server and command, environment variables/defaults, exact SQLite/media paths, and noninteractive admin provisioning. Account administration must not block clean startup.
-- Testing approach (explicitly deferred by the author), actual coverage command/scope/result (ADR-4). At least 70% core coverage is still required.
-- SDLC model, SMART goals, report, and final acceptance checks.
-- Feature sequencing if the agreed scope pressures the deadline; discuss reductions instead of silently dropping agreed behavior.
+The open items listed in the first design interview have since been decided: the schema was implemented and reconciled in `SCHEMA.md` and the migrations (ADR-3); the runtime is Python 3.13 with Django, Pillow, Waitress, WhiteNoise and tzdata in one root `requirements.txt`; the app starts with `python app.py` and is configured by environment variables (see the README); the testing approach and coverage are in ADR-4 and the README; and the SDLC reasoning, SMART goals and diagrams are in the report.
 
 ## Assignment evidence
 

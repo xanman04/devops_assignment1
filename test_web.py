@@ -6,6 +6,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 from PIL import Image
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import OperationalError
@@ -229,7 +230,7 @@ class WebTests(TestCase):
         client.force_login(self.owner)
         self.assertEqual(client.post(f'/events/{self.event.pk}/cancel/').status_code, 403)
         client.get(f'/events/{self.event.pk}/')
-        self.assertEqual(client.post(f'/events/{self.event.pk}/cancel/', {'csrfmiddlewaretoken':client.cookies['csrftoken'].value}).status_code, 302)
+        self.assertEqual(client.post(f'/events/{self.event.pk}/cancel/', {'csrfmiddlewaretoken':client.cookies[settings.CSRF_COOKIE_NAME].value}).status_code, 302)
 
     def test_post_actions_reject_get(self):
         self.login()
