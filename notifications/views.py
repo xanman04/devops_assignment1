@@ -10,8 +10,11 @@ from . import services
 @login_required
 @require_GET
 def inbox(request):
-    notices = services.inbox(actor=request.user, unread_only=request.GET.get("unread") == "1").select_related("join_request", "event_change")
-    return render(request, "notifications/inbox.html", {"notices": Paginator(notices, 30).get_page(request.GET.get("page"))})
+    unread = request.GET.get("unread") == "1"
+    notices = services.inbox(actor=request.user, unread_only=unread).select_related("join_request", "event_change")
+    return render(request, "notifications/inbox.html", {
+        "notices": Paginator(notices, 30).get_page(request.GET.get("page")), "unread": unread,
+        "unread_count": services.inbox(actor=request.user, unread_only=True).count()})
 
 
 @endpoint
